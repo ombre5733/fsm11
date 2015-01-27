@@ -12,7 +12,65 @@ namespace detail
 {
 
 template <typename TDerived>
-class SynchronousEventDispatcher
+class EventDispatcherBase
+{
+protected:
+    using options = typename get_options<TDerived>::type;
+    using event_type = typename options::event_type;
+    using state_type = State<options>;
+
+    TDerived& derived()
+    {
+        return *static_cast<TDerived*>(this);
+    }
+
+    const TDerived& derived() const
+    {
+        return *static_cast<const TDerived*>(this);
+    }
+
+    void enterInitialStates()
+    {
+        // TODO: Would be nice, if the state machine had an initial
+        // transition similar to initial transitions of states.
+        derived().clearStateFlags();
+        derived().rootState()->m_flags |= state_type::InEnterSet;
+        derived().markDescendantsForEntry();
+        derived().enterStatesInEnterSet(event_type());
+    }
+
+    void runToCompletion()
+    {
+        // We are in microstepping mode: follow all eventless transitions.
+        while (1)
+        {
+            derived().clearStateFlags();
+            //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
+            derived().selectTransitions(true, event_type());
+            if (!derived().m_enabledTransitions)
+                break;
+            derived().microstep(event_type());
+        }
+
+        // Synchronize the visible state active flag with the internal
+        // state active flag. Call the invoke() methods of all currently
+        // active states.
+        for (auto iter = derived().begin(); iter != derived().end(); ++iter)
+        {
+            iter->m_visibleActive = iter->m_internalActive;
+            if (iter->m_visibleActive)
+                iter->enterInvoke();
+        }
+
+#if 0
+        // Notify all waiters about the configuration change.
+        derived().broadcastConfigurationChange();
+#endif
+    }
+};
+
+template <typename TDerived>
+class SynchronousEventDispatcher : public EventDispatcherBase<TDerived>
 {
     enum FsmState
     {
@@ -91,7 +149,7 @@ private:
 };
 
 template <typename TDerived>
-class AsynchronousEventDispatcher
+class AsynchronousEventDispatcher : public EventDispatcherBase<TDerived>
 {
     enum ControlEvent
     {
@@ -171,36 +229,12 @@ private:
         return *static_cast<const TDerived*>(this);
     }
 
-    void runToCompletion()
-    {
-        // We are in microstepping mode: follow all eventless transitions.
-        while (1)
-        {
-            derived().clearStateFlags();
-            //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
-            derived().selectTransitions(true, event_type());
-            if (!derived().m_enabledTransitions)
-                break;
-            derived().microstep(event_type());
-        }
-
-        // Synchronize the visible state active flag with the internal
-        // state active flag. Call the invoke() methods of all currently
-        // active states.
-        for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        {
-            iter->m_visibleActive = iter->m_internalActive;
-            if (iter->m_visibleActive)
-                iter->enterInvoke();
-        }
-    }
-
     void eventLoop()
     {
         {
             std::unique_lock<std::mutex> lock(derived().m_mutex);
-            enterStates();
-            runToCompletion();
+            this->enterInitialStates();
+            this->runToCompletion();
         }
 
         while (true)
@@ -228,12 +262,7 @@ private:
             if (derived().m_enabledTransitions)
                 derived().microstep(std::move(event));
 
-            runToCompletion();
-
-#if 0
-            // Notify all waiters about the configuration change.
-            broadcastConfigurationChange();
-#endif
+            this->runToCompletion();
 
             //leaveGuard.dismiss();
         }

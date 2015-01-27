@@ -1208,6 +1208,8 @@ private:
     //! Broadcasts a configuration change.
     void broadcastConfigurationChange();
 
+
+    // TODO: Move all these functions into EventDispatcherBase
     //! Clears the flags of all states.
     void clearStateFlags()
     {
@@ -1253,6 +1255,8 @@ private:
         //! \todo Make this a free function
         return transition->source(); //! HACK!!!!!!!!   THIS IS WRONG!!!!!
     }
+
+    friend class EventDispatcherBase<StateMachine>;
 };
 
 template <typename TOptions>
@@ -1273,7 +1277,7 @@ void StateMachine<TOptions>::enterStatesInEnterSet(unsigned event)
     {
         if (iter->m_flags & state_type::InEnterSet)
         {
-            //std::cout << "[StateMachine] Enter " << iter->name() << std::endl;
+            std::cout << "[StateMachine] Enter " << iter->name() << std::endl;
             iter->onEntry(event);
             iter->m_internalActive = true;
         }
@@ -1288,7 +1292,7 @@ void StateMachine<TOptions>::leaveStatesInExitSet(unsigned event)
     {
         if (iter->m_flags & state_type::InExitSet)
         {
-            //std::cout << "[StateMachine] Leave " << iter->name() << std::endl;
+            std::cout << "[StateMachine] Leave " << iter->name() << std::endl;
             iter->m_internalActive = false;
             iter->exitInvoke();
             iter->onExit(event);
@@ -1392,7 +1396,7 @@ void StateMachine<TOptions>::markDescendantsForEntry()
         if (state->isCompound())
         {
             // Exactly one state of a compound state has to be marked for entry.
-            bool childMarked = true;
+            bool childMarked = false;
             for (sibling_iterator child = state.child_begin();
                  child != state.child_end(); ++child)
             {

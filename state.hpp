@@ -135,7 +135,7 @@ public:
     //! \brief The name.
     //!
     //! Returns the state's name.
-    StringRef name() const
+    const char* name() const
     {
         return m_name;
     }
@@ -308,7 +308,7 @@ private:
     };
 
     //! The state's name.
-    StringRef m_name;
+    const char* m_name;
     //! The parent state.
     State* m_parent;
     //! The associated state machine.
@@ -336,6 +336,9 @@ private:
     void pushBackTransition(transition_type* transition) noexcept;
 
     friend state_machine_type;
+
+    template <typename TDerived>
+    friend class EventDispatcherBase;
 };
 
 template <typename TOptions>
