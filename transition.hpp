@@ -166,6 +166,13 @@ struct Event
                                             std::forward<TGuard>(guard));
     }
 
+    template <typename TGuard>
+    EventGuard<TEvent, TGuard&&> operator()(TGuard&& guard) const
+    {
+        return EventGuard<TEvent, TGuard&&>(std::forward<TEvent>(m_event),
+                                            std::forward<TGuard>(guard));
+    }
+
     template <typename TAction>
     EventGuardAction<TEvent, std::nullptr_t&&, TAction&&> operator/(TAction&& action) const
     {
@@ -295,6 +302,9 @@ private:
 
     friend class State<TOptions>;
     friend class StateMachine<TOptions>;
+
+    template <typename TDerived>
+    friend class EventDispatcherBase;
 };
 
 } // namespace detail
