@@ -4,6 +4,7 @@
 #include "eventdispatcher.hpp"
 #include "state.hpp"
 #include "statemachine_fwd.hpp"
+#include "storage.hpp"
 #include "transition.hpp"
 
 //#include "/home/manuel/code/weos/src/scopeguard.hpp"
@@ -316,44 +317,7 @@ private:
 
 
 
-template <typename... TTypes>
-class Storage
-{
-    typedef std::tuple<TTypes...> tuple_type;
 
-public:
-    template <int TIndex>
-    typename std::tuple_element<TIndex, tuple_type>::type load()
-    {
-        return std::get<TIndex>(m_data);
-    }
-
-    template <int TIndex, typename TType>
-    void store(TType&& element)
-    {
-        std::get<TIndex>(m_data) = element;
-    }
-
-private:
-    tuple_type m_data;
-};
-
-template <>
-class Storage<>
-{
-public:
-    template <int TIndex>
-    void load()
-    {
-        static_assert(TIndex != TIndex, "No storage specified");
-    }
-
-    template <int TIndex, typename TType>
-    void store(TType&& element)
-    {
-        static_assert(TIndex != TIndex, "No storage specified");
-    }
-};
 
 
 
@@ -383,8 +347,7 @@ private:
 
 public:
     StateMachine()
-        : m_rootState("(StateMachine)"),
-          m_enabledTransitions(0)
+        : m_rootState("(StateMachine)")
     {
         m_rootState.m_stateMachine = this;
     }
@@ -1200,8 +1163,7 @@ private:
     std::condition_variable m_configurationChangeCondition;
 
 
-    //! The set of enabled transitions.
-    transition_type* m_enabledTransitions;
+
 
 
 
@@ -1210,51 +1172,10 @@ private:
 
 
     // TODO: Move all these functions into EventDispatcherBase
-    //! Clears the flags of all states.
-    void clearStateFlags()
-    {
-        for (pre_order_iterator iter = begin(); iter != end(); ++iter)
-            iter->m_flags = 0;
-    }
 
-    //! Clears the set of enabled transitions.
-    void clearEnabledTransitionsSet();
 
-    //! Enters all states in the enter-set.
-    void enterStatesInEnterSet(unsigned event);
 
-    //! Leaves the current configuration, which effectively stops the
-    //! state machine.
-    void leaveConfiguration();
 
-    //! Leaves all states in the exit-set.
-    void leaveStatesInExitSet(unsigned event);
-
-    //! Performs a microstep.
-    void microstep(event_type event);
-
-    //! \brief Propagates the entry mark to all descendant states.
-    //!
-    //! Loops over all states in the state machine. If a state \p S is marked
-    //! for entry, one of its children (in case \p S is a compound state) or
-    //! all of its children (in case \p S is a parallel state) will be marked
-    //! for entry, too.
-    void markDescendantsForEntry();
-
-    //! \brief Selects matching transitions.
-    //!
-    //! Loops over all states and selects all transitions matching the given
-    //! criteria. If \p eventless is set, only transitions without events are
-    //! selected. Otherwise, a transition is selected, if it's trigger event
-    //! equals the given \p event.
-    void selectTransitions(bool eventless, event_type event);
-
-    //! Computes the transition domain of the given \p transition.
-    static state_type* transitionDomain(const transition_type* transition)
-    {
-        //! \todo Make this a free function
-        return transition->source(); //! HACK!!!!!!!!   THIS IS WRONG!!!!!
-    }
 
     friend class EventDispatcherBase<StateMachine>;
 };
@@ -1270,225 +1191,8 @@ void StateMachine<TOptions>::add(
     transition->source()->pushBackTransition(transition);
 }
 
-template <typename TOptions>
-void StateMachine<TOptions>::enterStatesInEnterSet(unsigned event)
-{
-    for (pre_order_iterator iter = begin(); iter != end(); ++iter)
-    {
-        if (iter->m_flags & state_type::InEnterSet)
-        {
-            std::cout << "[StateMachine] Enter " << iter->name() << std::endl;
-            iter->onEntry(event);
-            iter->m_internalActive = true;
-        }
-    }
-}
 
-template <typename TOptions>
-void StateMachine<TOptions>::leaveStatesInExitSet(unsigned event)
-{
-    for (post_order_iterator iter = post_order_begin();
-         iter != post_order_end(); ++iter)
-    {
-        if (iter->m_flags & state_type::InExitSet)
-        {
-            std::cout << "[StateMachine] Leave " << iter->name() << std::endl;
-            iter->m_internalActive = false;
-            iter->exitInvoke();
-            iter->onExit(event);
-        }
-    }
-}
 
-template <typename TOptions>
-void StateMachine<TOptions>::microstep(event_type event)
-{
-    // 1. Mark the states in the exit set for exit and the target state of the
-    //    transition for entry.
-    for (transition_type *prev = 0, *transition = m_enabledTransitions;
-         transition != 0;
-         prev = transition, transition = transition->m_nextInEnabledSet)
-    {
-        if (!transition->target())
-            continue;
-
-        state_type* domain = transitionDomain(transition);
-
-        if (prev)
-        {
-            // Make sure that no state of the transition domain has been
-            // marked for exit. Otherwise, two transitions have an
-            // overlapping exit set, which means that the transitions
-            // conflict.
-            bool conflict = false;
-            for (const_pre_order_iterator iter = subtree_cbegin(domain);
-                 iter != subtree_cend(domain); ++iter)
-            {
-                if (iter->m_internalActive
-                    && (iter->m_flags & state_type::InExitSet))
-                {
-                    conflict = true;
-                    break;
-                }
-            }
-
-            // In case of a conflict, we simply ignore this transition but
-            // keep the old ones.
-            if (conflict)
-            {
-                prev->m_nextInEnabledSet = transition->m_nextInEnabledSet;
-                transition->m_nextInEnabledSet = 0;
-                transition = prev;
-                continue;
-            }
-        }
-
-        // As there is no conflict, we can set the exit mark for the states in
-        // the transition domain.
-        for (pre_order_iterator iter = subtree_begin(domain);
-             iter != subtree_end(domain); ++iter)
-        {
-            if (iter->m_internalActive)
-                iter->m_flags |= state_type::InExitSet;
-        }
-
-        // Finally, mark the ancestors of the target for entry, too. Note that
-        // we cannot mark the children right now, because another transition
-        // can target one of this target's descendants.
-        state_type* ancestor = transition->target();
-        while (ancestor && !(ancestor->m_flags & state_type::InEnterSet))
-        {
-            ancestor->m_flags |= state_type::InEnterSet;
-            ancestor = ancestor->parent();
-        }
-    }
-
-    // 2. Propagate the entry mark to the children.
-    markDescendantsForEntry();
-
-    // 3. Leave the states in the exit set.
-    leaveStatesInExitSet(event);
-
-    // 4. Execute the transition's actions.
-    for (transition_type* transition = m_enabledTransitions;
-         transition != 0;
-         transition = transition->m_nextInEnabledSet)
-    {
-        if (transition->action())
-            transition->action()(event);
-    }
-
-    // 5. Enter the states in the enter set.
-    enterStatesInEnterSet(event);
-}
-
-template <typename TOptions>
-void StateMachine<TOptions>::markDescendantsForEntry()
-{
-    for (pre_order_iterator state = begin(); state != end(); ++state)
-    {
-        if (!(state->m_flags & state_type::InEnterSet))
-        {
-            state.skipChildren();
-            continue;
-        }
-
-        if (state->isCompound())
-        {
-            // Exactly one state of a compound state has to be marked for entry.
-            bool childMarked = false;
-            for (sibling_iterator child = state.child_begin();
-                 child != state.child_end(); ++child)
-            {
-                if (child->m_flags & state_type::InEnterSet)
-                {
-                    childMarked = true;
-                    break;
-                }
-            }
-
-            if (!childMarked)
-            {
-                //! \todo Add the possibility to have an initial state
-                state->m_children->m_flags |= state_type::InEnterSet;
-            }
-        }
-        else if (state->isParallel())
-        {
-            // All child states of a parallel state have to be marked for entry.
-            for (sibling_iterator child = state.child_begin();
-                 child != state.child_end(); ++child)
-            {
-                child->m_flags |= state_type::InEnterSet;
-            }
-        }
-    }
-}
-
-template <typename TOptions>
-void StateMachine<TOptions>::selectTransitions(bool eventless, event_type event)
-{
-    transition_type** outputIter = &m_enabledTransitions;
-
-    // Loop over the states in post-order. This way, the descendent states are
-    // checked before their ancestors.
-    for (auto stateIter = post_order_begin(); stateIter != post_order_end();
-         ++stateIter)
-    {
-        if (!stateIter->m_internalActive)
-            continue;
-
-        // If a transition in a descendant of a parallel state has already
-        // been selected, the parallel state itself and all its ancestors
-        // can be skipped.
-        if (stateIter->m_flags & state_type::SkipTransitionSelection)
-            continue;
-
-        bool foundTransition = false;
-        for (auto transitionIter = stateIter->beginTransitions();
-             transitionIter != stateIter->endTransitions(); ++transitionIter)
-        {
-            if (eventless != transitionIter->eventless())
-                continue;
-
-            if (!eventless && transitionIter->event() != event)
-                continue;
-
-            // If the transition has a guard, it must evaluate to true in order
-            // to select the transition. A transition without guard is selected
-            // unconditionally.
-            if (!transitionIter->guard() || transitionIter->guard()(event))
-            {
-                *outputIter = &*transitionIter;
-                outputIter = &transitionIter->m_nextInEnabledSet;
-                foundTransition = true;
-                break;
-            }
-        }
-
-        if (foundTransition)
-        {
-            // As we have found a transition in this state, there is no need to
-            // check the ancestors for a matching transition.
-            bool hasParallelAncestor = false;
-            state_type* ancestor = stateIter->parent();
-            while (ancestor)
-            {
-                ancestor->m_flags |= state_type::SkipTransitionSelection;
-                hasParallelAncestor |= ancestor->isParallel();
-                ancestor = ancestor->parent();
-            }
-
-            // If none of the ancestors is a parallel state, there is no
-            // need to continue scanning the other states. This is because
-            // the remaining active states are all ancestors of the current
-            // state and no transition in an ancestor is more specific than
-            // the one which has been selected right now.
-            if (!hasParallelAncestor)
-                return;
-        }
-    }
-}
 
 
 #if 0
@@ -1535,7 +1239,7 @@ struct default_options
 {
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
-    static constexpr bool synchronous_dispatch = false;
+    static constexpr bool synchronous_dispatch = true;
 };
 
 } // namespace detail
@@ -1583,6 +1287,33 @@ template <bool TEnable>
 struct SendConfigurationChangeNotification { static constexpr bool notifications = TEnable; };
 
 */
+
+
+#if DOXYGEN
+
+template <typename... TOptions>
+class Statemachine
+{
+public:
+    //! Adds another \p event to the state machine.
+    void addEvent(event_type event);
+
+    void start();
+    void stop();
+    bool running() const;
+
+
+    template <std::size_t TIndex, typename TType>
+    void store(TType&& element);
+
+    //! \p T is the type of the \p TIndex-th element in the storage.
+    //!
+    //! \note This function is only available, if a storage has been specified.
+    template <std::size_t TIndex>
+    const T& load() const;
+};
+
+#endif // DOXYGEN
 
 } // namespace statemachine
 
