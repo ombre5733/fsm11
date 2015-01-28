@@ -183,22 +183,28 @@ public:
 
     bool running() const
     {
-        std::unique_lock<std::mutex> lock(derived().m_mutex);
+        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
         return m_eventLoopThread.joinable();
     }
 
     void start()
     {
-        std::unique_lock<std::mutex> lock(derived().m_mutex);
+        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
         if (!m_eventLoopThread.joinable())
+        {
+            derived().m_mutex.lock();
+            m_controlEvent = derived().m_eventList.empty() ? None : EventAdded;
+            derived().m_mutex.unlock();
+
             m_eventLoopThread = std::thread(
                                     &AsynchronousEventDispatcher::eventLoop,
                                     this);
+        }
     }
 
     void stop()
     {
-        //std::unique_lock<std::mutex> lock(derived().m_mutex);
+        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
         if (m_eventLoopThread.joinable())
         {
             derived().m_mutex.lock();
@@ -212,6 +218,8 @@ public:
 private:
     //! A handle to the thread which dispatches the events.
     std::thread m_eventLoopThread;
+    //! A mutex to suppress concurrent modifications to the thread handle.
+    mutable std::mutex m_eventLoopMutex;
 
     //! A control event to steer the event loop.
     ControlEvent m_controlEvent;
