@@ -485,14 +485,52 @@ void State<TOptions>::pushBackTransition(transition_type* transition) noexcept
     }
 }
 
-#if 0
-const State* findLeastCommonAncestor(const State* state1, const State* state2);
+// ----=====================================================================----
+//     Free functions
+// ----=====================================================================----
+
+template <typename TOptions>
+State<TOptions>* findLeastCommonProperAncestor(
+        State<TOptions>* state1, State<TOptions>* state2)
+{
+    while (state1)
+    {
+        if (isProperAncestor(state1, state2))
+            return state1;
+        state1 = state1->parent();
+    }
+
+    return 0;
+}
 
 //! \brief Checks if a state is an ancestor of another state.
 //!
 //! Returns \p true, if \p ancestor is an ancestor of \p descendant. Every
 //! state is its own ancestor.
-bool isAncestor(const State* ancestor, const State* descendant);
+template <typename TOptions>
+bool isAncestor(const State<TOptions>* ancestor,
+                const State<TOptions>* descendant)
+{
+    while (descendant)
+    {
+        if (ancestor == descendant)
+            return true;
+        descendant = descendant->parent();
+    }
+    return false;
+}
+
+template <typename TOptions>
+inline
+bool isProperAncestor(const State<TOptions>* ancestor,
+                      const State<TOptions>* descendant)
+{
+    return isAncestor(ancestor, descendant->parent());
+}
+
+#if 0
+const State* findLeastCommonAncestor(const State* state1, const State* state2);
+
 
 inline
 bool isDescendant(const State* descendant, const State* ancestor)

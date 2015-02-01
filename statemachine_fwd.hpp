@@ -1,7 +1,7 @@
-#ifndef STATEMACHINE_STATEMACHINE_FWD_HPP
-#define STATEMACHINE_STATEMACHINE_FWD_HPP
+#ifndef FSM11_STATEMACHINE_FWD_HPP
+#define FSM11_STATEMACHINE_FWD_HPP
 
-namespace statemachine
+namespace fsm11
 {
 namespace detail
 {
@@ -26,7 +26,13 @@ struct get_options<StateMachine<TOptions>>
     typedef TOptions type;
 };
 
-} // namespace detail
-} // namespace statemachine
 
-#endif // STATEMACHINE_STATEMACHINE_FWD_HPP
+
+template <typename TOptions>
+State<TOptions>* findLeastCommonProperAncestor(
+        State<TOptions>* state1, State<TOptions>* state2);
+
+} // namespace detail
+} // namespace fsm11
+
+#endif // FSM11_STATEMACHINE_FWD_HPP
