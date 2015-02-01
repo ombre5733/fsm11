@@ -1,13 +1,14 @@
-#ifndef STATEMACHINE_STATE_HPP
-#define STATEMACHINE_STATE_HPP
+#ifndef FSM11_STATE_HPP
+#define FSM11_STATE_HPP
 
 #include <statemachine_fwd.hpp>
 #include <stringref.hpp>
 
+#include <atomic>
 #include <cassert>
 #include <iterator>
 
-namespace statemachine
+namespace fsm11
 {
 namespace detail
 {
@@ -19,6 +20,7 @@ template <typename TOptions>
 class State
 {
 public:
+    using event_type = typename TOptions::event_type;
     using state_machine_type = StateMachine<TOptions>;
     using transition_type = Transition<TOptions>;
 
@@ -145,7 +147,7 @@ public:
     //! This method is called by the state machine, whenever this state
     //! is entered. The event which triggered the configuration change
     //! is passed in \p event.
-    virtual void onEntry(unsigned /*event*/)
+    virtual void onEntry(event_type /*event*/)
     {
         // The default implementation does nothing.
     }
@@ -155,7 +157,7 @@ public:
     //! This method is called by the state machine, when the staet is left.
     //! The event which triggered the configuration change is passed in
     //! \p event.
-    virtual void onExit(unsigned /*event*/)
+    virtual void onExit(event_type /*event*/)
     {
         // The default implementation does nothing.
     }
@@ -309,10 +311,10 @@ private:
 
     //! The state's name.
     const char* m_name;
-    //! The parent state.
-    State* m_parent;
     //! The associated state machine.
     state_machine_type* m_stateMachine;
+    //! The parent state.
+    State* m_parent;
     //! A pointer to the first child.
     State* m_children;
     //! A pointer to the next sibling in the linked list.
@@ -324,7 +326,7 @@ private:
     int m_flags; //! \todo This should be of type Flags
 
     bool m_internalActive;
-    bool m_visibleActive;
+    std::atomic_bool m_visibleActive;
 
 
     //! Adds a \p child.
@@ -344,8 +346,8 @@ private:
 template <typename TOptions>
 State<TOptions>::State(const char* name, State* parent)
     : m_name(name),
-      m_parent(parent),
       m_stateMachine(parent ? parent->m_stateMachine : 0),
+      m_parent(parent),
       m_children(0),
       m_nextSibling(0),
       m_transitions(0),
@@ -389,19 +391,7 @@ State<TOptions>* State<TOptions>::findChild(StringRef name) const
 template <typename TOptions>
 bool State<TOptions>::isActive() const
 {
-    if (m_stateMachine)
-    {
-        // TODO:
-        //m_stateMachine->m_configurationChangeMutex.lock();
-        bool active = m_visibleActive;
-        //m_stateMachine->m_configurationChangeMutex.unlock();
-        return active;
-    }
-    else
-    {
-        assert(!m_visibleActive);
-        return false;
-    }
+    return m_visibleActive;
 }
 
 template <typename TOptions>
@@ -518,6 +508,6 @@ bool isProperAncestor(const State* ancestor, const State* descendant)
 #endif
 
 } // namespace detail
-} // namespace statemachine
+} // namespace fsm11
 
-#endif // STATEMACHINE_STATE_HPP
+#endif // FSM11_STATE_HPP
