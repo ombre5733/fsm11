@@ -3,6 +3,7 @@
 
 #include "statemachine_fwd.hpp"
 
+#include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <utility>
@@ -21,9 +22,15 @@ template <typename TDerived>
 class EventDispatcherBase
 {
 public:
-    EventDispatcherBase()
-        : m_enabledTransitions(0)
+    EventDispatcherBase() noexcept
+        : m_enabledTransitions(0),
+          m_numConfigurationChanges(0)
     {
+    }
+
+    unsigned numConfigurationChanges() const noexcept
+    {
+        return m_numConfigurationChanges;
     }
 
 protected:
@@ -35,6 +42,8 @@ protected:
 
     //! The set of enabled transitions.
     transition_type* m_enabledTransitions;
+
+    std::atomic_uint m_numConfigurationChanges;
 
 
     TDerived& derived()
@@ -63,7 +72,7 @@ protected:
     static state_type* transitionDomain(const transition_type* transition);
 
     //! Clears the flags of all states.
-    void clearStateFlags();
+    void clearStateFlags() noexcept;
 
     //! \brief Propagates the entry mark to all descendant states.
     //!
@@ -180,7 +189,7 @@ auto EventDispatcherBase<TDerived>::transitionDomain(const transition_type* tran
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::clearStateFlags()
+void EventDispatcherBase<TDerived>::clearStateFlags() noexcept
 {
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
         iter->m_flags = 0;
@@ -372,7 +381,10 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
     // If we followed at least one transition, invoke the configuration
     // change callback.
     if (followedTransition)
+    {
+        ++m_numConfigurationChanges;
         derived().invokeConfigurationChangeCallback();
+    }
 }
 
 template <typename TDerived>
