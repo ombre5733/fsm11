@@ -1,12 +1,12 @@
-#ifndef STATEMACHINE_TRANSITION_HPP
-#define STATEMACHINE_TRANSITION_HPP
+#ifndef FSM11_TRANSITION_HPP
+#define FSM11_TRANSITION_HPP
 
 #include "statemachine_fwd.hpp"
 
 #include <functional>
 #include <type_traits>
 
-namespace statemachine
+namespace fsm11
 {
 namespace detail
 {
@@ -84,6 +84,16 @@ public:
     {
         return SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
                     m_source, &target,
+                    std::forward<TEvent>(m_event),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
+    }
+
+    SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
+            noTarget_t) const
+    {
+        return SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
+                    m_source, 0,
                     std::forward<TEvent>(m_event),
                     std::forward<TGuard>(m_guard),
                     std::forward<TAction>(m_action));
@@ -276,7 +286,7 @@ public:
 
     //! \brief The target state.
     //!
-    //! Returns the target state. If the transition has no target, a
+    //! Returns the target state. If this is a targetless transition, a
     //! null-pointer is returned.
     state_type* target() const
     {
@@ -317,6 +327,6 @@ detail::Event<TEvent&&> event(TEvent&& ev)
     return detail::Event<TEvent&&>(std::forward<TEvent>(ev));
 }
 
-} // namespace statemachine
+} // namespace fsm11
 
-#endif // STATEMACHINE_TRANSITION_HPP
+#endif // FSM11_TRANSITION_HPP
