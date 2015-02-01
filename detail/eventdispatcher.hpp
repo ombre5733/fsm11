@@ -1,12 +1,14 @@
-#ifndef STATEMACHINE_EVENTDISPATCHER_HPP
-#define STATEMACHINE_EVENTDISPATCHER_HPP
+#ifndef FSM11_DETAIL_EVENTDISPATCHER_HPP
+#define FSM11_DETAIL_EVENTDISPATCHER_HPP
 
 #include "statemachine_fwd.hpp"
 
 #include <condition_variable>
+#include <mutex>
+#include <utility>
 #include <thread>
 
-namespace statemachine
+namespace fsm11
 {
 namespace detail
 {
@@ -47,7 +49,7 @@ protected:
 
 
     //! Clears the set of enabled transitions.
-    void clearEnabledTransitionsSet();
+    void clearEnabledTransitionsSet() noexcept;
 
     //! \brief Selects matching transitions.
     //!
@@ -80,8 +82,10 @@ protected:
     //! Performs a microstep.
     void microstep(event_type event);
 
-    //! Follows all eventless transitions.
-    void runToCompletion();
+    //! Follows all eventless transitions. Invokes the configuration change
+    //! callback, if either followedTransition is set or at least one
+    //! eventless transition triggered.
+    void runToCompletion(bool followedTransition);
 
     //! Enters the initial states and thus brings up the state machine.
     void enterInitialStates();
@@ -92,10 +96,10 @@ protected:
 };
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::clearEnabledTransitionsSet()
+void EventDispatcherBase<TDerived>::clearEnabledTransitionsSet() noexcept
 {
-    auto transition = derived().m_enabledTransitions;
-    derived().m_enabledTransitions = 0;
+    auto transition = m_enabledTransitions;
+    m_enabledTransitions = 0;
     while (transition != 0)
     {
         auto next = transition->m_nextInEnabledSet;
@@ -172,7 +176,6 @@ void EventDispatcherBase<TDerived>::selectTransitions(bool eventless, event_type
 template <typename TDerived>
 auto EventDispatcherBase<TDerived>::transitionDomain(const transition_type* transition) -> state_type*
 {
-    //! \todo Make this a free function
     return transition->source(); //! HACK!!!!!!!!   THIS IS WRONG!!!!!
 }
 
@@ -233,7 +236,7 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
     {
         if (iter->m_flags & state_type::InEnterSet)
         {
-            std::cout << "[StateMachine] Enter " << iter->name() << std::endl;
+            derived().invokeStateEntryCallback(&*iter);
             iter->onEntry(event);
             iter->m_internalActive = true;
         }
@@ -248,7 +251,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
     {
         if (iter->m_flags & state_type::InExitSet)
         {
-            std::cout << "[StateMachine] Leave " << iter->name() << std::endl;
+            derived().invokeStateExitCallback(&*iter);
             iter->m_internalActive = false;
             iter->exitInvoke();
             iter->onExit(event);
@@ -325,7 +328,7 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
     // 3. Leave the states in the exit set.
     leaveStatesInExitSet(event);
 
-    // 4. Execute the transition's actions.
+    // 4. Execute the transitions' actions.
     for (transition_type* transition = m_enabledTransitions;
          transition != 0;
          transition = transition->m_nextInEnabledSet)
@@ -339,7 +342,7 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::runToCompletion()
+void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
 {
     // We are in microstepping mode: follow all eventless transitions.
     while (1)
@@ -349,24 +352,27 @@ void EventDispatcherBase<TDerived>::runToCompletion()
         selectTransitions(true, event_type());
         if (!m_enabledTransitions)
             break;
+        followedTransition = true;
         microstep(event_type());
         clearEnabledTransitionsSet(); // TODO: replace this by the scope guard
     }
 
     // Synchronize the visible state active flag with the internal
-    // state active flag. Call the invoke() methods of all currently
-    // active states.
+    // state active flag.
+    for (auto iter = derived().begin(); iter != derived().end(); ++iter)
+        iter->m_visibleActive = iter->m_internalActive;
+
+    // Call the invoke() methods of all currently active states.
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
     {
-        iter->m_visibleActive = iter->m_internalActive;
-        if (iter->m_visibleActive)
+        if (iter->m_internalActive)
             iter->enterInvoke();
     }
 
-#if 0
-    // Notify all waiters about the configuration change.
-    derived().broadcastConfigurationChange();
-#endif
+    // If we followed at least one transition, invoke the configuration
+    // change callback.
+    if (followedTransition)
+        derived().invokeConfigurationChangeCallback();
 }
 
 template <typename TDerived>
@@ -430,35 +436,10 @@ public:
     {
     }
 
-    //void addEvent(event_type event)
-
-    bool running() const
-    {
-        // TODO std::unique_lock<std::mutex> lock(derived().m_mutex);
-        return m_running;
-    }
-
-    void start()
-    {
-        // TODO std::unique_lock<std::mutex> lock(derived().m_mutex);
-        if (!m_running)
-        {
-            this->enterInitialStates();
-            this->runToCompletion();
-            m_running = true;
-        }
-    }
-
-    void stop()
-    {
-        // TODO
-        m_running = false;
-    }
-
     void addEvent(event_type event)
     {
-        std::cout << "Dispatch event " << event << std::endl;
-        // TODO std::unique_lock<std::mutex> lock(derived().m_mutex);
+        auto lock = derived().getLock();
+
         derived().m_eventList.push_back(std::move(event));
         if (!m_running || m_dispatching)
             return;
@@ -471,18 +452,51 @@ public:
 
             auto event = derived().m_eventList.front();
             derived().m_eventList.pop_front();
+            derived().invokeEventDispatchCallback(event);
 
             this->clearStateFlags();
             //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
             this->selectTransitions(false, event);
+            bool followedTransition = false;
             if (this->m_enabledTransitions)
+            {
+                followedTransition = true;
                 this->microstep(std::move(event));
+            }
+            else
+            {
+                derived().invokeEventDiscardedCallback(std::move(event));
+            }
             this->clearEnabledTransitionsSet();
 
-            this->runToCompletion();
+            this->runToCompletion(followedTransition);
 
             //leaveGuard.dismiss();
         }
+    }
+
+    bool running() const
+    {
+        auto lock = derived().getLock();
+        return m_running;
+    }
+
+    void start()
+    {
+        auto lock = derived().getLock();
+        if (!m_running)
+        {
+            this->enterInitialStates();
+            this->runToCompletion(true);
+            m_running = true;
+        }
+    }
+
+    void stop()
+    {
+        auto lock = derived().getLock();
+        // TODO
+        m_running = false;
     }
 
 private:
@@ -503,20 +517,13 @@ private:
 template <typename TDerived>
 class AsynchronousEventDispatcher : public EventDispatcherBase<TDerived>
 {
-    enum ControlEvent
-    {
-        None,
-        StopRequest,
-        EventAdded
-    };
-
     using options = typename get_options<TDerived>::type;
 
 public:
     using event_type = typename options::event_type;
 
     AsynchronousEventDispatcher()
-        : m_controlEvent(None)
+        : m_stopRequest(false)
     {
     }
 
@@ -526,29 +533,32 @@ public:
     void addEvent(event_type event)
     {
         {
-            std::unique_lock<std::mutex> lock(derived().m_mutex);
+            std::lock_guard<std::mutex> lock(m_eventLoopMutex);
             derived().m_eventList.push_back(std::move(event));
-            m_controlEvent = EventAdded;
         }
-        m_controlEventReceived.notify_one();
+
+        m_continueEventLoop.notify_one();
     }
 
     bool running() const
     {
-        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
+        auto lock = derived().getLock();
         return m_eventLoopThread.joinable();
     }
 
     void start()
     {
-        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
+        start(0);
+    }
+
+    void start(int /*attrs*/)
+    {
+        auto lock = derived().getLock();
         if (!m_eventLoopThread.joinable())
         {
-            derived().m_mutex.lock();
-            m_controlEvent = derived().m_eventList.empty() ? None : EventAdded;
-            derived().m_mutex.unlock();
-
+            m_stopRequest = false;
             m_eventLoopThread = std::thread(
+                                    // TODO: attrs
                                     &AsynchronousEventDispatcher::eventLoop,
                                     this);
         }
@@ -556,13 +566,13 @@ public:
 
     void stop()
     {
-        std::lock_guard<std::mutex> lock(m_eventLoopMutex);
+        auto lock = derived().getLock();
         if (m_eventLoopThread.joinable())
         {
-            derived().m_mutex.lock();
-            m_controlEvent = StopRequest;
-            derived().m_mutex.unlock();
-            m_controlEventReceived.notify_one();
+            m_eventLoopMutex.lock();
+            m_stopRequest = true;
+            m_eventLoopMutex.unlock();
+            m_continueEventLoop.notify_one();
             m_eventLoopThread.join();
         }
     }
@@ -574,9 +584,9 @@ private:
     mutable std::mutex m_eventLoopMutex;
 
     //! A control event to steer the event loop.
-    ControlEvent m_controlEvent;
+    bool m_stopRequest;
     //! This CV signals that a new control event is available.
-    std::condition_variable m_controlEventReceived;
+    std::condition_variable m_continueEventLoop;
 
 
     TDerived& derived()
@@ -592,38 +602,49 @@ private:
     void eventLoop()
     {
         {
-            std::unique_lock<std::mutex> lock(derived().m_mutex);
+            auto lock = derived().getLock();
             this->enterInitialStates();
             this->runToCompletion();
         }
 
         while (true)
         {
-            std::unique_lock<std::mutex> lock(derived().m_mutex);
             //weos::ScopeGuard leaveGuard
             //        = weos::makeScopeGuard(&StateMachine::leaveConfiguration, this);
 
-            // Wait for another event.
-            m_controlEventReceived.wait(
-                        lock, [&]{ return m_controlEvent != None; });
-            if (m_controlEvent == StopRequest)
-                return;
-            m_controlEvent = None;
+            typename options::event_type event;
+            {
+                // Wait until either an event is added to the list or
+                // an FSM stop has been requested.
+                std::unique_lock<std::mutex> lock(m_eventLoopMutex);
+                m_continueEventLoop.wait(
+                            lock, [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
+                if (m_stopRequest)
+                    return;
+                // Get the next event from the event list.
+                event = derived().m_eventList.front();
+                derived().m_eventList.pop_front();
+            }
 
-            // Get the next event from the event list.
-            if (derived().m_eventList.empty())
-                continue;
-            auto event = derived().m_eventList.front();
-            derived().m_eventList.pop_front();
+            auto lock = derived().getLock();
+            derived().invokeEventDispatchCallback(event);
 
             this->clearStateFlags();
             //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
             this->selectTransitions(false, event);
+            bool followedTransition = false;
             if (this->m_enabledTransitions)
+            {
+                followedTransition = true;
                 this->microstep(std::move(event));
+            }
+            else
+            {
+                derived().invokeEventDiscardedCallback(std::move(event));
+            }
             this->clearEnabledTransitionsSet();
 
-            this->runToCompletion();
+            this->runToCompletion(followedTransition);
 
             //leaveGuard.dismiss();
         }
@@ -649,6 +670,6 @@ struct get_dispatcher
 };
 
 } // namespace detail
-} // namespace statemachine
+} // namespace fsm11
 
-#endif // STATEMACHINE_EVENTDISPATCHER_HPP
+#endif // FSM11_DETAIL_EVENTDISPATCHER_HPP

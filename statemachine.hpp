@@ -1,25 +1,24 @@
-#ifndef STATEMACHINE_STATEMACHINE_HPP
-#define STATEMACHINE_STATEMACHINE_HPP
+#ifndef FSM11_STATEMACHINE_HPP
+#define FSM11_STATEMACHINE_HPP
 
-#include "eventdispatcher.hpp"
 #include "state.hpp"
 #include "statemachine_fwd.hpp"
-#include "storage.hpp"
 #include "transition.hpp"
+
+#include "detail/callbacks.hpp"
+#include "detail/eventdispatcher.hpp"
+#include "detail/multithreading.hpp"
+#include "detail/storage.hpp"
 
 //#include "/home/manuel/code/weos/src/scopeguard.hpp"
 
 
 #include <deque>
-#include <mutex>
 #include <iterator>
+#include <mutex>
 #include <type_traits>
 
-
-// DEBUG
-#include <iostream>
-
-namespace statemachine
+namespace fsm11
 {
 namespace detail
 {
@@ -331,8 +330,13 @@ private:
 //! Every state machine has an implicit root state. All top-level states of
 //! a state machine, must be added as child of this root state.
 template <typename TOptions>
-class StateMachine : public get_dispatcher<TOptions>::type,
-                     public Storage<>
+class StateMachine :
+        public get_multithreading<TOptions>::type,
+        public get_dispatcher<TOptions>::type,
+        public get_configuration_change_callbacks<TOptions>::type,
+        public get_event_callbacks<TOptions>::type,
+        public get_state_callbacks<TOptions>::type,
+        public get_storage<TOptions>::type
 {
 public:
     using type = StateMachine<TOptions>;
@@ -382,10 +386,14 @@ public:
     void add(SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
-    //!
-    //! Adds a transition, which will be created from a transition specification
-    //! \p spec. The method returns this state machine.
-    //StateMachine& operator<< (const detail::TransitionSpec& spec);
+    template <typename TState, typename TEvent, typename TGuard,
+              typename TAction>
+    inline
+    StateMachine& operator<<(
+            SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
+    {
+        add(t);
+    }
 
     //! \note Calling this method directly is almost certainly a
     //! mistake. Instead an RAII-lock such as std::lock_guard<> or
@@ -1157,25 +1165,6 @@ private:
     //! The implicit root state.
     state_type m_rootState;
 
-    //! A mutex to prevent concurrent modifications.
-    mutable std::mutex m_mutex;
-
-    std::condition_variable m_configurationChangeCondition;
-
-
-
-
-
-
-    //! Broadcasts a configuration change.
-    void broadcastConfigurationChange();
-
-
-    // TODO: Move all these functions into EventDispatcherBase
-
-
-
-
 
     friend class EventDispatcherBase<StateMachine>;
 };
@@ -1240,6 +1229,11 @@ struct default_options
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
     static constexpr bool synchronous_dispatch = true;
+    static constexpr bool multithreading_enable = true;
+
+    static constexpr bool event_callbacks_enable = true;
+    static constexpr bool configuration_change_callbacks_enable = true;
+    static constexpr bool state_callbacks_enable = false;
 };
 
 } // namespace detail
@@ -1295,26 +1289,52 @@ template <typename... TOptions>
 class Statemachine
 {
 public:
+    //! The type of the state machine.
+    using type = StateMachine<TOptions...>;
+    using event_type = typename TOptions::event_type;
+    using event_list_type = typename TOptions::event_list_type;
+    using state_type = State<TOptions>;
+    using transition_type = Transition<TOptions>;
+
+
     //! Adds another \p event to the state machine.
     void addEvent(event_type event);
 
+    //! Starts the state machine.
     void start();
+
+    //! Starts the state machine.
+    //!
+    //! Starts the state machine. The attributes \p attrs are passed to the
+    //! thread running the event loop.
+    //!
+    //! \note This overload is only available, if asynchronous event
+    //! dispatching has been enabled.
+    void start(const weos::thread::attributes& attrs);
+
     void stop();
+
     bool running() const;
 
-
-    template <std::size_t TIndex, typename TType>
-    void store(TType&& element);
-
+    //! Loads an element from the storage.
+    //!
     //! \p T is the type of the \p TIndex-th element in the storage.
     //!
     //! \note This function is only available, if a storage has been specified.
     template <std::size_t TIndex>
     const T& load() const;
+
+    //! Sets an element in the storage.
+    //!
+    //! Sets the \p TIndex-th element in the storage to the given \p value.
+    //!
+    //! \note This function is only available, if a storage has been specified.
+    template <std::size_t TIndex, typename TType>
+    void store(TType&& value);
 };
 
 #endif // DOXYGEN
 
-} // namespace statemachine
+} // namespace fsm11
 
-#endif // STATEMACHINE_STATEMACHINE_HPP
+#endif // FSM11_STATEMACHINE_HPP

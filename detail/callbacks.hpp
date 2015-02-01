@@ -151,7 +151,7 @@ struct get_configuration_change_callbacks
     using type = typename std::conditional<
                      TOptions::configuration_change_callbacks_enable,
                      WithConfigurationChangeCallback,
-                     WithoutConfigurationChangeCallback>;
+                     WithoutConfigurationChangeCallback>::type;
 };
 
 // ----=====================================================================----
