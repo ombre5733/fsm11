@@ -8,6 +8,7 @@
 #include "detail/callbacks.hpp"
 #include "detail/eventdispatcher.hpp"
 #include "detail/multithreading.hpp"
+#include "detail/options.hpp"
 #include "detail/storage.hpp"
 
 //#include "/home/manuel/code/weos/src/scopeguard.hpp"
@@ -384,6 +385,13 @@ public:
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     void add(SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
+
+    //! \brief Adds a transition.
+    //!
+    //! Adds a transition, which will be created from a transition specification
+    //! \p spec.
+    template <typename TState, typename TGuard, typename TAction>
+    void add(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
     template <typename TState, typename TEvent, typename TGuard,
@@ -1180,6 +1188,15 @@ void StateMachine<TOptions>::add(
     transition->source()->pushBackTransition(transition);
 }
 
+template <typename TOptions>
+template <typename TState, typename TGuard, typename TAction>
+void StateMachine<TOptions>::add(
+        SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+{
+    using namespace std;
+    transition_type* transition = new transition_type(std::move(t));
+    transition->source()->pushBackTransition(transition);
+}
 
 
 
@@ -1229,58 +1246,116 @@ struct default_options
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
     static constexpr bool synchronous_dispatch = true;
-    static constexpr bool multithreading_enable = true;
+    static constexpr bool multithreading_enable = false;
 
-    static constexpr bool event_callbacks_enable = true;
-    static constexpr bool configuration_change_callbacks_enable = true;
+    static constexpr bool event_callbacks_enable = false;
+    static constexpr bool configuration_change_callbacks_enable = false;
     static constexpr bool state_callbacks_enable = false;
 };
 
 } // namespace detail
 
+
+
 struct SynchronousEventDispatching
 {
-    static constexpr bool synchronous_dispatch = true;
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool synchronous_dispatch = true;
+    };
+    //! \endcond
 };
 
 struct AsynchronousEventDispatching
 {
-    static constexpr bool synchronous_dispatch = false;
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool synchronous_dispatch = false;
+    };
+    //! \endcond
 };
 
 template <typename TType>
 struct EventType
 {
-    using event_type = TType;
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using event_type = TType;
+    };
+    //! \endcond
 };
 
 template <typename TType>
 struct EventListType
 {
-    using event_list_type = TType;
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using event_list_type = TType;
+    };
+    //! \endcond
 };
 
-//using namespace detail;
-#if 0
+template <bool TEnable>
+struct EnableEventCallbacks
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool event_callbacks_enable = TEnable;
+    };
+    //! \endcond
+};
+
+template <bool TEnable>
+struct EnableConfigurationChangeCallbacks
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool configuration_change_callbacks_enable = TEnable;
+    };
+    //! \endcond
+};
+
+template <bool TEnable>
+struct EnableStateCallbacks
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool state_callbacks_enable = TEnable;
+    };
+    //! \endcond
+};
+
+
+
 template <typename... TOptions>
 struct makeStateMachineType
 {
-
+private:
+    using packed_options = typename detail::pack_options<detail::default_options,
+                                                         TOptions...>::type;
+public:
+    using type = detail::StateMachine<packed_options>;
 };
 
+
+
 template <typename... TOptions>
-using StateMachine = makeStateMachineType<TOptions...>::type;
-#endif
+using StateMachine = typename makeStateMachineType<TOptions...>::type;
 
-using StateMachine = detail::StateMachine<detail::default_options>;
-
-
-/* Options:
-
-template <bool TEnable>
-struct SendConfigurationChangeNotification { static constexpr bool notifications = TEnable; };
-
-*/
 
 
 #if DOXYGEN

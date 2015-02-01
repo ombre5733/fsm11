@@ -11,27 +11,12 @@ namespace fsm11
 namespace detail
 {
 
-//! A type-tag for creating eventless transitions.
-struct noEvent_t {};
 //! A type-tag for creating targetless transitions.
 struct noTarget_t {};
 
-//! A tag for creating eventless transitions.
-constexpr noEvent_t noEvent = noEvent_t();
-//! A tag for creating targetless transitions.
-constexpr noTarget_t noTarget = noTarget_t();
-
-
-
-template <typename TEvent, typename TGuard, typename TAction>
-class NoEventGuardAction
-{
-};
-
-template <typename TGuard>
-class NoEventGuard
-{
-};
+// ----=====================================================================----
+//     Intermediate types for transitions with events
+// ----=====================================================================----
 
 template <typename TState, typename TEvent, typename TGuard, typename TAction>
 class SourceEventGuardActionTarget
@@ -225,6 +210,172 @@ auto operator+(State<TOptions>& source, EventGuardAction<TEvent, TGuard, TAction
                 std::forward<TAction>(rhs.m_action));
 }
 
+// ----=====================================================================----
+//     Intermediate types for transitions without events
+// ----=====================================================================----
+
+template <typename TState, typename TGuard, typename TAction>
+class SourceNoEventGuardActionTarget
+{
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
+
+public:
+    SourceNoEventGuardActionTarget(TState* source, TState* target,
+                                   TGuard guard, TAction action)
+        : m_source(source),
+          m_target(target),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
+    {
+    }
+
+private:
+    TState* m_source;
+    TState* m_target;
+    TGuard m_guard;
+    TAction m_action;
+
+    template <typename TOptions>
+    friend class Transition;
+};
+
+template <typename TState, typename TGuard, typename TAction>
+class SourceNoEventGuardAction
+{
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
+
+public:
+    SourceNoEventGuardAction(TState* source, TGuard guard, TAction action)
+        : m_source(source),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
+    {
+    }
+
+    SourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+            TState& target) const
+    {
+        return SourceNoEventGuardActionTarget<TState, TGuard, TAction>(
+                    m_source, &target,
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
+    }
+
+    SourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+            noTarget_t) const
+    {
+        return SourceNoEventGuardActionTarget<TState, TGuard, TAction>(
+                    m_source, 0,
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
+    }
+
+private:
+    TState* m_source;
+    TGuard m_guard;
+    TAction m_action;
+};
+
+template <typename TGuard, typename TAction>
+struct NoEventGuardAction
+{
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
+
+    NoEventGuardAction(TGuard guard, TAction action)
+        : m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
+    {
+    }
+
+    NoEventGuardAction(const NoEventGuardAction&) = default;
+    NoEventGuardAction& operator=(const NoEventGuardAction&) = delete;
+
+    TGuard m_guard;
+    TAction m_action;
+};
+
+template <typename TGuard>
+struct NoEventGuard
+{
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+
+    NoEventGuard(TGuard guard)
+        : m_guard(std::forward<TGuard>(guard))
+    {
+    }
+
+    NoEventGuard(const NoEventGuard&) = default;
+    NoEventGuard& operator=(const NoEventGuard&) = delete;
+
+    template <typename TAction>
+    NoEventGuardAction<TGuard, TAction&&> operator/ (TAction&& action) const
+    {
+        return NoEventGuardAction<TGuard, TAction&&>(
+                   std::forward<TGuard>(m_guard),
+                   std::forward<TAction>(action));
+    }
+
+    TGuard m_guard;
+};
+
+class NoEvent
+{
+public:
+    template <typename TGuard>
+    NoEventGuard<TGuard&&> operator[](TGuard&& guard) const
+    {
+        return NoEventGuard<TGuard&&>(std::forward<TGuard>(guard));
+    }
+
+    template <typename TGuard>
+    NoEventGuard<TGuard&&> operator()(TGuard&& guard) const
+    {
+        return NoEventGuard<TGuard&&>(std::forward<TGuard>(guard));
+    }
+
+    template <typename TAction>
+    NoEventGuardAction<std::nullptr_t&&, TAction&&> operator/(TAction&& action) const
+    {
+        return NoEventGuardAction<std::nullptr_t&&, TAction&&>(
+                   nullptr,
+                   std::forward<TAction>(action));
+    }
+};
+
+template <typename TOptions>
+auto operator+(State<TOptions>& source, NoEvent)
+    -> SourceNoEventGuardAction<State<TOptions>, std::nullptr_t&&, std::nullptr_t&&>
+{
+    return SourceNoEventGuardAction<State<TOptions>, std::nullptr_t&&, std::nullptr_t&&>(
+                &source, nullptr, nullptr);
+}
+
+template <typename TOptions, typename TGuard>
+auto operator+(State<TOptions>& source, NoEventGuard<TGuard>&& rhs)
+    -> SourceNoEventGuardAction<State<TOptions>, TGuard, std::nullptr_t&&>
+{
+    return SourceNoEventGuardAction<State<TOptions>, TGuard, std::nullptr_t&&>(
+                &source,
+                std::forward<TGuard>(rhs.m_guard), nullptr);
+}
+
+template <typename TOptions, typename TGuard, typename TAction>
+auto operator+(State<TOptions>& source, NoEventGuardAction<TGuard, TAction>&& rhs)
+    -> SourceNoEventGuardAction<State<TOptions>, TGuard, TAction>
+{
+    return SourceNoEventGuardAction<State<TOptions>, TGuard, TAction>(
+                &source,
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action));
+}
+
+// ----=====================================================================----
+//     Transition
+// ----=====================================================================----
+
 //! \brief A transition.
 template <typename TOptions>
 class Transition
@@ -247,6 +398,20 @@ public:
           m_action(std::forward<TAction>(rhs.m_action)),
           m_event(std::forward<TEvent>(rhs.m_event)),
           m_eventless(false)
+    {
+    }
+
+    template <typename TState, typename TGuard, typename TAction>
+    explicit Transition(
+            SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& rhs)
+        : m_source(rhs.m_source),
+          m_target(rhs.m_target),
+          m_nextInSourceState(0),
+          m_nextInEnabledSet(0),
+          m_guard(std::forward<TGuard>(rhs.m_guard)),
+          m_action(std::forward<TAction>(rhs.m_action)),
+          m_event(),
+          m_eventless(true)
     {
     }
 
@@ -326,6 +491,13 @@ detail::Event<TEvent&&> event(TEvent&& ev)
 {
     return detail::Event<TEvent&&>(std::forward<TEvent>(ev));
 }
+
+//! A tag to create eventless transitions.
+constexpr detail::NoEvent noEvent = detail::NoEvent();
+
+//! A tag to create targetless transitions.
+constexpr detail::noTarget_t noTarget = detail::noTarget_t();
+
 
 } // namespace fsm11
 
