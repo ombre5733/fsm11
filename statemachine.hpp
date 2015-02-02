@@ -462,11 +462,6 @@ public:
     typedef AtomicIterator<true> const_atomic_iterator;
 
     template <bool TIsConst>
-    class SubTreeIterator;
-    typedef SubTreeIterator<false> subtree_iterator;
-    typedef SubTreeIterator<true> const_subtree_iterator;
-
-    template <bool TIsConst>
     class SiblingIterator;
     typedef SiblingIterator<false> sibling_iterator;
     typedef SiblingIterator<true> const_sibling_iterator;

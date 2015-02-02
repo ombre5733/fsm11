@@ -217,7 +217,437 @@ public:
     }
 
     // -------------------------------------------------------------------------
-    // Iterators
+    // State iterators
+    // -------------------------------------------------------------------------
+
+    template <bool TIsConst>
+    class PreOrderIterator;
+    typedef PreOrderIterator<false> pre_order_iterator;
+    typedef PreOrderIterator<true>  const_pre_order_iterator;
+
+    template <bool TIsConst>
+    class PreOrderView;
+
+    template <bool TIsConst>
+    class PostOrderIterator;
+    typedef PostOrderIterator<false> post_order_iterator;
+    typedef PostOrderIterator<true>  const_post_order_iterator;
+
+
+    //! \brief A pre-order iterator to the first state.
+    //!
+    //! Returns a pre-order iterator to the first state.
+    pre_order_iterator pre_order_begin()
+    {
+        return pre_order_iterator(this);
+    }
+
+    //! \brief A pre-order const-iterator to the first state.
+    //!
+    //! Returns a pre-order const-iterator to the first state.
+    const_pre_order_iterator pre_order_begin() const
+    {
+        return const_pre_order_iterator(this);
+    }
+
+    //! \brief A pre-order const-iterator to the first state.
+    //!
+    //! Returns a pre-order const-iterator to the first state.
+    const_pre_order_iterator pre_order_cbegin() const
+    {
+        return const_pre_order_iterator(this);
+    }
+
+    //! \brief A pre-order iterator past the last state.
+    //!
+    //! Returns a pre-order iterator past the last state.
+    pre_order_iterator pre_order_end()
+    {
+        pre_order_iterator iter(this);
+        iter.skipChildren();
+        return ++iter;
+    }
+
+    //! \brief A pre-order const-iterator past the last state.
+    //!
+    //! Returns a pre-order const-iterator past the last state.
+    const_pre_order_iterator pre_order_end() const
+    {
+        const_pre_order_iterator iter(this);
+        iter.skipChildren();
+        return ++iter;
+    }
+
+    //! \brief A pre-order const-iterator past the last state.
+    //!
+    //! Returns a pre-order const-iterator past the last state.
+    const_pre_order_iterator pre_order_cend() const
+    {
+        const_pre_order_iterator iter(this);
+        iter.skipChildren();
+        return ++iter;
+    }
+
+    PreOrderView<false> pre_order_view()
+    {
+        return PreOrderView<false>(this);
+    }
+
+    PreOrderView<true> pre_order_view() const
+    {
+        return PreOrderView<true>(this);
+    }
+
+
+    //! \brief A post-order iterator to the first state.
+    //!
+    //! Returns a post-order iterator to the first state.
+    post_order_iterator post_order_begin()
+    {
+        State* state = this;
+        while (state->m_children)
+            state = state->m_children;
+        return post_order_iterator(state);
+    }
+
+    //! \brief A post-order const-iterator to the first state.
+    //!
+    //! Returns a post-order const-iterator to the first state.
+    const_post_order_iterator post_order_begin() const
+    {
+        return post_order_cbegin();
+    }
+
+    //! \brief A post-order const-iterator to the first state.
+    //!
+    //! Returns a post-order const-iterator to the first state.
+    const_post_order_iterator post_order_cbegin() const
+    {
+        return const_cast<State*>(this)->post_order_begin();
+    }
+
+    //! \brief A post-order iterator past the last state.
+    //!
+    //! Returns a post-order iterator past the last state.
+    post_order_iterator post_order_end()
+    {
+        return ++post_order_iterator(this);
+    }
+
+    //! \brief A post-order const-iterator past the last state.
+    //!
+    //! Returns a post-order const-iterator past the last state.
+    const_post_order_iterator post_order_end() const
+    {
+        return ++const_post_order_iterator(this);
+    }
+
+    //! \brief A post-order const-iterator past the last state.
+    //!
+    //! Returns a post-order const-iterator past the last state.
+    const_post_order_iterator post_order_cend() const
+    {
+        return ++const_post_order_iterator(this);
+    }
+
+
+    //! \brief A pre-order iterator.
+    //!
+    //! The PreOrderIterator is a pre-order depth-first iterator over a
+    //! hierarchy of states. If \p TIsConst is set, it implements
+    //! a const-iterator, otherwise the accessed state is mutable.
+    template <bool TIsConst>
+    class PreOrderIterator
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef State value_type;
+        typedef typename std::conditional<TIsConst, const State*, State*>::type
+                    pointer;
+        typedef typename std::conditional<TIsConst, const State&, State&>::type
+                    reference;
+        typedef std::forward_iterator_tag iterator_category;
+
+
+        //! Default constructs an end-iterator.
+        PreOrderIterator() noexcept
+            : m_current(0),
+              m_skipChildren(false)
+        {
+        }
+
+        //! (Copy-)Constructs an iterator from a non-const iterator.
+        PreOrderIterator(const PreOrderIterator<false>& other) noexcept
+            : m_current(other.m_current),
+              m_skipChildren(false)
+        {
+        }
+
+        //! Prefix increment.
+        PreOrderIterator& operator++() noexcept
+        {
+            //assert(m_current)
+            if (m_current->m_children && !m_skipChildren)
+            {
+                // Visit the first child.
+                m_current = m_current->m_children;
+            }
+            else
+            {
+                m_skipChildren = false;
+                // This state has no child, so go to its sibling. If there is
+                // no sibling, go to the parent's sibling, the parent's
+                // parent's sibling... Note that the direct ancestors must
+                // be skipped because they have been visited already.
+                while (m_current->m_nextSibling == 0)
+                {
+                    m_current = m_current->parent();
+                    if (!m_current)
+                        return *this;
+                }
+                m_current = m_current->m_nextSibling;
+            }
+            return *this;
+        }
+
+        //! Postfix increment.
+        PreOrderIterator operator++(int) noexcept
+        {
+            PreOrderIterator temp(*this);
+            ++*this;
+            return temp;
+        }
+
+        //! Returns \p true, if this iterator is equal to the \p other iterator.
+        bool operator==(PreOrderIterator other) const noexcept
+        {
+            return m_current == other.m_current;
+        }
+
+        //! Returns \p true, if this iterator is not equal to the \p other
+        //! iterator.
+        bool operator!=(PreOrderIterator other) const noexcept
+        {
+            return m_current != other.m_current;
+        }
+
+        //! Returns a reference to the state.
+        reference operator*() const noexcept
+        {
+            return *m_current;
+        }
+
+        //! Returns a pointer to the state.
+        pointer operator->() const noexcept
+        {
+            return m_current;
+        }
+
+        //! \brief Skip child iteration.
+        //!
+        //! When this method is called, the iterator will skip the children
+        //! when it is advanced the next time. The flag is reset automatically.
+        void skipChildren() noexcept
+        {
+            m_skipChildren = true;
+        }
+
+
+        /*
+        //! \brief Returns an iterator to the first child.
+        //!
+        //! Returns an iterator to the first child.
+        sibling_iterator child_begin() noexcept
+        {
+            return sibling_iterator(m_current->m_children);
+        }
+
+        //! \brief Returns a const-iterator to the first child.
+        //!
+        //! Returns a const-iterator to the first child.
+        const_sibling_iterator child_begin() const noexcept
+        {
+            return const_sibling_iterator(m_current->m_children);
+        }
+
+        //! \brief Returns a const-iterator to the first child.
+        //!
+        //! Returns a const-iterator to the first child.
+        const_sibling_iterator child_cbegin() const noexcept
+        {
+            return const_sibling_iterator(m_current->m_children);
+        }
+
+        //! \brief Returns an iterator past the last child.
+        //!
+        //! Returns an iterator past the last child.
+        sibling_iterator child_end() noexcept
+        {
+            return sibling_iterator();
+        }
+
+        //! \brief Returns a const-iterator past the last child.
+        //!
+        //! Returns a const-iterator past the last child.
+        const_sibling_iterator child_end() const noexcept
+        {
+            return const_sibling_iterator();
+        }
+
+        //! \brief Returns a const-iterator past the last child.
+        //!
+        //! Returns a const-iterator past the last child.
+        const_sibling_iterator child_cend() const noexcept
+        {
+            return const_sibling_iterator();
+        }
+        */
+
+    private:
+        //! The current state.
+        pointer m_current;
+        //! The flag is set, when the children of a state have to be skipped.
+        bool m_skipChildren;
+
+        //! Constructs an iterator pointing to the \p state.
+        PreOrderIterator(pointer state) noexcept
+            : m_current(state),
+              m_skipChildren(false)
+        {
+        }
+
+
+        friend class State;
+        // Befriend the non-const version with the const version.
+        friend PreOrderIterator<true>;
+    };
+
+    //! \brief A view for pre-order iteration.
+    template <bool TIsConst>
+    class PreOrderView
+    {
+    public:
+        using iterator = PreOrderIterator<TIsConst>;
+
+        explicit PreOrderView(typename iterator::pointer state)
+            : m_state(state)
+        {
+        }
+
+        iterator begin() const
+        {
+            return m_state->pre_order_begin();
+        }
+
+        iterator end() const
+        {
+            return m_state->pre_order_end();
+        }
+
+    private:
+        typename iterator::pointer m_state;
+    };
+
+    //! \brief A post-order iterator.
+    //!
+    //! The PostOrderIterator is a post-order depth-first iterator over a
+    //! hierarchy of states. If \p TIsConst is set, it implements
+    //! a const-iterator, otherwise the accessed state is mutable.
+    template <bool TIsConst>
+    class PostOrderIterator
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef State value_type;
+        typedef typename std::conditional<TIsConst, const State*, State*>::type
+                    pointer;
+        typedef typename std::conditional<TIsConst, const State&, State&>::type
+                    reference;
+        typedef std::forward_iterator_tag iterator_category;
+
+
+        //! Default constructs an end-iterator.
+        PostOrderIterator() noexcept
+            : m_current(0)
+        {
+        }
+
+        //! A copy-constructor with implicit conversion from a non-const
+        //! iterator.
+        PostOrderIterator(const PostOrderIterator<false>& other) noexcept
+            : m_current(other.m_current)
+        {
+        }
+
+        //! Prefix increment.
+        PostOrderIterator& operator++() noexcept
+        {
+            //assert(m_current)
+
+            if (m_current->m_nextSibling)
+            {
+                m_current = m_current->m_nextSibling;
+                while (m_current->m_children)
+                    m_current = m_current->m_children;
+            }
+            else
+            {
+                m_current = m_current->parent();
+            }
+            return *this;
+        }
+
+        //! Postfix increment.
+        PostOrderIterator operator++(int) noexcept
+        {
+            PostOrderIterator temp(*this);
+            ++*this;
+            return temp;
+        }
+
+        //! Returns \p true, if this iterator is equal to the \p other iterator.
+        bool operator==(PostOrderIterator other) const noexcept
+        {
+            return m_current == other.m_current;
+        }
+
+        //! Returns \p true, if this iterator is not equal to the \p other
+        //! iterator.
+        bool operator!=(PostOrderIterator other) const noexcept
+        {
+            return m_current != other.m_current;
+        }
+
+        //! Returns a reference to the state.
+        reference operator*() const noexcept
+        {
+            return *m_current;
+        }
+
+        //! Returns a pointer to the state.
+        pointer operator->() const noexcept
+        {
+            return m_current;
+        }
+
+    private:
+        //! The current state.
+        pointer m_current;
+
+        //! Constructs an iterator pointing to the \p state.
+        PostOrderIterator(pointer state) noexcept
+            : m_current(state)
+        {
+        }
+
+
+        friend class State;
+        // Befriend the non-const version with the const version.
+        friend PostOrderIterator<true>;
+    };
+
+    // -------------------------------------------------------------------------
+    // Transition iterators
     // -------------------------------------------------------------------------
 
     //! \brief An iterator over a state's transitions.
