@@ -246,7 +246,8 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
 {
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
     {
-        if (iter->m_flags & state_type::InEnterSet)
+        if ((iter->m_flags & state_type::InEnterSet)
+            && !iter->m_internalActive)
         {
             derived().invokeStateEntryCallback(&*iter);
             iter->onEntry(event);
@@ -292,8 +293,8 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
             // overlapping exit set, which means that the transitions
             // conflict.
             bool conflict = false;
-            for (auto iter = derived().subtree_cbegin(domain);
-                 iter != derived().subtree_cend(domain); ++iter)
+            for (auto iter = ++domain->pre_order_begin();
+                 iter != domain->pre_order_end(); ++iter)
             {
                 if (iter->m_internalActive
                     && (iter->m_flags & state_type::InExitSet))
@@ -316,8 +317,8 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
 
         // As there is no conflict, we can set the exit mark for the states in
         // the transition domain.
-        for (auto iter = derived().subtree_begin(domain);
-             iter != derived().subtree_end(domain); ++iter)
+        for (auto iter = ++domain->pre_order_begin();
+             iter != domain->pre_order_end(); ++iter)
         {
             if (iter->m_internalActive)
                 iter->m_flags |= state_type::InExitSet;
