@@ -397,7 +397,7 @@ void EventDispatcherBase<TDerived>::enterInitialStates()
     // TODO: Would be nice, if the state machine had an initial
     // transition similar to initial transitions of states.
     clearStateFlags();
-    derived().rootState()->m_flags |= state_type::InEnterSet;
+    derived().m_flags |= state_type::InEnterSet;
     markDescendantsForEntry();
     enterStatesInEnterSet(event_type());
 }

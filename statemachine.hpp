@@ -337,7 +337,8 @@ class StateMachine :
         public get_configuration_change_callbacks<TOptions>::type,
         public get_event_callbacks<TOptions>::type,
         public get_state_callbacks<TOptions>::type,
-        public get_storage<TOptions>::type
+        public get_storage<TOptions>::type,
+        public State<TOptions>
 {
 public:
     using type = StateMachine<TOptions>;
@@ -352,9 +353,10 @@ private:
 
 public:
     StateMachine()
-        : m_rootState("(StateMachine)")
+        : state_type("(StateMachine)")
     {
-        m_rootState.m_stateMachine = this;
+        state_type::m_stateMachine = this;
+        //m_rootState.m_stateMachine = this;
     }
 
     //! \brief Destroys the state machine.
@@ -403,43 +405,8 @@ public:
         add(t);
     }
 
-    //! \note Calling this method directly is almost certainly a
-    //! mistake. Instead an RAII-lock such as std::lock_guard<> or
-    //! std::unique_lock<> should be used as in the following example:
-    //! \code
-    //! StateMachine sm;
-    //! std::unique_lock<StateMachine> lock(sm);
-    //! ... operate on the state machine ...
-    //! \endcode
-    void lock();
 
-    //! \note Calling this method directly is almost certainly a mistake.
-    //!
-    //! \sa lock()
-    void unlock();
-
-    void waitForConfigurationChange(std::unique_lock<StateMachine>& lock);
-
-    //! \brief The root state.
-    //!
-    //! Returns the root state. The root state is implicitly created by the
-    //! state machine. Every top-level state must be a child of the
-    //! root state.
-    state_type* rootState() const
-    {
-        return const_cast<state_type*>(&m_rootState);
-    }
-
-    operator state_type*()
-    {
-        return &m_rootState;
-    }
-
-    operator const state_type*() const
-    {
-        return &m_rootState;
-    }
-
+#if 0
     // -------------------------------------------------------------------------
     // Iterators
     // -------------------------------------------------------------------------
@@ -1160,13 +1127,13 @@ public:
         // Befriend the non-const version with the const version.
         friend SiblingIterator<true>;
     };
-
+#endif
 private:
     //! A list of events which have to be handled by the event loop.
     event_list_type m_eventList;
 
     //! The implicit root state.
-    state_type m_rootState;
+    //state_type m_rootState;
 
 
     friend class EventDispatcherBase<StateMachine>;
@@ -1385,6 +1352,24 @@ public:
     void stop();
 
     bool running() const;
+
+
+
+    //! \note Calling this method directly is almost certainly a
+    //! mistake. Instead an RAII-lock such as std::lock_guard<> or
+    //! std::unique_lock<> should be used as in the following example:
+    //! \code
+    //! StateMachine sm;
+    //! std::unique_lock<StateMachine> lock(sm);
+    //! ... operate on the state machine ...
+    //! \endcode
+    void lock();
+
+    //! \note Calling this method directly is almost certainly a mistake.
+    //!
+    //! \sa lock()
+    void unlock();
+
 
     //! Loads an element from the storage.
     //!
