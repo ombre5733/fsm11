@@ -233,76 +233,91 @@ public:
     typedef PostOrderIterator<false> post_order_iterator;
     typedef PostOrderIterator<true>  const_post_order_iterator;
 
+    template <bool TIsConst>
+    class SiblingIterator;
+    typedef SiblingIterator<false> sibling_iterator;
+    typedef SiblingIterator<true> const_sibling_iterator;
 
-    //! \brief A pre-order iterator to the first state.
+    template <bool TIsConst>
+    class SiblingView;
+
+
+    //! \brief A pre-order iterator to the first state of the sub-tree.
     //!
-    //! Returns a pre-order iterator to the first state.
-    pre_order_iterator pre_order_begin()
+    //! Returns a pre-order iterator to the first state of the sub-tree
+    //! rooted at this state.
+    pre_order_iterator pre_order_begin() noexcept
     {
         return pre_order_iterator(this);
     }
 
-    //! \brief A pre-order const-iterator to the first state.
+    //! \brief A pre-order const-iterator to the first state of the sub-tree.
     //!
-    //! Returns a pre-order const-iterator to the first state.
-    const_pre_order_iterator pre_order_begin() const
+    //! Returns a pre-order const-iterator to the first state of the sub-tree
+    //! rooted at this state.
+    const_pre_order_iterator pre_order_begin() const noexcept
     {
         return const_pre_order_iterator(this);
     }
 
-    //! \brief A pre-order const-iterator to the first state.
+    //! \brief A pre-order const-iterator to the first state of the sub-tree.
     //!
-    //! Returns a pre-order const-iterator to the first state.
-    const_pre_order_iterator pre_order_cbegin() const
+    //! Returns a pre-order const-iterator to the first state of the sub-tree
+    //! rooted at this state.
+    const_pre_order_iterator pre_order_cbegin() const noexcept
     {
         return const_pre_order_iterator(this);
     }
 
-    //! \brief A pre-order iterator past the last state.
+    //! \brief A pre-order iterator past the last state of the sub-tree.
     //!
-    //! Returns a pre-order iterator past the last state.
-    pre_order_iterator pre_order_end()
+    //! Returns a pre-order iterator past the last state of the sub-tree
+    //! rooted at this state.
+    pre_order_iterator pre_order_end() noexcept
     {
         pre_order_iterator iter(this);
         iter.skipChildren();
         return ++iter;
     }
 
-    //! \brief A pre-order const-iterator past the last state.
+    //! \brief A pre-order const-iterator past the last state of the sub-tree.
     //!
-    //! Returns a pre-order const-iterator past the last state.
-    const_pre_order_iterator pre_order_end() const
+    //! Returns a pre-order const-iterator past the last state of the sub-tree
+    //! rooted at this state.
+    const_pre_order_iterator pre_order_end() const noexcept
     {
         const_pre_order_iterator iter(this);
         iter.skipChildren();
         return ++iter;
     }
 
-    //! \brief A pre-order const-iterator past the last state.
+    //! \brief A pre-order const-iterator past the last state of the sub-tree.
     //!
-    //! Returns a pre-order const-iterator past the last state.
-    const_pre_order_iterator pre_order_cend() const
+    //! Returns a pre-order const-iterator past the last state of the sub-tree
+    //! rooted at this state..
+    const_pre_order_iterator pre_order_cend() const noexcept
     {
         const_pre_order_iterator iter(this);
         iter.skipChildren();
         return ++iter;
     }
 
-    PreOrderView<false> pre_order_view()
+    PreOrderView<false> pre_order_view() noexcept
     {
         return PreOrderView<false>(this);
     }
 
-    PreOrderView<true> pre_order_view() const
+    PreOrderView<true> pre_order_view() const noexcept
     {
         return PreOrderView<true>(this);
     }
 
 
-    //! \brief A post-order iterator to the first state.
+    //! \brief A post-order iterator to the first state of the sub-tree.
     //!
-    //! Returns a post-order iterator to the first state.
-    post_order_iterator post_order_begin()
+    //! Returns a post-order iterator to the first state of the sub-tree
+    //! rooted at this state..
+    post_order_iterator post_order_begin() noexcept
     {
         State* state = this;
         while (state->m_children)
@@ -310,42 +325,47 @@ public:
         return post_order_iterator(state);
     }
 
-    //! \brief A post-order const-iterator to the first state.
+    //! \brief A post-order const-iterator to the first state of the sub-tree.
     //!
-    //! Returns a post-order const-iterator to the first state.
-    const_post_order_iterator post_order_begin() const
+    //! Returns a post-order const-iterator to the first state of the sub-tree
+    //! rooted at this state..
+    const_post_order_iterator post_order_begin() const noexcept
     {
         return post_order_cbegin();
     }
 
-    //! \brief A post-order const-iterator to the first state.
+    //! \brief A post-order const-iterator to the first state of the sub-tree.
     //!
-    //! Returns a post-order const-iterator to the first state.
-    const_post_order_iterator post_order_cbegin() const
+    //! Returns a post-order const-iterator to the first state of the sub-tree
+    //! rooted at this state.
+    const_post_order_iterator post_order_cbegin() const noexcept
     {
         return const_cast<State*>(this)->post_order_begin();
     }
 
-    //! \brief A post-order iterator past the last state.
+    //! \brief A post-order iterator past the last state of the sub-tree.
     //!
-    //! Returns a post-order iterator past the last state.
-    post_order_iterator post_order_end()
+    //! Returns a post-order iterator past the last state of the sub-tree
+    //! rooted at this state.
+    post_order_iterator post_order_end() noexcept
     {
         return ++post_order_iterator(this);
     }
 
-    //! \brief A post-order const-iterator past the last state.
+    //! \brief A post-order const-iterator past the last state of the sub-tree.
     //!
-    //! Returns a post-order const-iterator past the last state.
-    const_post_order_iterator post_order_end() const
+    //! Returns a post-order const-iterator past the last state of the sub-tree
+    //! rooted at this state.
+    const_post_order_iterator post_order_end() const noexcept
     {
         return ++const_post_order_iterator(this);
     }
 
-    //! \brief A post-order const-iterator past the last state.
+    //! \brief A post-order const-iterator past the last state of the sub-tree.
     //!
-    //! Returns a post-order const-iterator past the last state.
-    const_post_order_iterator post_order_cend() const
+    //! Returns a post-order const-iterator past the last state of the sub-tree
+    //! rooted at this state.
+    const_post_order_iterator post_order_cend() const noexcept
     {
         return ++const_post_order_iterator(this);
     }
@@ -453,7 +473,6 @@ public:
         }
 
 
-        /*
         //! \brief Returns an iterator to the first child.
         //!
         //! Returns an iterator to the first child.
@@ -501,7 +520,6 @@ public:
         {
             return const_sibling_iterator();
         }
-        */
 
     private:
         //! The current state.
@@ -529,17 +547,17 @@ public:
     public:
         using iterator = PreOrderIterator<TIsConst>;
 
-        explicit PreOrderView(typename iterator::pointer state)
+        explicit PreOrderView(typename iterator::pointer state) noexcept
             : m_state(state)
         {
         }
 
-        iterator begin() const
+        iterator begin() const noexcept
         {
             return m_state->pre_order_begin();
         }
 
-        iterator end() const
+        iterator end() const noexcept
         {
             return m_state->pre_order_end();
         }
@@ -644,6 +662,89 @@ public:
         friend class State;
         // Befriend the non-const version with the const version.
         friend PostOrderIterator<true>;
+    };
+
+    //! \brief An iterator over state siblings.
+    template <bool TIsConst>
+    class SiblingIterator
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef State value_type;
+        typedef typename std::conditional<TIsConst, const State*, State*>::type
+                    pointer;
+        typedef typename std::conditional<TIsConst, const State&, State&>::type
+                    reference;
+        typedef std::forward_iterator_tag iterator_category;
+
+
+        //! Default constructs an end-iterator.
+        SiblingIterator() noexcept
+            : m_current(0)
+        {
+        }
+
+        //! A copy-constructor with implicit conversion from a non-const
+        //! iterator.
+        SiblingIterator(const SiblingIterator<false>& other) noexcept
+            : m_current(other.m_current)
+        {
+        }
+
+        //! Prefix increment.
+        SiblingIterator& operator++() noexcept
+        {
+            m_current = m_current->m_nextSibling;
+            return *this;
+        }
+
+        //! Postfix increment.
+        SiblingIterator operator++(int) noexcept
+        {
+            SiblingIterator temp(*this);
+            ++*this;
+            return temp;
+        }
+
+        //! Returns \p true, if this iterator is equal to the \p other iterator.
+        bool operator==(SiblingIterator other) const noexcept
+        {
+            return m_current == other.m_current;
+        }
+
+        //! Returns \p true, if this iterator is not equal to the \p other
+        //! iterator.
+        bool operator!=(SiblingIterator other) const noexcept
+        {
+            return m_current != other.m_current;
+        }
+
+        //! Returns a reference to the state.
+        reference operator*() const noexcept
+        {
+            return *m_current;
+        }
+
+        //! Returns a pointer to the state.
+        pointer operator->() const noexcept
+        {
+            return m_current;
+        }
+
+    private:
+        //! The current child state.
+        pointer m_current;
+
+        //! Constructs an iterator pointing to the \p state.
+        SiblingIterator(pointer state) noexcept
+            : m_current(state)
+        {
+        }
+
+
+        friend class State;
+        // Befriend the non-const version with the const version.
+        friend SiblingIterator<true>;
     };
 
     // -------------------------------------------------------------------------
