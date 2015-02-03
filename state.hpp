@@ -245,6 +245,60 @@ public:
     //! \brief A pre-order iterator to the first state of the sub-tree.
     //!
     //! Returns a pre-order iterator to the first state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_begin().
+    pre_order_iterator begin()
+    {
+        return pre_order_begin();
+    }
+
+    //! \brief A pre-order const-iterator to the first state of the sub-tree.
+    //!
+    //! Returns a pre-order const-iterator to the first state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_begin().
+    const_pre_order_iterator begin() const
+    {
+        return pre_order_begin();
+    }
+
+    //! \brief A pre-order const-iterator to the first state of the sub-tree.
+    //!
+    //! Returns a pre-order const-iterator to the first state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_cbegin().
+    const_pre_order_iterator cbegin() const
+    {
+        return pre_order_cbegin();
+    }
+
+    //! \brief A pre-order iterator past the last state of the sub-tree.
+    //!
+    //! Returns a pre-order iterator past the last state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_end().
+    pre_order_iterator end()
+    {
+        return pre_order_end();
+    }
+
+    //! \brief A pre-order const-iterator past the last state of the sub-tree.
+    //!
+    //! Returns a pre-order const-iterator past the last state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_end().
+    const_pre_order_iterator end() const
+    {
+        return pre_order_end();
+    }
+
+    //! \brief A pre-order const-iterator past the last state of the sub-tree.
+    //!
+    //! Returns a pre-order const-iterator past the last state of the sub-tree
+    //! rooted at this state. This is a synonym for pre_order_cend().
+    const_pre_order_iterator cend() const
+    {
+        return pre_order_cend();
+    }
+
+    //! \brief A pre-order iterator to the first state of the sub-tree.
+    //!
+    //! Returns a pre-order iterator to the first state of the sub-tree
     //! rooted at this state.
     pre_order_iterator pre_order_begin() noexcept
     {
@@ -1020,6 +1074,12 @@ void State<TOptions>::pushBackTransition(transition_type* transition) noexcept
 //     Free functions
 // ----=====================================================================----
 
+//! Returns the least common proper ancestor.
+//!
+//! Returns the least common proper ancestor of the states \p state1 and
+//! \p state2. A state \p S is the least common proper ancestor if it
+//! is a proper ancestor of both \p state1 and \p state2 and no descendant
+//! of \p S has this property.
 template <typename TOptions>
 State<TOptions>* findLeastCommonProperAncestor(
         State<TOptions>* state1, State<TOptions>* state2)
