@@ -11,7 +11,7 @@ namespace fsm11
 namespace detail
 {
 
-class NoMultithreading
+class WithoutMultithreading
 {
 public:
     template <typename T = void>
@@ -36,7 +36,7 @@ protected:
     }
 };
 
-class Multithreading
+class WithMultithreading
 {
 public:
     void lock()
@@ -62,13 +62,13 @@ protected:
 template <bool TEnabled>
 struct get_multithreading_helper
 {
-    typedef NoMultithreading type;
+    typedef WithoutMultithreading type;
 };
 
 template <>
 struct get_multithreading_helper<true>
 {
-    typedef Multithreading type;
+    typedef WithMultithreading type;
 };
 
 template <typename TOptions>
