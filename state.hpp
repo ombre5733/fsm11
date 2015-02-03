@@ -234,6 +234,9 @@ public:
     typedef PostOrderIterator<true>  const_post_order_iterator;
 
     template <bool TIsConst>
+    class PostOrderView;
+
+    template <bool TIsConst>
     class SiblingIterator;
     typedef SiblingIterator<false> sibling_iterator;
     typedef SiblingIterator<true> const_sibling_iterator;
@@ -356,12 +359,23 @@ public:
         return ++iter;
     }
 
-    PreOrderView<false> pre_order_view() noexcept
+    //! \brief Returns a pre-order sub-tree.
+    //!
+    //! Returns a helper object, which enables to use pre-order iterators over
+    //! the sub-tree in a range-based for loop.
+    //! \code
+    //! State* root;
+    //! for (auto& state : root->pre_order_subtree())
+    //! {
+    //!     // state accesses all descendants of root in pre-order.
+    //! }
+    //! \endcode
+    PreOrderView<false> pre_order_subtree() noexcept
     {
         return PreOrderView<false>(this);
     }
 
-    PreOrderView<true> pre_order_view() const noexcept
+    PreOrderView<true> pre_order_subtree() const noexcept
     {
         return PreOrderView<true>(this);
     }
@@ -422,6 +436,16 @@ public:
     const_post_order_iterator post_order_cend() const noexcept
     {
         return ++const_post_order_iterator(this);
+    }
+
+    PostOrderView<false> post_order_subtree() noexcept
+    {
+        return PostOrderView<false>(this);
+    }
+
+    PostOrderView<true> post_order_subtree() const noexcept
+    {
+        return PostOrderView<true>(this);
     }
 
 
@@ -716,6 +740,32 @@ public:
         friend class State;
         // Befriend the non-const version with the const version.
         friend PostOrderIterator<true>;
+    };
+
+    //! \brief A view for post-order iteration.
+    template <bool TIsConst>
+    class PostOrderView
+    {
+    public:
+        using iterator = PostOrderIterator<TIsConst>;
+
+        explicit PostOrderView(typename iterator::pointer state) noexcept
+            : m_state(state)
+        {
+        }
+
+        iterator begin() const noexcept
+        {
+            return m_state->post_order_begin();
+        }
+
+        iterator end() const noexcept
+        {
+            return m_state->post_order_end();
+        }
+
+    private:
+        typename iterator::pointer m_state;
     };
 
     //! \brief An iterator over state siblings.
