@@ -9,7 +9,7 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 // ----=====================================================================----
 //     Event callbacks
@@ -247,7 +247,7 @@ struct get_state_callbacks : public get_state_callbacks_helper<TOptions::state_c
 {
 };
 
-} // namespace detail
+} // namespace fsm11_detail
 } // namespace fsm11
 
 #endif // FSM11_DETAIL_CALLBACKS_HPP

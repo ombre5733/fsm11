@@ -9,7 +9,7 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 
 template <typename TDerived, typename... TTypes>
@@ -69,7 +69,7 @@ struct get_storage
     typedef Storage<StateMachine<TOptions>> type;
 };
 
-} // namespace detail
+} // namespace fsm11_detail
 } // namespace fsm11
 
 #endif // FSM11_DETAIL_STORAGE_HPP

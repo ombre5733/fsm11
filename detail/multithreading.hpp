@@ -8,7 +8,7 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 
 class WithoutMultithreading
@@ -76,7 +76,7 @@ struct get_multithreading : public get_multithreading_helper<TOptions::multithre
 {
 };
 
-} // namespace detail
+} // namespace fsm11_detail
 } // namespace fsm11
 
 #endif // FSM11_DETAIL_MULTITHREADING_HPP

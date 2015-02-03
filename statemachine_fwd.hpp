@@ -3,7 +3,7 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 
 template <typename TOptions>

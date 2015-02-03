@@ -10,12 +10,12 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 
 //! \brief A state in a state machine.
 //!
-//! The State describes a state in a finite state machine.
+//! The State defines a state in a finite state machine.
 template <typename TOptions>
 class State
 {
@@ -37,14 +37,6 @@ public:
         Parallel
     };
 
-    template <bool TIsConst>
-    class TransitionIterator;
-
-    //! The iterator type for iterating over transitions.
-    typedef TransitionIterator<false> transition_iterator;
-    //! The const-iterator type for iterating over transitions.
-    typedef TransitionIterator<true> const_transition_iterator;
-
 
     //! \brief Constructs a state.
     //!
@@ -63,39 +55,6 @@ public:
     {
         return m_childMode;
     }
-
-
-
-    transition_iterator beginTransitions()
-    {
-        return transition_iterator(m_transitions);
-    }
-
-    const_transition_iterator beginTransitions() const
-    {
-        return const_transition_iterator(m_transitions);
-    }
-
-    const_transition_iterator cbeginTransitions() const
-    {
-        return const_transition_iterator(m_transitions);
-    }
-
-    transition_iterator endTransitions()
-    {
-        return transition_iterator();
-    }
-
-    const_transition_iterator endTransitions() const
-    {
-        return const_transition_iterator();
-    }
-
-    const_transition_iterator cendTransitions() const
-    {
-        return const_transition_iterator();
-    }
-
 
     State* findChild(StringRef name) const;
 
@@ -855,6 +814,46 @@ public:
     // Transition iterators
     // -------------------------------------------------------------------------
 
+    template <bool TIsConst>
+    class TransitionIterator;
+
+    //! The iterator type for iterating over transitions.
+    typedef TransitionIterator<false> transition_iterator;
+    //! The const-iterator type for iterating over transitions.
+    typedef TransitionIterator<true> const_transition_iterator;
+
+
+    transition_iterator beginTransitions()
+    {
+        return transition_iterator(m_transitions);
+    }
+
+    const_transition_iterator beginTransitions() const
+    {
+        return const_transition_iterator(m_transitions);
+    }
+
+    const_transition_iterator cbeginTransitions() const
+    {
+        return const_transition_iterator(m_transitions);
+    }
+
+    transition_iterator endTransitions()
+    {
+        return transition_iterator();
+    }
+
+    const_transition_iterator endTransitions() const
+    {
+        return const_transition_iterator();
+    }
+
+    const_transition_iterator cendTransitions() const
+    {
+        return const_transition_iterator();
+    }
+
+
     //! \brief An iterator over a state's transitions.
     template <bool TIsConst>
     class TransitionIterator
@@ -1170,8 +1169,6 @@ bool isProperAncestor(const State<TOptions>* ancestor,
 }
 
 #if 0
-const State* findLeastCommonAncestor(const State* state1, const State* state2);
-
 
 inline
 bool isDescendant(const State* descendant, const State* ancestor)
@@ -1179,14 +1176,9 @@ bool isDescendant(const State* descendant, const State* ancestor)
     return isAncestor(ancestor, descendant);
 }
 
-inline
-bool isProperAncestor(const State* ancestor, const State* descendant)
-{
-    return isAncestor(ancestor, descendant->parent());
-}
 #endif
 
-} // namespace detail
+} // namespace fsm11_detail
 } // namespace fsm11
 
 #endif // FSM11_STATE_HPP

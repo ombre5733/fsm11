@@ -8,7 +8,7 @@
 
 namespace fsm11
 {
-namespace detail
+namespace fsm11_detail
 {
 
 //! A type-tag for creating targetless transitions.
@@ -482,21 +482,21 @@ private:
     friend class EventDispatcherBase;
 };
 
-} // namespace detail
+} // namespace fsm11_detail
 
 
 template <typename TEvent>
 inline
-detail::Event<TEvent&&> event(TEvent&& ev)
+fsm11_detail::Event<TEvent&&> event(TEvent&& ev)
 {
-    return detail::Event<TEvent&&>(std::forward<TEvent>(ev));
+    return fsm11_detail::Event<TEvent&&>(std::forward<TEvent>(ev));
 }
 
 //! A tag to create eventless transitions.
-constexpr detail::NoEvent noEvent = detail::NoEvent();
+constexpr fsm11_detail::NoEvent noEvent = fsm11_detail::NoEvent();
 
 //! A tag to create targetless transitions.
-constexpr detail::noTarget_t noTarget = detail::noTarget_t();
+constexpr fsm11_detail::noTarget_t noTarget = fsm11_detail::noTarget_t();
 
 
 } // namespace fsm11
