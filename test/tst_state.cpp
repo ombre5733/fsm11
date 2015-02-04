@@ -45,6 +45,37 @@ TEST_CASE("set the parent of a state", "[state]")
     REQUIRE(p2.isAtomic());
 }
 
+TEST_CASE("set the state machine", "[state]")
+{
+    StateMachine_t sm1;
+    State_t s1("s1", &sm1);
+    State_t s2("s2");
+    State_t s3("s3", &s2);
+
+    REQUIRE(s1.stateMachine() == &sm1);
+    REQUIRE(s2.stateMachine() == 0);
+    REQUIRE(s3.stateMachine() == 0);
+    s2.setParent(&s1);
+    REQUIRE(s1.stateMachine() == &sm1);
+    REQUIRE(s2.stateMachine() == &sm1);
+    REQUIRE(s3.stateMachine() == &sm1);
+
+    State_t s4("s4", &s2);
+    REQUIRE(s4.stateMachine() == &sm1);
+
+    REQUIRE(!s1.isAtomic());
+
+    StateMachine_t sm2;
+    s2.setParent(&sm2);
+
+    REQUIRE(s1.stateMachine() == &sm1);
+    REQUIRE(s2.stateMachine() == &sm2);
+    REQUIRE(s3.stateMachine() == &sm2);
+    REQUIRE(s4.stateMachine() == &sm2);
+
+    REQUIRE(s1.isAtomic());
+}
+
 TEST_CASE("change the child mode", "[state]")
 {
     State_t s("s");
@@ -86,7 +117,7 @@ TEST_CASE("find a child", "[state]")
     REQUIRE(!std::strcmp("c12", found->name()));
 }
 #endif
-TEST_CASE("hierarchy properties", "[state]")
+TEST_CASE("state relationship", "[state]")
 {
     State_t p("p");
     State_t c1("c1", &p);
@@ -112,4 +143,9 @@ TEST_CASE("hierarchy properties", "[state]")
     REQUIRE(isAncestor(&c1, &c12));
     REQUIRE(!isAncestor(&c1, &c31));
     REQUIRE(!isAncestor(&c1, &c32));
+
+    REQUIRE(!isProperAncestor(&p, &p));
+    REQUIRE(!isProperAncestor(&c1, &p));
+    REQUIRE(isProperAncestor(&p, &c1));
+    REQUIRE(isProperAncestor(&p, &c11));
 }
