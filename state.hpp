@@ -10,8 +10,6 @@
 
 namespace fsm11
 {
-namespace fsm11_detail
-{
 
 //! \brief A state in a state machine.
 //!
@@ -21,7 +19,7 @@ class State
 {
 public:
     using event_type = typename TOptions::event_type;
-    using state_machine_type = StateMachine<TOptions>;
+    using state_machine_type = fsm11_detail::StateMachine<TOptions>;
     using transition_type = Transition<TOptions>;
 
     //! \brief The possible child modes.
@@ -44,6 +42,9 @@ public:
     //! \p parent state. The \p parent may be a null-pointer. In this case
     //! the state is at the root of its hierarchy.
     explicit State(const char* name, State* parent = 0);
+
+    //! \brief Destroys the state.
+    virtual ~State() {}
 
     State(const State&) = delete;
     State& operator=(const State&) = delete;
@@ -974,7 +975,7 @@ private:
     friend state_machine_type;
 
     template <typename TDerived>
-    friend class EventDispatcherBase;
+    friend class fsm11_detail::EventDispatcherBase;
 };
 
 template <typename TOptions>
@@ -1040,19 +1041,9 @@ void State<TOptions>::setParent(State* parent)
         parent->addChild(this);
 
     // Propagate the state machine of the new parent to the new child states.
-    state_machine_type* newFsm = parent ? parent->stateMachine() : 0;
-    state_machine_type* fsm = newFsm
-                              ? newFsm
-                              : (m_parent ? m_parent->stateMachine() : 0);
-    if (fsm)
-    {
-        for (auto iter = fsm->subtree_begin(this),
-              end_iter = fsm->subtree_end(this);
-             iter != end_iter; ++iter)
-        {
-            iter->m_stateMachine = newFsm;
-        }
-    }
+    state_machine_type* fsm = parent ? parent->stateMachine() : 0;
+    for (auto& state : *this)
+        state.m_stateMachine = fsm;
 
     m_parent = parent;
 }
@@ -1168,17 +1159,14 @@ bool isProperAncestor(const State<TOptions>* ancestor,
     return isAncestor(ancestor, descendant->parent());
 }
 
-#if 0
-
+template <typename TOptions>
 inline
-bool isDescendant(const State* descendant, const State* ancestor)
+bool isDescendant(const State<TOptions>* descendant,
+                  const State<TOptions>* ancestor)
 {
     return isAncestor(ancestor, descendant);
 }
 
-#endif
-
-} // namespace fsm11_detail
 } // namespace fsm11
 
 #endif // FSM11_STATE_HPP

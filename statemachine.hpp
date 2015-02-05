@@ -399,10 +399,19 @@ public:
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     inline
-    StateMachine& operator<<(
+    StateMachine& operator+=(
             SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
-        add(t);
+        add(std::move(t));
+        return *this;
+    }
+
+    template <typename TState, typename TGuard, typename TAction>
+    inline
+    StateMachine& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    {
+        add(std::move(t));
+        return *this;
     }
 
 private:

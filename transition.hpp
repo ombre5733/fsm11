@@ -8,11 +8,12 @@
 
 namespace fsm11
 {
-namespace fsm11_detail
-{
 
 //! A type-tag for creating targetless transitions.
 struct noTarget_t {};
+
+namespace fsm11_detail
+{
 
 // ----=====================================================================----
 //     Intermediate types for transitions with events
@@ -372,6 +373,8 @@ auto operator+(State<TOptions>& source, NoEventGuardAction<TGuard, TAction>&& rh
                 std::forward<TAction>(rhs.m_action));
 }
 
+} // namespace fsm11_detail
+
 // ----=====================================================================----
 //     Transition
 // ----=====================================================================----
@@ -386,10 +389,13 @@ public:
     using action_type = std::function<void(event_type)>;
     using guard_type = std::function<bool(event_type)>;
 
+    //! \brief Creates a transition.
+    //!
+    //! Creates a transition from the specification \p rhs.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
-    explicit Transition(
-            SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& rhs)
+    explicit Transition(fsm11_detail::SourceEventGuardActionTarget<
+                            TState, TEvent, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
           m_nextInSourceState(0),
@@ -401,9 +407,12 @@ public:
     {
     }
 
+    //! \brief Creates a transition.
+    //!
+    //! Creates an eventless transition from the specification \p rhs.
     template <typename TState, typename TGuard, typename TAction>
-    explicit Transition(
-            SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& rhs)
+    explicit Transition(fsm11_detail::SourceNoEventGuardActionTarget<
+                            TState, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
           m_nextInSourceState(0),
@@ -418,16 +427,25 @@ public:
     Transition(const Transition&) = delete;
     Transition& operator=(const Transition&) = delete;
 
+    //! \brief Returns the action.
+    //!
+    //! Returns the transition's action.
     const action_type& action() const
     {
         return m_action;
     }
 
+    //! \brief Returns the guard.
+    //!
+    //! Returns the transition's guard function.
     const guard_type& guard() const
     {
         return m_guard;
     }
 
+    //! \brief Returns the event.
+    //!
+    //! Returns the transition's event.
     const event_type& event() const
     {
         return m_event;
@@ -476,15 +494,13 @@ private:
 
 
     friend class State<TOptions>;
-    friend class StateMachine<TOptions>;
+    friend class fsm11_detail::StateMachine<TOptions>;
 
     template <typename TDerived>
-    friend class EventDispatcherBase;
+    friend class fsm11_detail::EventDispatcherBase;
 };
 
-} // namespace fsm11_detail
-
-
+//! \brief Names an event in a transition specification.
 template <typename TEvent>
 inline
 fsm11_detail::Event<TEvent&&> event(TEvent&& ev)
@@ -496,8 +512,7 @@ fsm11_detail::Event<TEvent&&> event(TEvent&& ev)
 constexpr fsm11_detail::NoEvent noEvent = fsm11_detail::NoEvent();
 
 //! A tag to create targetless transitions.
-constexpr fsm11_detail::noTarget_t noTarget = fsm11_detail::noTarget_t();
-
+constexpr noTarget_t noTarget = noTarget_t();
 
 } // namespace fsm11
 
