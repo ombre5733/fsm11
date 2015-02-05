@@ -411,9 +411,13 @@ void EventDispatcherBase<TDerived>::leaveConfiguration()
             iter->m_flags |= state_type::InExitSet;
     }
     leaveStatesInExitSet(event_type());
-#if 0
-    broadcastConfigurationChange();
-#endif
+
+    for (auto iter = derived().begin(); iter != derived().end(); ++iter)
+        iter->m_visibleActive = iter->m_internalActive;
+
+    ++m_numConfigurationChanges;
+    derived().invokeConfigurationChangeCallback();
+
     //! \todo Clear the event list? Or document that the event list is
     //! preserved when the FSM is stopped?
 }
@@ -511,7 +515,7 @@ public:
     void stop()
     {
         auto lock = derived().getLock();
-        // TODO
+        this->leaveConfiguration();
         m_running = false;
     }
 

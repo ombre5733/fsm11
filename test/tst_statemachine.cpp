@@ -11,18 +11,24 @@ TEST_CASE("construct a statemachine", "[statemachine]")
 {
     StateMachine_t sm;
     REQUIRE(!sm.running());
+    REQUIRE(sm.numConfigurationChanges() == 0);
 }
 
 TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
 {
     StateMachine_t sm;
     REQUIRE(!sm.running());
+    REQUIRE(!sm.isActive());
     for (int cnt = 0; cnt < 2; ++cnt)
     {
         sm.start();
         REQUIRE(sm.running());
+        REQUIRE(sm.isActive());
+        REQUIRE(sm.numConfigurationChanges() == 2 * cnt + 1);
         sm.stop();
         REQUIRE(!sm.running());
+        REQUIRE(!sm.isActive());
+        REQUIRE(sm.numConfigurationChanges() == 2 * cnt + 2);
     }
 }
 
