@@ -620,7 +620,7 @@ private:
         {
             auto lock = derived().getLock();
             this->enterInitialStates();
-            this->runToCompletion();
+            this->runToCompletion(true);
         }
 
         while (true)

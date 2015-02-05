@@ -13,8 +13,23 @@ TEST_CASE("construct a statemachine", "[statemachine]")
     REQUIRE(!sm.running());
 }
 
-TEST_CASE("start an empty statemachine", "[statemachine]")
+TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
 {
+    StateMachine_t sm;
+    REQUIRE(!sm.running());
+    for (int cnt = 0; cnt < 2; ++cnt)
+    {
+        sm.start();
+        REQUIRE(sm.running());
+        sm.stop();
+        REQUIRE(!sm.running());
+    }
+}
+
+TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
+{
+    using StateMachine_t = StateMachine<AsynchronousEventDispatching>;
+
     StateMachine_t sm;
     REQUIRE(!sm.running());
     for (int cnt = 0; cnt < 2; ++cnt)
