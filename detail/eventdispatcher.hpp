@@ -2,6 +2,7 @@
 #define FSM11_DETAIL_EVENTDISPATCHER_HPP
 
 #include "statemachine_fwd.hpp"
+#include "scopeguard.hpp"
 
 #include <atomic>
 #include <condition_variable>
@@ -361,13 +362,12 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
     while (1)
     {
         clearStateFlags();
-        //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
         selectTransitions(true, event_type());
         if (!m_enabledTransitions)
             break;
         followedTransition = true;
         microstep(event_type());
-        clearEnabledTransitionsSet(); // TODO: replace this by the scope guard
+        clearEnabledTransitionsSet();
     }
 
     // Synchronize the visible state active flag with the internal
@@ -464,34 +464,34 @@ public:
         if (!m_running || m_dispatching)
             return;
 
-        Holder h(m_dispatching);
+        Holder holder(m_dispatching);
+        SCOPE_FAILURE {
+            this->clearEnabledTransitionsSet();
+            this->leaveConfiguration();
+            m_running = false;
+        };
+
         while (!derived().m_eventList.empty())
         {
-            //weos::ScopeGuard leaveGuard
-            //        = weos::makeScopeGuard(&StateMachine::leaveConfiguration, this);
-
             auto event = derived().m_eventList.front();
             derived().m_eventList.pop_front();
             derived().invokeEventDispatchCallback(event);
 
             this->clearStateFlags();
-            //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
             this->selectTransitions(false, event);
             bool followedTransition = false;
             if (this->m_enabledTransitions)
             {
                 followedTransition = true;
                 this->microstep(std::move(event));
+                this->clearEnabledTransitionsSet();
             }
             else
             {
                 derived().invokeEventDiscardedCallback(std::move(event));
             }
-            this->clearEnabledTransitionsSet();
 
             this->runToCompletion(followedTransition);
-
-            //leaveGuard.dismiss();
         }
     }
 
@@ -506,6 +506,11 @@ public:
         auto lock = derived().getLock();
         if (!m_running)
         {
+            SCOPE_FAILURE {
+                this->clearEnabledTransitionsSet();
+                this->leaveConfiguration();
+            };
+
             this->enterInitialStates();
             this->runToCompletion(true);
             m_running = true;
@@ -623,15 +628,17 @@ private:
     {
         {
             auto lock = derived().getLock();
+            SCOPE_FAILURE {
+                this->clearEnabledTransitionsSet();
+                this->leaveConfiguration();
+            };
+
             this->enterInitialStates();
             this->runToCompletion(true);
         }
 
         while (true)
         {
-            //weos::ScopeGuard leaveGuard
-            //        = weos::makeScopeGuard(&StateMachine::leaveConfiguration, this);
-
             typename options::event_type event;
             {
                 // Wait until either an event is added to the list or
@@ -647,26 +654,28 @@ private:
             }
 
             auto lock = derived().getLock();
+            SCOPE_FAILURE {
+                this->clearEnabledTransitionsSet();
+                this->leaveConfiguration();
+            };
+
             derived().invokeEventDispatchCallback(event);
 
             this->clearStateFlags();
-            //WEOS_ON_SCOPE_EXIT(&StateMachine::clearEnabledTransitionsSet, this);
             this->selectTransitions(false, event);
             bool followedTransition = false;
             if (this->m_enabledTransitions)
             {
                 followedTransition = true;
                 this->microstep(std::move(event));
+                this->clearEnabledTransitionsSet();
             }
             else
             {
                 derived().invokeEventDiscardedCallback(std::move(event));
             }
-            this->clearEnabledTransitionsSet();
 
             this->runToCompletion(followedTransition);
-
-            //leaveGuard.dismiss();
         }
     }
 };

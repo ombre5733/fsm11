@@ -7,6 +7,10 @@
 
 using namespace fsm11;
 
+struct GuardException
+{
+};
+
 struct ListException
 {
 };
@@ -31,7 +35,7 @@ public:
 
     void push_back(unsigned event)
     {
-        if (event > 1)
+        if (event == 1)
             throw ListException();
         m_events.push_back(event);
     }
@@ -107,7 +111,7 @@ TEST_CASE("throw in addEvent", "[exception]")
         bool caught = false;
         try
         {
-            sm.addEvent(2);
+            sm.addEvent(1);
         }
         catch (ListException&)
         {
@@ -126,7 +130,7 @@ TEST_CASE("throw in addEvent", "[exception]")
         bool caught = false;
         try
         {
-            sm.addEvent(2);
+            sm.addEvent(1);
         }
         catch (ListException&)
         {
@@ -136,4 +140,149 @@ TEST_CASE("throw in addEvent", "[exception]")
         REQUIRE(caught);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
     }
+}
+
+TEST_CASE("throw in guard", "[exception]")
+{
+    StateMachine_t sm;
+
+    State_t a("a", &sm);
+    State_t aa("aa", &a);
+    State_t ab("ab", &a);
+    State_t b("b", &sm);
+    State_t ba("ba", &b);
+    State_t bb("bb", &b);
+
+    auto guard = [](unsigned event) {
+        if (event == 3)
+            throw GuardException();
+        return event % 2 == 0;
+    };
+
+    sm += aa + event(0) [guard] == ba;
+    sm += aa + event(3) [guard] == ba;
+    sm += ba + event(3) [guard] == bb;
+
+    REQUIRE(isActive(sm, {}));
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+    SECTION("throw")
+    {
+        bool caught = false;
+        try
+        {
+            sm.addEvent(3);
+        }
+        catch (GuardException&)
+        {
+            caught = true;
+        }
+
+        REQUIRE(caught);
+    }
+
+    SECTION("transit then throw")
+    {
+        sm.addEvent(0);
+        REQUIRE(isActive(sm, {&sm, &b, &ba}));
+
+        bool caught = false;
+        try
+        {
+            sm.addEvent(3);
+        }
+        catch (GuardException&)
+        {
+            caught = true;
+        }
+
+        REQUIRE(caught);
+    }
+
+    // The state machine must have been stopped.
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
+
+    // Restart the state machine.
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+    sm.addEvent(0);
+    REQUIRE(isActive(sm, {&sm, &b, &ba}));
+    sm.stop();
+
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
+}
+
+TEST_CASE("throw in action", "[exception]")
+{
+    StateMachine_t sm;
+
+    State_t a("a", &sm);
+    State_t aa("aa", &a);
+    State_t ab("ab", &a);
+    State_t b("b", &sm);
+    State_t ba("ba", &b);
+    State_t bb("bb", &b);
+
+    auto action = [](unsigned event) {
+        if (event == 3)
+            throw GuardException();
+    };
+
+    sm += aa + event(0) / action == ba;
+    sm += aa + event(3) / action == ba;
+    sm += ba + event(3) / action == bb;
+
+    REQUIRE(isActive(sm, {}));
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+    SECTION("throw")
+    {
+        bool caught = false;
+        try
+        {
+            sm.addEvent(3);
+        }
+        catch (GuardException&)
+        {
+            caught = true;
+        }
+
+        REQUIRE(caught);
+    }
+
+    SECTION("transit then throw")
+    {
+        sm.addEvent(0);
+        REQUIRE(isActive(sm, {&sm, &b, &ba}));
+
+        bool caught = false;
+        try
+        {
+            sm.addEvent(3);
+        }
+        catch (GuardException&)
+        {
+            caught = true;
+        }
+
+        REQUIRE(caught);
+    }
+
+    // The state machine must have been stopped.
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
+
+    // Restart the state machine.
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+    sm.addEvent(0);
+    REQUIRE(isActive(sm, {&sm, &b, &ba}));
+    sm.stop();
+
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
 }
