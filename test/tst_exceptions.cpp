@@ -1,9 +1,9 @@
 #include "catch.hpp"
 
 #include "../statemachine.hpp"
+#include "testutils.hpp"
 
 #include <deque>
-#include <set>
 
 using namespace fsm11;
 
@@ -46,21 +46,6 @@ private:
 
 using StateMachine_t = fsm11::StateMachine<EventListType<ThrowingList>>;
 using State_t = StateMachine_t::state_type;
-
-template <typename T>
-bool isActive(const T& sm,
-              const std::set<const typename T::state_type*>& expected)
-{
-    for (const auto& state : sm.pre_order_subtree())
-    {
-        auto iter = expected.find(&state);
-        if (iter != expected.end())
-            REQUIRE(state.isActive());
-        else
-            REQUIRE(!state.isActive());
-    }
-    return true;
-}
 
 TEST_CASE("throw in addEvent", "[exception]")
 {
