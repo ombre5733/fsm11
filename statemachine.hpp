@@ -11,12 +11,15 @@
 #include "detail/multithreading.hpp"
 #include "detail/storage.hpp"
 
-//#include "/home/manuel/code/weos/src/scopeguard.hpp"
-
-
-#include <iterator>
+#ifdef FSM11_USE_WEOS
+#include <weos/mutex.hpp>
+#include <weos/type_traits.hpp>
+#else
 #include <mutex>
 #include <type_traits>
+#endif // FSM11_USE_WEOS
+
+#include <iterator>
 
 namespace fsm11
 {
@@ -402,7 +405,7 @@ public:
     StateMachineImpl& operator+=(
             SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
-        add(std::move(t));
+        add(FSM11STD::move(t));
         return *this;
     }
 
@@ -411,7 +414,7 @@ public:
     inline
     StateMachineImpl& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
-        add(std::move(t));
+        add(FSM11STD::move(t));
         return *this;
     }
 
@@ -430,7 +433,7 @@ void StateMachineImpl<TOptions>::add(
         SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
     using namespace std;
-    transition_type* transition = new transition_type(std::move(t));
+    transition_type* transition = new transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
 
@@ -440,7 +443,7 @@ void StateMachineImpl<TOptions>::add(
         SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
     using namespace std;
-    transition_type* transition = new transition_type(std::move(t));
+    transition_type* transition = new transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
 

@@ -3,9 +3,15 @@
 
 #include "statemachine_fwd.hpp"
 
+#ifdef FSM11_USE_WEOS
+#include <weos/functional.hpp>
+#include <weos/utility.hpp>
+#include <weos/type_traits.hpp>
+#else
 #include <functional>
 #include <utility>
 #include <type_traits>
+#endif // FSM11_USE_WEOS
 
 namespace fsm11
 {
@@ -25,14 +31,14 @@ public:
     template <typename TType>
     void setEventDispatchCallback(TType&&)
     {
-        static_assert(!std::is_same<TType, TType>::value,
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
                       "Event callbacks are disabled");
     }
 
     template <typename TType>
     void setEventDiscardedCallback(TType&&)
     {
-        static_assert(!std::is_same<TType, TType>::value,
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
                       "Event callbacks are disabled");
     }
 
@@ -58,13 +64,13 @@ public:
     template <typename TType>
     void setEventDispatchCallback(TType&& callback)
     {
-        m_eventDispatchCallback = std::forward<TType>(callback);
+        m_eventDispatchCallback = FSM11STD::forward<TType>(callback);
     }
 
     template <typename TType>
     void setEventDiscardedCallback(TType&& callback)
     {
-        m_eventDiscardedCallback = std::forward<TType>(callback);
+        m_eventDiscardedCallback = FSM11STD::forward<TType>(callback);
     }
 
 protected:
@@ -83,8 +89,8 @@ protected:
     }
 
 private:
-    std::function<void(event_type)> m_eventDispatchCallback;
-    std::function<void(event_type)> m_eventDiscardedCallback;
+    FSM11STD::function<void(event_type)> m_eventDispatchCallback;
+    FSM11STD::function<void(event_type)> m_eventDiscardedCallback;
 };
 template <bool TEnabled, typename TOptions>
 struct get_event_callbacks_helper
@@ -113,7 +119,7 @@ public:
     template <typename TType>
     void setConfigurationChangeCallback(TType&&)
     {
-        static_assert(!std::is_same<TType, TType>::value,
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
                       "Configuration change callbacks are disabled");
     }
 
@@ -130,7 +136,7 @@ public:
     template <typename TType>
     void setConfigurationChangeCallback(TType&& callback)
     {
-        m_configurationChangeCallback = std::forward<TType>(callback);
+        m_configurationChangeCallback = FSM11STD::forward<TType>(callback);
     }
 
 protected:
@@ -142,13 +148,13 @@ protected:
     }
 
 private:
-    std::function<void()> m_configurationChangeCallback;
+    FSM11STD::function<void()> m_configurationChangeCallback;
 };
 
 template <typename TOptions>
 struct get_configuration_change_callbacks
 {
-    using type = typename std::conditional<
+    using type = typename FSM11STD::conditional<
                      TOptions::configuration_change_callbacks_enable,
                      WithConfigurationChangeCallback,
                      WithoutConfigurationChangeCallback>::type;
@@ -168,14 +174,14 @@ public:
     template <typename TType>
     void setStateEntryCallback(TType&&)
     {
-        static_assert(!std::is_same<TType, TType>::value,
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
                       "State callbacks are disabled");
     }
 
     template <typename TType>
     void setStateExitCallback(TType&&)
     {
-        static_assert(!std::is_same<TType, TType>::value,
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
                       "State callbacks are disabled");
     }
 
@@ -201,13 +207,13 @@ public:
     template <typename TType>
     void setStateEntryCallback(TType&& callback)
     {
-        m_stateEntryCallback = std::forward<TType>(callback);
+        m_stateEntryCallback = FSM11STD::forward<TType>(callback);
     }
 
     template <typename TType>
     void setStateExitCallback(TType&& callback)
     {
-        m_stateExitCallback = std::forward<TType>(callback);
+        m_stateExitCallback = FSM11STD::forward<TType>(callback);
     }
 
 protected:
@@ -226,8 +232,8 @@ protected:
     }
 
 private:
-    std::function<void(state_type*)> m_stateEntryCallback;
-    std::function<void(state_type*)> m_stateExitCallback;
+    FSM11STD::function<void(state_type*)> m_stateEntryCallback;
+    FSM11STD::function<void(state_type*)> m_stateExitCallback;
 };
 
 template <bool TEnabled, typename TOptions>

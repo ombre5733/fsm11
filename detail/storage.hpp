@@ -4,9 +4,15 @@
 #include "statemachine_fwd.hpp"
 #include "options.hpp"
 
-#include <cstddef>
+#ifdef FSM11_USE_WEOS
+#include <weos/utility.hpp>
+#include <weos/tuple.hpp>
+#else
 #include <utility>
 #include <tuple>
+#endif // FSM11_USE_WEOS
+
+#include <cstddef>
 
 namespace fsm11
 {
@@ -19,16 +25,16 @@ class Storage;
 template <typename TDerived, typename... TTypes>
 class Storage<TDerived, type_list<TTypes...>>
 {
-    typedef std::tuple<TTypes...> tuple_type;
+    typedef FSM11STD::tuple<TTypes...> tuple_type;
 
     // A helper to check the index agains the tuple size.
     template <std::size_t TIndex>
     struct get_type
     {
-        static_assert(TIndex < std::tuple_size<tuple_type>::value,
+        static_assert(TIndex < FSM11STD::tuple_size<tuple_type>::value,
                       "Index out of bounds");
 
-        using type = typename std::tuple_element<TIndex, tuple_type>::type;
+        using type = typename FSM11STD::tuple_element<TIndex, tuple_type>::type;
     };
 
 public:
@@ -36,16 +42,16 @@ public:
     const typename get_type<TIndex>::type& load() const
     {
         auto lock = derived().getLock();
-        return std::get<TIndex>(m_data);
+        return FSM11STD::get<TIndex>(m_data);
     }
 
     template <std::size_t TIndex, typename TType>
     void store(TType&& value)
     {
-        static_assert(TIndex < std::tuple_size<tuple_type>::value,
+        static_assert(TIndex < FSM11STD::tuple_size<tuple_type>::value,
                       "Index out of bounds");
         auto lock = derived().getLock();
-        std::get<TIndex>(m_data) = std::forward<TType>(value);
+        FSM11STD::get<TIndex>(m_data) = FSM11STD::forward<TType>(value);
     }
 
 private:

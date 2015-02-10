@@ -14,14 +14,14 @@ namespace __cxxabiv1
 extern "C" __cxa_eh_globals* __cxa_get_globals();
 } // namespace __cxxabiv1
 
-namespace std
+namespace FSM11STD
 {
 inline
 int uncaught_exceptions() noexcept
 {
     return *reinterpret_cast<int*>(static_cast<char*>(static_cast<void*>(__cxxabiv1::__cxa_get_globals())) + sizeof(void*));
 }
-} // namespace std
+} // namespace FSM11STD
 
 #endif // __GNUC__
 
@@ -33,8 +33,8 @@ class ScopeGuard
 {
 public:
     template <typename T,
-              typename _ = typename std::enable_if<!std::is_same<typename std::decay<T>::type,
-                                                                 ScopeGuard>::value>::type>
+              typename _ = typename FSM11STD::enable_if<!FSM11STD::is_same<typename FSM11STD::decay<T>::type,
+                                                                           ScopeGuard>::value>::type>
     explicit ScopeGuard(T&& callable) // TODO: noexcept
         : m_callable(callable),
           m_dismissed(false)
@@ -42,7 +42,7 @@ public:
     }
 
     ScopeGuard(ScopeGuard&& other) // TODO: noexcept
-        : m_callable(std::move(other.m_callable)),
+        : m_callable(FSM11STD::move(other.m_callable)),
           m_dismissed(other.m_dismissed)
     {
         other.m_dismissed = true;
@@ -73,16 +73,16 @@ class ExceptionScopeGuard
 {
 public:
     template <typename T,
-              typename _ = typename std::enable_if<!std::is_same<typename std::decay<T>::type,
-                                                                 ExceptionScopeGuard>::value>::type>
+              typename _ = typename FSM11STD::enable_if<!FSM11STD::is_same<typename FSM11STD::decay<T>::type,
+                                                                           ExceptionScopeGuard>::value>::type>
     explicit ExceptionScopeGuard(T&& callable) // TODO: noexcept
-        : m_callable(std::forward<T>(callable)),
-          m_numExceptions(std::uncaught_exceptions())
+        : m_callable(FSM11STD::forward<T>(callable)),
+          m_numExceptions(FSM11STD::uncaught_exceptions())
     {
     }
 
     ExceptionScopeGuard(ExceptionScopeGuard&& other) // TODO: noexcept
-        : m_callable(std::move(other.m_callable)),
+        : m_callable(FSM11STD::move(other.m_callable)),
           m_numExceptions(other.m_numExceptions)
     {
     }
@@ -90,7 +90,7 @@ public:
     ~ExceptionScopeGuard() noexcept(TExecuteOnException)
     {
         if (TExecuteOnException
-            == (std::uncaught_exceptions() > m_numExceptions))
+            == (FSM11STD::uncaught_exceptions() > m_numExceptions))
         {
             m_callable();
         }
@@ -108,27 +108,27 @@ struct OnScopeFailure {};
 struct OnScopeSuccess {};
 
 template <typename TCallable>
-ScopeGuard<typename std::decay<TCallable>::type> operator+(
+ScopeGuard<typename FSM11STD::decay<TCallable>::type> operator+(
         OnScopeExit, TCallable&& callable)
 {
-    return ScopeGuard<typename std::decay<TCallable>::type>(
-                std::forward<TCallable>(callable));
+    return ScopeGuard<typename FSM11STD::decay<TCallable>::type>(
+                FSM11STD::forward<TCallable>(callable));
 }
 
 template <typename TCallable>
-ExceptionScopeGuard<typename std::decay<TCallable>::type, true> operator+(
+ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, true> operator+(
         OnScopeFailure, TCallable&& callable)
 {
-    return ExceptionScopeGuard<typename std::decay<TCallable>::type, true>(
-                std::forward<TCallable>(callable));
+    return ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, true>(
+                FSM11STD::forward<TCallable>(callable));
 }
 
 template <typename TCallable>
-ExceptionScopeGuard<typename std::decay<TCallable>::type, false> operator+(
+ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, false> operator+(
         OnScopeSuccess, TCallable&& callable)
 {
-    return ExceptionScopeGuard<typename std::decay<TCallable>::type, false>(
-                std::forward<TCallable>(callable));
+    return ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, false>(
+                FSM11STD::forward<TCallable>(callable));
 }
 
 } // namespace weos_exception_detail

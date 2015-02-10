@@ -4,11 +4,19 @@
 #include "statemachine_fwd.hpp"
 #include "scopeguard.hpp"
 
+#ifdef FSM11_USE_WEOS
+#include <weos/atomic.hpp>
+#include <weos/condition_variable.hpp>
+#include <weos/mutex.hpp>
+#include <weos/utility.hpp>
+#include <weos/thread.hpp>
+#else
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
 #include <utility>
 #include <thread>
+#endif // FSM11_USE_WEOS
 
 namespace fsm11
 {
@@ -44,7 +52,7 @@ protected:
     //! The set of enabled transitions.
     transition_type* m_enabledTransitions;
 
-    std::atomic_uint m_numConfigurationChanges;
+    FSM11STD::atomic_uint m_numConfigurationChanges;
 
 
     TDerived& derived()
@@ -269,9 +277,9 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
             if (iter->m_flags & state_type::Invoked)
             {
                 iter->m_flags &= ~state_type::Invoked;
-                std::exception_ptr exc = iter->exitInvoke();
+                FSM11STD::exception_ptr exc = iter->exitInvoke();
                 if (exc)
-                    std::rethrow_exception(exc);
+                    FSM11STD::rethrow_exception(exc);
             }
             iter->m_flags &= ~state_type::Active;
             iter->onExit(event);
@@ -454,7 +462,7 @@ public:
     {
         auto lock = derived().getLock();
 
-        derived().m_eventList.push_back(std::move(event));
+        derived().m_eventList.push_back(FSM11STD::move(event));
         if (!m_running || m_dispatching)
             return;
 
@@ -478,12 +486,12 @@ public:
             if (this->m_enabledTransitions)
             {
                 followedTransition = true;
-                this->microstep(std::move(event));
+                this->microstep(FSM11STD::move(event));
                 this->clearEnabledTransitionsSet();
             }
             else
             {
-                derived().invokeEventDiscardedCallback(std::move(event));
+                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
             }
 
             this->runToCompletion(followedTransition);
@@ -553,8 +561,8 @@ public:
     void addEvent(event_type event)
     {
         {
-            std::lock_guard<std::mutex> lock(m_eventLoopMutex);
-            derived().m_eventList.push_back(std::move(event));
+            FSM11STD::lock_guard<FSM11STD::mutex> lock(m_eventLoopMutex);
+            derived().m_eventList.push_back(FSM11STD::move(event));
         }
 
         m_continueEventLoop.notify_one();
@@ -577,7 +585,7 @@ public:
         if (!m_eventLoopThread.joinable())
         {
             m_stopRequest = false;
-            m_eventLoopThread = std::thread(
+            m_eventLoopThread = FSM11STD::thread(
                                     // TODO: attrs
                                     &AsynchronousEventDispatcher::eventLoop,
                                     this);
@@ -599,14 +607,14 @@ public:
 
 private:
     //! A handle to the thread which dispatches the events.
-    std::thread m_eventLoopThread;
+    FSM11STD::thread m_eventLoopThread;
     //! A mutex to suppress concurrent modifications to the thread handle.
-    mutable std::mutex m_eventLoopMutex;
+    mutable FSM11STD::mutex m_eventLoopMutex;
 
     //! A control event to steer the event loop.
     bool m_stopRequest;
     //! This CV signals that a new control event is available.
-    std::condition_variable m_continueEventLoop;
+    FSM11STD::condition_variable m_continueEventLoop;
 
 
     TDerived& derived()
@@ -638,7 +646,7 @@ private:
 
             // Wait until either an event is added to the list or
             // an FSM stop has been requested.
-            std::unique_lock<std::mutex> eventLoopLock(m_eventLoopMutex);
+            FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
             m_continueEventLoop.wait(
                         eventLoopLock,
                         [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
@@ -663,12 +671,12 @@ private:
             if (this->m_enabledTransitions)
             {
                 followedTransition = true;
-                this->microstep(std::move(event));
+                this->microstep(FSM11STD::move(event));
                 this->clearEnabledTransitionsSet();
             }
             else
             {
-                derived().invokeEventDiscardedCallback(std::move(event));
+                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
             }
 
             this->runToCompletion(followedTransition);

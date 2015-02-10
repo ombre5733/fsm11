@@ -3,8 +3,13 @@
 
 #include "statemachine_fwd.hpp"
 
+#ifdef FSM11_USE_WEOS
+#include <weos/mutex.hpp>
+#include <weos/type_traits.hpp>
+#else
 #include <mutex>
 #include <type_traits>
+#endif // FSM11_USE_WEOS
 
 namespace fsm11
 {
@@ -17,14 +22,14 @@ public:
     template <typename T = void>
     void lock()
     {
-        static_assert(!std::is_same<T, T>::value,
+        static_assert(!FSM11STD::is_same<T, T>::value,
                       "Multithreading support is not enabled");
     }
 
     template <typename T = void>
     void unlock()
     {
-        static_assert(!std::is_same<T, T>::value,
+        static_assert(!FSM11STD::is_same<T, T>::value,
                       "Multithreading support is not enabled");
     }
 
@@ -50,12 +55,12 @@ public:
     }
 
 protected:
-    mutable std::recursive_mutex m_mutex;
+    mutable FSM11STD::recursive_mutex m_mutex;
 
     inline
-    std::unique_lock<std::recursive_mutex> getLock() const
+    FSM11STD::unique_lock<FSM11STD::recursive_mutex> getLock() const
     {
-        return std::unique_lock<std::recursive_mutex>(m_mutex);
+        return FSM11STD::unique_lock<FSM11STD::recursive_mutex>(m_mutex);
     }
 };
 

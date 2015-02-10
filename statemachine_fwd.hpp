@@ -1,6 +1,8 @@
 #ifndef FSM11_STATEMACHINE_FWD_HPP
 #define FSM11_STATEMACHINE_FWD_HPP
 
+#define FSM11STD   std
+
 namespace fsm11
 {
 

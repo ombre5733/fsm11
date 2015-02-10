@@ -1,11 +1,19 @@
 #ifndef FSM11_STATE_HPP
 #define FSM11_STATE_HPP
 
-#include <statemachine_fwd.hpp>
+#include "statemachine_fwd.hpp"
 
+#ifdef FSM11_USE_WEOS
+#include <weos/atomic.hpp>
+#include <weos/exception.hpp>
+#include <weos/type_traits.hpp>
+#else
 #include <atomic>
-#include <cassert>
 #include <exception>
+#include <type_traits>
+#endif // FSM11_USE_WEOS
+
+#include <cassert> // TODO
 #include <iterator>
 
 namespace fsm11
@@ -23,6 +31,7 @@ public:
     using event_type = typename options::event_type;
     using state_machine_type = TStateMachine;
     using transition_type = Transition<TStateMachine>;
+    using type = State<TStateMachine>;
 
     //! \brief The possible child modes.
     //!
@@ -129,10 +138,10 @@ public:
         // The default implementation does nothing.
     }
 
-    virtual std::exception_ptr exitInvoke()
+    virtual FSM11STD::exception_ptr exitInvoke()
     {
         // The default implementation does nothing.
-        return std::exception_ptr();
+        return FSM11STD::exception_ptr();
     }
 
     //! \brief The parent.
@@ -423,9 +432,9 @@ public:
     public:
         typedef std::ptrdiff_t difference_type;
         typedef State value_type;
-        typedef typename std::conditional<TIsConst, const State*, State*>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
                     pointer;
-        typedef typename std::conditional<TIsConst, const State&, State&>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
                     reference;
         typedef std::forward_iterator_tag iterator_category;
 
@@ -618,9 +627,9 @@ public:
     public:
         typedef std::ptrdiff_t difference_type;
         typedef State value_type;
-        typedef typename std::conditional<TIsConst, const State*, State*>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
                     pointer;
-        typedef typename std::conditional<TIsConst, const State&, State&>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
                     reference;
         typedef std::forward_iterator_tag iterator_category;
 
@@ -738,9 +747,9 @@ public:
     public:
         typedef std::ptrdiff_t difference_type;
         typedef State value_type;
-        typedef typename std::conditional<TIsConst, const State*, State*>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
                     pointer;
-        typedef typename std::conditional<TIsConst, const State&, State&>::type
+        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
                     reference;
         typedef std::forward_iterator_tag iterator_category;
 
@@ -865,9 +874,9 @@ public:
     public:
         typedef std::ptrdiff_t difference_type;
         typedef transition_type value_type;
-        typedef typename std::conditional<TIsConst, const transition_type*,
+        typedef typename FSM11STD::conditional<TIsConst, const transition_type*,
                                           transition_type*>::type pointer;
-        typedef typename std::conditional<TIsConst, const transition_type&,
+        typedef typename FSM11STD::conditional<TIsConst, const transition_type&,
                                           transition_type&>::type reference;
         typedef std::forward_iterator_tag iterator_category;
 
@@ -968,7 +977,7 @@ private:
     ChildMode m_childMode;
     int m_flags; //! \todo This should be of type Flags
 
-    std::atomic_bool m_visibleActive;
+    FSM11STD::atomic_bool m_visibleActive;
 
     //! Adds a \p child.
     void addChild(State* child);
