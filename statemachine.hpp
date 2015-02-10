@@ -349,14 +349,15 @@ public:
 
 private:
     using dispatcher_type = typename get_dispatcher<TOptions>::type;
+    using storage_type = typename get_storage<TOptions>::type;
     friend dispatcher_type;
+    friend storage_type;
 
 public:
     StateMachineImpl()
         : state_type("(StateMachine)")
     {
         state_type::m_stateMachine = this;
-        //m_rootState.m_stateMachine = this;
     }
 
     //! \brief Destroys the state machine.
@@ -406,6 +407,7 @@ public:
         return *this;
     }
 
+    //! \brief Adds a transition.
     template <typename TState, typename TGuard, typename TAction>
     inline
     StateMachineImpl& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
@@ -490,6 +492,7 @@ struct default_options
 {
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
+    using storage = type_list<>;
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
 
@@ -580,6 +583,18 @@ struct EnableStateCallbacks
     struct pack : TBase
     {
         static constexpr bool state_callbacks_enable = TEnable;
+    };
+    //! \endcond
+};
+
+template <typename... TTypes>
+struct Storage
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using storage = fsm11_detail::type_list<TTypes...>;
     };
     //! \endcond
 };
