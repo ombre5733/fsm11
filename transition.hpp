@@ -494,7 +494,7 @@ private:
 
 
     friend class State<TOptions>;
-    friend class fsm11_detail::StateMachine<TOptions>;
+    friend class fsm11_detail::StateMachineImpl<TOptions>;
 
     template <typename TDerived>
     friend class fsm11_detail::EventDispatcherBase;

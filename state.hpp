@@ -19,7 +19,7 @@ class State
 {
 public:
     using event_type = typename TOptions::event_type;
-    using state_machine_type = fsm11_detail::StateMachine<TOptions>;
+    using state_machine_type = fsm11_detail::StateMachineImpl<TOptions>;
     using transition_type = Transition<TOptions>;
 
     //! \brief The possible child modes.

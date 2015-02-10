@@ -331,7 +331,7 @@ private:
 //! Every state machine has an implicit root state. All top-level states of
 //! a state machine, must be added as child of this root state.
 template <typename TOptions>
-class StateMachine :
+class StateMachineImpl :
         public get_multithreading<TOptions>::type,
         public get_dispatcher<TOptions>::type,
         public get_configuration_change_callbacks<TOptions>::type,
@@ -341,7 +341,7 @@ class StateMachine :
         public State<TOptions>
 {
 public:
-    using type = StateMachine<TOptions>;
+    using type = StateMachineImpl<TOptions>;
     using state_type = State<TOptions>;
     using transition_type = Transition<TOptions>;
     using event_type = typename TOptions::event_type;
@@ -352,7 +352,7 @@ private:
     friend dispatcher_type;
 
 public:
-    StateMachine()
+    StateMachineImpl()
         : state_type("(StateMachine)")
     {
         state_type::m_stateMachine = this;
@@ -360,13 +360,13 @@ public:
     }
 
     //! \brief Destroys the state machine.
-    virtual ~StateMachine()
+    virtual ~StateMachineImpl()
     {
         this->stop();
     }
 
-    StateMachine(const StateMachine&) = delete;
-    StateMachine& operator=(const StateMachine&) = delete;
+    StateMachineImpl(const StateMachineImpl&) = delete;
+    StateMachineImpl& operator=(const StateMachineImpl&) = delete;
 
 //    template <typename TDerived>
 //    void apply(Visitor<TDerived>& visitor);
@@ -399,7 +399,7 @@ public:
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     inline
-    StateMachine& operator+=(
+    StateMachineImpl& operator+=(
             SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
         add(std::move(t));
@@ -408,7 +408,7 @@ public:
 
     template <typename TState, typename TGuard, typename TAction>
     inline
-    StateMachine& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    StateMachineImpl& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
         add(std::move(t));
         return *this;
@@ -419,13 +419,13 @@ private:
     event_list_type m_eventList;
 
 
-    friend class EventDispatcherBase<StateMachine>;
+    friend class EventDispatcherBase<StateMachineImpl>;
 };
 
 template <typename TOptions>
 template <typename TState, typename TEvent, typename TGuard,
           typename TAction>
-void StateMachine<TOptions>::add(
+void StateMachineImpl<TOptions>::add(
         SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
     using namespace std;
@@ -435,7 +435,7 @@ void StateMachine<TOptions>::add(
 
 template <typename TOptions>
 template <typename TState, typename TGuard, typename TAction>
-void StateMachine<TOptions>::add(
+void StateMachineImpl<TOptions>::add(
         SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
     using namespace std;
@@ -593,7 +593,7 @@ private:
     using packed_options = typename fsm11_detail::pack_options<fsm11_detail::default_options,
                                                                TOptions...>::type;
 public:
-    using type = fsm11_detail::StateMachine<packed_options>;
+    using type = fsm11_detail::StateMachineImpl<packed_options>;
 };
 
 

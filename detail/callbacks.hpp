@@ -89,13 +89,13 @@ private:
 template <bool TEnabled, typename TOptions>
 struct get_event_callbacks_helper
 {
-    typedef WithoutEventCallbacks<StateMachine<TOptions>> type;
+    typedef WithoutEventCallbacks<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>
 struct get_event_callbacks_helper<true, TOptions>
 {
-    typedef WithEventCallbacks<StateMachine<TOptions>> type;
+    typedef WithEventCallbacks<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>
@@ -233,13 +233,13 @@ private:
 template <bool TEnabled, typename TOptions>
 struct get_state_callbacks_helper
 {
-    typedef WithoutStateCallbacks<StateMachine<TOptions>> type;
+    typedef WithoutStateCallbacks<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>
 struct get_state_callbacks_helper<true, TOptions>
 {
-    typedef WithStateCallbacks<StateMachine<TOptions>> type;
+    typedef WithStateCallbacks<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>

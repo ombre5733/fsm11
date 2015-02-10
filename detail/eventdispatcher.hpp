@@ -684,13 +684,13 @@ private:
 template <bool TSynchronous, typename TOptions>
 struct get_dispatcher_helper
 {
-    typedef SynchronousEventDispatcher<StateMachine<TOptions>> type;
+    typedef SynchronousEventDispatcher<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>
 struct get_dispatcher_helper<false, TOptions>
 {
-    typedef AsynchronousEventDispatcher<StateMachine<TOptions>> type;
+    typedef AsynchronousEventDispatcher<StateMachineImpl<TOptions>> type;
 };
 
 template <typename TOptions>

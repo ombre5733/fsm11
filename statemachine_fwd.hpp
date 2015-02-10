@@ -17,14 +17,14 @@ template <typename TDerived>
 class EventDispatcherBase;
 
 template <typename TOptions>
-class StateMachine;
+class StateMachineImpl;
 
 
 template <typename TType>
 struct get_options;
 
 template <typename TOptions>
-struct get_options<StateMachine<TOptions>>
+struct get_options<StateMachineImpl<TOptions>>
 {
     typedef TOptions type;
 };

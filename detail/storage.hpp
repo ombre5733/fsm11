@@ -66,7 +66,7 @@ public:
 template <typename TOptions>
 struct get_storage
 {
-    typedef Storage<StateMachine<TOptions>> type;
+    typedef Storage<StateMachineImpl<TOptions>> type;
 };
 
 } // namespace fsm11_detail
