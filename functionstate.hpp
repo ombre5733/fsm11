@@ -22,6 +22,7 @@ class FunctionState : public State<TStateMachine>
 
 public:
     using event_type = typename options::event_type;
+    using function_type = FSM11STD::function<void(event_type)>;
     using type = FunctionState<TStateMachine>;
 
     template <typename TEntry, typename TExit>
@@ -29,13 +30,37 @@ public:
                            TEntry&& entryFn, TExit&& exitFn,
                            base_type* parent = 0)
         : base_type(name, parent),
-          m_entry(FSM11STD::forward<TEntry>(entryFn)),
-          m_exit(FSM11STD::forward<TExit>(exitFn))
+          m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
+          m_exitFunction(FSM11STD::forward<TExit>(exitFn))
     {
     }
 
     FunctionState(const FunctionState&) = delete;
     FunctionState& operator=(const FunctionState&) = delete;
+
+    //! Returns the entry function.
+    const function_type& entryFunction() const
+    {
+        return m_entryFunction;
+    }
+
+    template <typename T>
+    void setEntryFunction(T&& fn)
+    {
+        m_entryFunction = FSM11STD::forward<T>(fn);
+    }
+
+    //! Returns the exit function.
+    const function_type& exitFunction() const
+    {
+        return m_exitFunction;
+    }
+
+    template <typename T>
+    void setExitFunction(T&& fn)
+    {
+        m_exitFunction = FSM11STD::forward<T>(fn);
+    }
 
     virtual void onEntry(event_type event) override
     {
@@ -50,8 +75,8 @@ public:
     }
 
 private:
-    FSM11STD::function<void(event_type)> m_entryFunction;
-    FSM11STD::function<void(event_type)> m_exitFunction;
+    function_type m_entryFunction;
+    function_type m_exitFunction;
 };
 
 } // namespace fsm11
