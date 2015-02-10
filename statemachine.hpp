@@ -343,7 +343,7 @@ class StateMachineImpl :
 public:
     using type = StateMachineImpl<TOptions>;
     using state_type = State<type>;
-    using transition_type = Transition<TOptions>;
+    using transition_type = Transition<type>;
     using event_type = typename TOptions::event_type;
     using event_list_type = typename TOptions::event_list_type;
 

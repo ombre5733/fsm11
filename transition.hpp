@@ -44,7 +44,7 @@ private:
     TGuard m_guard;
     TAction m_action;
 
-    template <typename TOptions>
+    template <typename TStateMachine>
     friend class Transition;
 };
 
@@ -237,7 +237,7 @@ private:
     TGuard m_guard;
     TAction m_action;
 
-    template <typename TOptions>
+    template <typename TStateMachine>
     friend class Transition;
 };
 
@@ -380,12 +380,14 @@ auto operator+(State<TSm>& source, NoEventGuardAction<TGuard, TAction>&& rhs)
 // ----=====================================================================----
 
 //! \brief A transition.
-template <typename TOptions>
+template <typename TStateMachine>
 class Transition
 {
+    using options = typename fsm11_detail::get_options<TStateMachine>::type;
+
 public:
-    using state_type = State<fsm11_detail::StateMachineImpl<TOptions>>;
-    using event_type = typename TOptions::event_type;
+    using state_type = State<TStateMachine>;
+    using event_type = typename options::event_type;
     using action_type = std::function<void(event_type)>;
     using guard_type = std::function<bool(event_type)>;
 
@@ -493,9 +495,8 @@ private:
     bool m_eventless;
 
 
-    template <typename TSm>
-    friend class State;
-    friend class fsm11_detail::StateMachineImpl<TOptions>;
+    friend state_type;
+    friend TStateMachine;
 
     template <typename TDerived>
     friend class fsm11_detail::EventDispatcherBase;

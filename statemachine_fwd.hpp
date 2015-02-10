@@ -7,7 +7,7 @@ namespace fsm11
 template <typename TStateMachine>
 class State;
 
-template <typename TOptions>
+template <typename TStateMachine>
 class Transition;
 
 namespace fsm11_detail

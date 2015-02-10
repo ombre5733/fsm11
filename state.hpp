@@ -22,7 +22,7 @@ class State
 public:
     using event_type = typename options::event_type;
     using state_machine_type = TStateMachine;
-    using transition_type = Transition<options>;
+    using transition_type = Transition<TStateMachine>;
 
     //! \brief The possible child modes.
     //!

@@ -38,7 +38,7 @@ protected:
     using options = typename get_options<TDerived>::type;
     using event_type = typename options::event_type;
     using state_type = State<TDerived>;
-    using transition_type = Transition<options>;
+    using transition_type = Transition<TDerived>;
 
 
     //! The set of enabled transitions.
