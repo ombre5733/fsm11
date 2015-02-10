@@ -72,8 +72,8 @@ protected:
     //! Computes the transition domain of the given \p transition.
     static state_type* transitionDomain(const transition_type* transition);
 
-    //! Clears the flags of all states.
-    void clearStateFlags() noexcept;
+    //! Clears the transient flags of all states.
+    void clearTransientStateFlags() noexcept;
 
     //! \brief Propagates the entry mark to all descendant states.
     //!
@@ -128,7 +128,7 @@ void EventDispatcherBase<TDerived>::selectTransitions(bool eventless, event_type
     for (auto stateIter = derived().post_order_begin();
          stateIter != derived().post_order_end(); ++stateIter)
     {
-        if (!stateIter->m_internalActive)
+        if (!(stateIter->m_flags & state_type::Active))
             continue;
 
         // If a transition in a descendant of a parallel state has already
@@ -193,10 +193,10 @@ auto EventDispatcherBase<TDerived>::transitionDomain(const transition_type* tran
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::clearStateFlags() noexcept
+void EventDispatcherBase<TDerived>::clearTransientStateFlags() noexcept
 {
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        iter->m_flags = 0;
+        iter->m_flags &= ~state_type::Transient;
 }
 
 template <typename TDerived>
@@ -248,11 +248,11 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
     {
         if ((iter->m_flags & state_type::InEnterSet)
-            && !iter->m_internalActive)
+            && !(iter->m_flags & state_type::Active))
         {
             derived().invokeStateEntryCallback(&*iter);
             iter->onEntry(event);
-            iter->m_internalActive = true;
+            iter->m_flags |= (state_type::Active | state_type::StartInvoke);
         }
     }
 }
@@ -266,8 +266,14 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
         if (iter->m_flags & state_type::InExitSet)
         {
             derived().invokeStateExitCallback(&*iter);
-            iter->m_internalActive = false;
-            iter->exitInvoke();
+            if (iter->m_flags & state_type::Invoked)
+            {
+                iter->m_flags &= ~state_type::Invoked;
+                std::exception_ptr exc = iter->exitInvoke();
+                if (exc)
+                    std::rethrow_exception(exc);
+            }
+            iter->m_flags &= ~state_type::Active;
             iter->onExit(event);
         }
     }
@@ -297,7 +303,7 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
             for (auto iter = ++domain->pre_order_begin();
                  iter != domain->pre_order_end(); ++iter)
             {
-                if (iter->m_internalActive
+                if ((iter->m_flags & state_type::Active)
                     && (iter->m_flags & state_type::InExitSet))
                 {
                     conflict = true;
@@ -321,7 +327,7 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
         for (auto iter = ++domain->pre_order_begin();
              iter != domain->pre_order_end(); ++iter)
         {
-            if (iter->m_internalActive)
+            if ((iter->m_flags & state_type::Active))
                 iter->m_flags |= state_type::InExitSet;
         }
 
@@ -361,7 +367,7 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
     // We are in microstepping mode: follow all eventless transitions.
     while (1)
     {
-        clearStateFlags();
+        clearTransientStateFlags();
         selectTransitions(true, event_type());
         if (!m_enabledTransitions)
             break;
@@ -373,13 +379,17 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
     // Synchronize the visible state active flag with the internal
     // state active flag.
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        iter->m_visibleActive = iter->m_internalActive;
+        iter->m_visibleActive = (iter->m_flags & state_type::Active) != 0;
 
     // Call the invoke() methods of all currently active states.
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
     {
-        if (iter->m_internalActive)
+        if (iter->m_flags & state_type::StartInvoke)
+        {
             iter->enterInvoke();
+            iter->m_flags &= ~state_type::StartInvoke;
+            iter->m_flags |= state_type::Invoked;
+        }
     }
 
     // If we followed at least one transition, invoke the configuration
@@ -396,7 +406,7 @@ void EventDispatcherBase<TDerived>::enterInitialStates()
 {
     // TODO: Would be nice, if the state machine had an initial
     // transition similar to initial transitions of states.
-    clearStateFlags();
+    clearTransientStateFlags();
     derived().m_flags |= state_type::InEnterSet;
     markDescendantsForEntry();
     enterStatesInEnterSet(event_type());
@@ -407,13 +417,13 @@ void EventDispatcherBase<TDerived>::leaveConfiguration()
 {
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
     {
-        if (iter->m_internalActive)
+        if (iter->m_flags & state_type::Active)
             iter->m_flags |= state_type::InExitSet;
     }
     leaveStatesInExitSet(event_type());
 
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        iter->m_visibleActive = iter->m_internalActive;
+        iter->m_visibleActive = false;
 
     ++m_numConfigurationChanges;
     derived().invokeConfigurationChangeCallback();
@@ -430,22 +440,6 @@ template <typename TDerived>
 class SynchronousEventDispatcher : public EventDispatcherBase<TDerived>
 {
     using options = typename get_options<TDerived>::type;
-
-    struct Holder
-    {
-        Holder(bool& b)
-            : m_b(b)
-        {
-            m_b = true;
-        }
-
-        ~Holder()
-        {
-            m_b = false;
-        }
-
-        bool& m_b;
-    };
 
 public:
     using event_type = typename options::event_type;
@@ -464,7 +458,8 @@ public:
         if (!m_running || m_dispatching)
             return;
 
-        Holder holder(m_dispatching);
+        m_dispatching = true;
+        SCOPE_EXIT { m_dispatching = false; };
         SCOPE_FAILURE {
             this->clearEnabledTransitionsSet();
             this->leaveConfiguration();
@@ -477,7 +472,7 @@ public:
             derived().m_eventList.pop_front();
             derived().invokeEventDispatchCallback(event);
 
-            this->clearStateFlags();
+            this->clearTransientStateFlags();
             this->selectTransitions(false, event);
             bool followedTransition = false;
             if (this->m_enabledTransitions)
@@ -662,7 +657,7 @@ private:
 
             derived().invokeEventDispatchCallback(event);
 
-            this->clearStateFlags();
+            this->clearTransientStateFlags();
             this->selectTransitions(false, event);
             bool followedTransition = false;
             if (this->m_enabledTransitions)

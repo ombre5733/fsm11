@@ -942,7 +942,12 @@ private:
     {
         SkipTransitionSelection = 0x01,
         InEnterSet              = 0x02,
-        InExitSet               = 0x04
+        InExitSet               = 0x04,
+        StartInvoke             = 0x08,
+        Active                  = 0x10,
+        Invoked                 = 0x20,
+
+        Transient               = 0x0F
     };
 
     //! The state's name.
@@ -961,9 +966,7 @@ private:
     ChildMode m_childMode;
     int m_flags; //! \todo This should be of type Flags
 
-    bool m_internalActive;
     std::atomic_bool m_visibleActive;
-
 
     //! Adds a \p child.
     void addChild(State* child);
@@ -988,7 +991,7 @@ State<TOptions>::State(const char* name, State* parent)
       m_nextSibling(0),
       m_transitions(0),
       m_childMode(Exclusive),
-      m_internalActive(false),
+      m_flags(0),
       m_visibleActive(false)
 {
     if (parent)
