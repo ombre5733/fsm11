@@ -47,33 +47,6 @@ private:
 using StateMachine_t = fsm11::StateMachine<EventListType<ThrowingList>>;
 using State_t = StateMachine_t::state_type;
 
-#if 0
-#include <map>
-
-template <typename T>
-std::map<const typename T::state_type*, bool> storeConfiguration(const T& sm)
-{
-    std::map<const typename T::state_type*, bool> result;
-    for (const auto& state : sm.pre_order_subtree())
-    {
-        result[&state] = state.isActive();
-    }
-    return result;
-}
-
-template <typename T>
-void compareConfiguration(const T& sm,
-                          const std::map<const typename T::state_type*, bool>& cfg)
-{
-    for (const auto& state : sm.pre_order_subtree())
-    {
-        auto iter = cfg.find(&state);
-        REQUIRE(iter != cfg.end());
-        REQUIRE(iter->second == state.isActive());
-    }
-}
-#endif
-
 template <typename T>
 bool isActive(const T& sm,
               const std::set<const typename T::state_type*>& expected)

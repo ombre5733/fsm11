@@ -640,18 +640,19 @@ private:
         while (true)
         {
             typename options::event_type event;
-            {
-                // Wait until either an event is added to the list or
-                // an FSM stop has been requested.
-                std::unique_lock<std::mutex> lock(m_eventLoopMutex);
-                m_continueEventLoop.wait(
-                            lock, [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
-                if (m_stopRequest)
-                    return;
-                // Get the next event from the event list.
-                event = derived().m_eventList.front();
-                derived().m_eventList.pop_front();
-            }
+
+            // Wait until either an event is added to the list or
+            // an FSM stop has been requested.
+            std::unique_lock<std::mutex> eventLoopLock(m_eventLoopMutex);
+            m_continueEventLoop.wait(
+                        eventLoopLock,
+                        [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
+            if (m_stopRequest)
+                return;
+            // Get the next event from the event list.
+            event = derived().m_eventList.front();
+            derived().m_eventList.pop_front(); // TODO: What if this throws?
+            eventLoopLock.unlock();
 
             auto lock = derived().getLock();
             SCOPE_FAILURE {
