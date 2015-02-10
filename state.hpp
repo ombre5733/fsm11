@@ -5,6 +5,7 @@
 
 #include <atomic>
 #include <cassert>
+#include <exception>
 #include <iterator>
 
 namespace fsm11
@@ -126,9 +127,10 @@ public:
         // The default implementation does nothing.
     }
 
-    virtual void exitInvoke()
+    virtual std::exception_ptr exitInvoke()
     {
         // The default implementation does nothing.
+        return std::exception_ptr();
     }
 
     //! \brief The parent.
