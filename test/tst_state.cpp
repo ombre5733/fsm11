@@ -1,6 +1,7 @@
 #include "catch.hpp"
 
 #include "../statemachine.hpp"
+#include <cstring>
 
 using namespace fsm11;
 

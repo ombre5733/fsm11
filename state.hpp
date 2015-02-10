@@ -2,7 +2,6 @@
 #define FSM11_STATE_HPP
 
 #include <statemachine_fwd.hpp>
-#include <stringref.hpp>
 
 #include <atomic>
 #include <cassert>
@@ -57,7 +56,7 @@ public:
         return m_childMode;
     }
 
-    State* findChild(StringRef name) const;
+    //State* findChild(StringRef name) const;
 
     //! \brief Checks if the state is active.
     //!
@@ -994,10 +993,10 @@ State<TOptions>::State(const char* name, State* parent)
         parent->addChild(this);
 }
 
+#if 0
 template <typename TOptions>
 State<TOptions>* State<TOptions>::findChild(StringRef name) const
 {
-#if 0
     const State* parent = this;
     while (1)
     {
@@ -1019,9 +1018,9 @@ State<TOptions>* State<TOptions>::findChild(StringRef name) const
         parent = &*child;
         name = splitName.second;
     }
-#endif
     return 0;
 }
+#endif
 
 template <typename TOptions>
 bool State<TOptions>::isActive() const
