@@ -14,13 +14,15 @@ namespace fsm11
 //! \brief A state in a state machine.
 //!
 //! The State defines a state in a finite state machine.
-template <typename TOptions>
+template <typename TStateMachine>
 class State
 {
+    using options = typename fsm11_detail::get_options<TStateMachine>::type;
+
 public:
-    using event_type = typename TOptions::event_type;
-    using state_machine_type = fsm11_detail::StateMachineImpl<TOptions>;
-    using transition_type = Transition<TOptions>;
+    using event_type = typename options::event_type;
+    using state_machine_type = TStateMachine;
+    using transition_type = Transition<options>;
 
     //! \brief The possible child modes.
     //!
@@ -982,8 +984,8 @@ private:
     friend class fsm11_detail::EventDispatcherBase;
 };
 
-template <typename TOptions>
-State<TOptions>::State(const char* name, State* parent)
+template <typename TStateMachine>
+State<TStateMachine>::State(const char* name, State* parent)
     : m_name(name),
       m_stateMachine(parent ? parent->m_stateMachine : 0),
       m_parent(parent),
@@ -999,8 +1001,8 @@ State<TOptions>::State(const char* name, State* parent)
 }
 
 #if 0
-template <typename TOptions>
-State<TOptions>* State<TOptions>::findChild(StringRef name) const
+template <typename TStateMachine>
+State<TStateMachine>* State<TStateMachine>::findChild(StringRef name) const
 {
     const State* parent = this;
     while (1)
@@ -1027,14 +1029,15 @@ State<TOptions>* State<TOptions>::findChild(StringRef name) const
 }
 #endif
 
-template <typename TOptions>
-bool State<TOptions>::isActive() const
+template <typename TStateMachine>
+inline
+bool State<TStateMachine>::isActive() const
 {
     return m_visibleActive;
 }
 
-template <typename TOptions>
-void State<TOptions>::setParent(State* parent)
+template <typename TStateMachine>
+void State<TStateMachine>::setParent(State* parent)
 {
     if (parent == m_parent)
         return;
@@ -1056,8 +1059,8 @@ void State<TOptions>::setParent(State* parent)
 //     Private methods
 // ----=====================================================================----
 
-template <typename TOptions>
-void State<TOptions>::addChild(State* child)
+template <typename TStateMachine>
+void State<TStateMachine>::addChild(State* child)
 {
     assert(child->m_nextSibling == 0);
 
@@ -1074,8 +1077,8 @@ void State<TOptions>::addChild(State* child)
     }
 }
 
-template <typename TOptions>
-void State<TOptions>::removeChild(State* child)
+template <typename TStateMachine>
+void State<TStateMachine>::removeChild(State* child)
 {
     assert(m_children != 0);
 
@@ -1098,8 +1101,8 @@ void State<TOptions>::removeChild(State* child)
     child->m_nextSibling = 0;
 }
 
-template <typename TOptions>
-void State<TOptions>::pushBackTransition(transition_type* transition) noexcept
+template <typename TStateMachine>
+void State<TStateMachine>::pushBackTransition(transition_type* transition) noexcept
 {
     if (!m_transitions)
     {
@@ -1124,9 +1127,9 @@ void State<TOptions>::pushBackTransition(transition_type* transition) noexcept
 //! \p state2. A state \p S is the least common proper ancestor if it
 //! is a proper ancestor of both \p state1 and \p state2 and no descendant
 //! of \p S has this property.
-template <typename TOptions>
-State<TOptions>* findLeastCommonProperAncestor(
-        State<TOptions>* state1, State<TOptions>* state2)
+template <typename TStateMachine>
+State<TStateMachine>* findLeastCommonProperAncestor(
+        State<TStateMachine>* state1, State<TStateMachine>* state2)
 {
     while (state1)
     {
@@ -1142,9 +1145,9 @@ State<TOptions>* findLeastCommonProperAncestor(
 //!
 //! Returns \p true, if \p ancestor is an ancestor of \p descendant. Every
 //! state is its own ancestor.
-template <typename TOptions>
-bool isAncestor(const State<TOptions>* ancestor,
-                const State<TOptions>* descendant)
+template <typename TStateMachine>
+bool isAncestor(const State<TStateMachine>* ancestor,
+                const State<TStateMachine>* descendant)
 {
     while (descendant)
     {
@@ -1155,18 +1158,18 @@ bool isAncestor(const State<TOptions>* ancestor,
     return false;
 }
 
-template <typename TOptions>
+template <typename TStateMachine>
 inline
-bool isProperAncestor(const State<TOptions>* ancestor,
-                      const State<TOptions>* descendant)
+bool isProperAncestor(const State<TStateMachine>* ancestor,
+                      const State<TStateMachine>* descendant)
 {
     return isAncestor(ancestor, descendant->parent());
 }
 
-template <typename TOptions>
+template <typename TStateMachine>
 inline
-bool isDescendant(const State<TOptions>* descendant,
-                  const State<TOptions>* ancestor)
+bool isDescendant(const State<TStateMachine>* descendant,
+                  const State<TStateMachine>* ancestor)
 {
     return isAncestor(ancestor, descendant);
 }

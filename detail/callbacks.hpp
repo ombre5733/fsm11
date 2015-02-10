@@ -163,7 +163,7 @@ class WithoutStateCallbacks
 {
 public:
     using options = typename get_options<TDerived>::type;
-    using state_type = State<options>;
+    using state_type = State<TDerived>;
 
     template <typename TType>
     void setStateEntryCallback(TType&&)
@@ -196,7 +196,7 @@ class WithStateCallbacks
 {
 public:
     using options = typename get_options<TDerived>::type;
-    using state_type = State<options>;
+    using state_type = State<TDerived>;
 
     template <typename TType>
     void setStateEntryCallback(TType&& callback)

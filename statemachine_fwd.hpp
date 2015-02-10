@@ -4,7 +4,7 @@
 namespace fsm11
 {
 
-template <typename TOptions>
+template <typename TStateMachine>
 class State;
 
 template <typename TOptions>
@@ -31,9 +31,9 @@ struct get_options<StateMachineImpl<TOptions>>
 
 } // namespace detail
 
-template <typename TOptions>
-State<TOptions>* findLeastCommonProperAncestor(
-        State<TOptions>* state1, State<TOptions>* state2);
+template <typename TStateMachine>
+State<TStateMachine>* findLeastCommonProperAncestor(
+        State<TStateMachine>* state1, State<TStateMachine>* state2);
 
 } // namespace fsm11
 

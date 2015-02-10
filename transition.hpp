@@ -181,30 +181,30 @@ struct Event
     TEvent m_event;
 };
 
-template <typename TOptions, typename TEvent>
-auto operator+(State<TOptions>& source, Event<TEvent>&& rhs)
-    -> SourceEventGuardAction<State<TOptions>, TEvent, std::nullptr_t&&, std::nullptr_t&&>
+template <typename TSm, typename TEvent>
+auto operator+(State<TSm>& source, Event<TEvent>&& rhs)
+    -> SourceEventGuardAction<State<TSm>, TEvent, std::nullptr_t&&, std::nullptr_t&&>
 {
-    return SourceEventGuardAction<State<TOptions>, TEvent, std::nullptr_t&&, std::nullptr_t&&>(
+    return SourceEventGuardAction<State<TSm>, TEvent, std::nullptr_t&&, std::nullptr_t&&>(
                 &source,
                 std::forward<TEvent>(rhs.m_event), nullptr, nullptr);
 }
 
-template <typename TOptions, typename TEvent, typename TGuard>
-auto operator+(State<TOptions>& source, EventGuard<TEvent, TGuard>&& rhs)
-    -> SourceEventGuardAction<State<TOptions>, TEvent, TGuard, std::nullptr_t&&>
+template <typename TSm, typename TEvent, typename TGuard>
+auto operator+(State<TSm>& source, EventGuard<TEvent, TGuard>&& rhs)
+    -> SourceEventGuardAction<State<TSm>, TEvent, TGuard, std::nullptr_t&&>
 {
-    return SourceEventGuardAction<State<TOptions>, TEvent, TGuard, std::nullptr_t&&>(
+    return SourceEventGuardAction<State<TSm>, TEvent, TGuard, std::nullptr_t&&>(
                 &source,
                 std::forward<TEvent>(rhs.m_event),
                 std::forward<TGuard>(rhs.m_guard), nullptr);
 }
 
-template <typename TOptions, typename TEvent, typename TGuard, typename TAction>
-auto operator+(State<TOptions>& source, EventGuardAction<TEvent, TGuard, TAction>&& rhs)
-    -> SourceEventGuardAction<State<TOptions>, TEvent, TGuard, TAction>
+template <typename TSm, typename TEvent, typename TGuard, typename TAction>
+auto operator+(State<TSm>& source, EventGuardAction<TEvent, TGuard, TAction>&& rhs)
+    -> SourceEventGuardAction<State<TSm>, TEvent, TGuard, TAction>
 {
-    return SourceEventGuardAction<State<TOptions>, TEvent, TGuard, TAction>(
+    return SourceEventGuardAction<State<TSm>, TEvent, TGuard, TAction>(
                 &source,
                 std::forward<TEvent>(rhs.m_event),
                 std::forward<TGuard>(rhs.m_guard),
@@ -346,28 +346,28 @@ public:
     }
 };
 
-template <typename TOptions>
-auto operator+(State<TOptions>& source, NoEvent)
-    -> SourceNoEventGuardAction<State<TOptions>, std::nullptr_t&&, std::nullptr_t&&>
+template <typename TSm>
+auto operator+(State<TSm>& source, NoEvent)
+    -> SourceNoEventGuardAction<State<TSm>, std::nullptr_t&&, std::nullptr_t&&>
 {
-    return SourceNoEventGuardAction<State<TOptions>, std::nullptr_t&&, std::nullptr_t&&>(
+    return SourceNoEventGuardAction<State<TSm>, std::nullptr_t&&, std::nullptr_t&&>(
                 &source, nullptr, nullptr);
 }
 
-template <typename TOptions, typename TGuard>
-auto operator+(State<TOptions>& source, NoEventGuard<TGuard>&& rhs)
-    -> SourceNoEventGuardAction<State<TOptions>, TGuard, std::nullptr_t&&>
+template <typename TSm, typename TGuard>
+auto operator+(State<TSm>& source, NoEventGuard<TGuard>&& rhs)
+    -> SourceNoEventGuardAction<State<TSm>, TGuard, std::nullptr_t&&>
 {
-    return SourceNoEventGuardAction<State<TOptions>, TGuard, std::nullptr_t&&>(
+    return SourceNoEventGuardAction<State<TSm>, TGuard, std::nullptr_t&&>(
                 &source,
                 std::forward<TGuard>(rhs.m_guard), nullptr);
 }
 
-template <typename TOptions, typename TGuard, typename TAction>
-auto operator+(State<TOptions>& source, NoEventGuardAction<TGuard, TAction>&& rhs)
-    -> SourceNoEventGuardAction<State<TOptions>, TGuard, TAction>
+template <typename TSm, typename TGuard, typename TAction>
+auto operator+(State<TSm>& source, NoEventGuardAction<TGuard, TAction>&& rhs)
+    -> SourceNoEventGuardAction<State<TSm>, TGuard, TAction>
 {
-    return SourceNoEventGuardAction<State<TOptions>, TGuard, TAction>(
+    return SourceNoEventGuardAction<State<TSm>, TGuard, TAction>(
                 &source,
                 std::forward<TGuard>(rhs.m_guard),
                 std::forward<TAction>(rhs.m_action));
@@ -384,7 +384,7 @@ template <typename TOptions>
 class Transition
 {
 public:
-    using state_type = State<TOptions>;
+    using state_type = State<fsm11_detail::StateMachineImpl<TOptions>>;
     using event_type = typename TOptions::event_type;
     using action_type = std::function<void(event_type)>;
     using guard_type = std::function<bool(event_type)>;
@@ -493,7 +493,8 @@ private:
     bool m_eventless;
 
 
-    friend class State<TOptions>;
+    template <typename TSm>
+    friend class State;
     friend class fsm11_detail::StateMachineImpl<TOptions>;
 
     template <typename TDerived>

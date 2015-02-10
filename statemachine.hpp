@@ -338,11 +338,11 @@ class StateMachineImpl :
         public get_event_callbacks<TOptions>::type,
         public get_state_callbacks<TOptions>::type,
         public get_storage<TOptions>::type,
-        public State<TOptions>
+        public State<StateMachineImpl<TOptions>>
 {
 public:
     using type = StateMachineImpl<TOptions>;
-    using state_type = State<TOptions>;
+    using state_type = State<type>;
     using transition_type = Transition<TOptions>;
     using event_type = typename TOptions::event_type;
     using event_list_type = typename TOptions::event_list_type;
@@ -628,7 +628,7 @@ public:
     using type = StateMachine<TOptions...>;
     using event_type = typename TOptions::event_type;
     using event_list_type = typename TOptions::event_list_type;
-    using state_type = State<TOptions>;
+    using state_type = State<type>;
     using transition_type = Transition<TOptions>;
 
 
