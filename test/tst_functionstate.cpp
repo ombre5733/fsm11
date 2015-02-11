@@ -6,7 +6,7 @@
 using StateMachine_t = fsm11::StateMachine<>;
 using State_t = fsm11::FunctionState<StateMachine_t>;
 
-TEST_CASE("construct function state", "[s1]")
+TEST_CASE("construct function state", "[functionstate]")
 {
     State_t s1("s1", nullptr, nullptr);
     REQUIRE(!s1.isActive());
@@ -19,7 +19,9 @@ TEST_CASE("construct function state", "[s1]")
     auto enter = [&](unsigned) { ++entered; };
     auto leave = [&](unsigned) { ++left; };
 
-    State_t s2("s2", enter, nullptr);
+    State_t s2("s2", enter, nullptr, &s1);
+    REQUIRE(s2.parent() == &s1);
+
     REQUIRE(s2.entryFunction());
     REQUIRE(!s2.exitFunction());
     s2.entryFunction()(0);

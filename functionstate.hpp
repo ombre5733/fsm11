@@ -44,6 +44,9 @@ public:
         return m_entryFunction;
     }
 
+    //! \brief Sets the entry function.
+    //!
+    //! Sets the entry function to \p fn.
     template <typename T>
     void setEntryFunction(T&& fn)
     {
@@ -56,6 +59,9 @@ public:
         return m_exitFunction;
     }
 
+    //! \brief Sets the exit function.
+    //!
+    //! Sets the exit function to \p fn.
     template <typename T>
     void setExitFunction(T&& fn)
     {

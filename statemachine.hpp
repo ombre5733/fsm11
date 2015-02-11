@@ -114,62 +114,62 @@ public:
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given \p state.
-    void visitState(state_type* /*state_type*/) {}
+    void visitState(state_type* /*state*/) {}
 
     //! \brief Visits an atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given atomic \p state.
-    void visitAtomicState(state_type* /*state_type*/) {}
+    void visitAtomicState(state_type* /*state*/) {}
 
     //! \brief Visits a non-state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given non-atomic \p state.
-    void visitNonAtomicState(state_type* /*state_type*/) {}
+    void visitNonAtomicState(state_type* /*state*/) {}
 
     //! \brief Visits a compound state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given compound \p state.
-    void visitCompoundState(state_type* /*state_type*/) {}
+    void visitCompoundState(state_type* /*state*/) {}
 
     //! \brief Visits a parallel state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given parallel \p state.
-    void visitParallelState(state_type* /*state_type*/) {}
+    void visitParallelState(state_type* /*state*/) {}
 
 
     //! \brief Leaves a state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given \p state.
-    void leaveState(state_type* /*state_type*/) {}
+    void leaveState(state_type* /*state*/) {}
 
     //! \brief Leaves an atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given atomic \p state.
-    void leaveAtomicState(state_type* /*state_type*/) {}
+    void leaveAtomicState(state_type* /*state*/) {}
 
     //! \brief Leaves a non-atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given non-atomic \p state.
-    void leaveNonAtomicState(state_type* /*state_type*/) {}
+    void leaveNonAtomicState(state_type* /*state*/) {}
 
     //! \brief Leaves a compound state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given compound \p state.
-    void leaveCompoundState(state_type* /*state_type*/) {}
+    void leaveCompoundState(state_type* /*state*/) {}
 
     //! \brief Leaves a parallel state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given parallel \p state.
-    void leaveParallelState(state_type* /*state_type*/) {}
+    void leaveParallelState(state_type* /*state*/) {}
 
 private:
     //! Casts this instance to the derived class.
@@ -251,62 +251,62 @@ public:
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given \p state.
-    void visitState(state_type* /*state_type*/) {}
+    void visitState(state_type* /*state*/) {}
 
     //! \brief Visits an atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given atomic \p state.
-    void visitAtomicState(state_type* /*state_type*/) {}
+    void visitAtomicState(state_type* /*state*/) {}
 
     //! \brief Visits a non-state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given non-atomic \p state.
-    void visitNonAtomicState(state_type* /*state_type*/) {}
+    void visitNonAtomicState(state_type* /*state*/) {}
 
     //! \brief Visits a compound state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given compound \p state.
-    void visitCompoundState(state_type* /*state_type*/) {}
+    void visitCompoundState(state_type* /*state*/) {}
 
     //! \brief Visits a parallel state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a pre-order traversal of the given parallel \p state.
-    void visitParallelState(state_type* /*state_type*/) {}
+    void visitParallelState(state_type* /*state*/) {}
 
 
     //! \brief Leaves a state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given \p state.
-    void leaveState(state_type* /*state_type*/) {}
+    void leaveState(state_type* /*state*/) {}
 
     //! \brief Leaves an atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given atomic \p state.
-    void leaveAtomicState(state_type* /*state_type*/) {}
+    void leaveAtomicState(state_type* /*state*/) {}
 
     //! \brief Leaves a non-atomic state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given non-atomic \p state.
-    void leaveNonAtomicState(state_type* /*state_type*/) {}
+    void leaveNonAtomicState(state_type* /*state*/) {}
 
     //! \brief Leaves a compound state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given compound \p state.
-    void leaveCompoundState(state_type* /*state_type*/) {}
+    void leaveCompoundState(state_type* /*state*/) {}
 
     //! \brief Leaves a parallel state.
     //!
     //! This method has to be overridden in a derived class in order to
     //! perform a post-order traversal of the given parallel \p state.
-    void leaveParallelState(state_type* /*state_type*/) {}
+    void leaveParallelState(state_type* /*state*/) {}
 
 private:
     //! Casts this instance to the derived class.
