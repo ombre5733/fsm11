@@ -281,7 +281,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                 if (exc)
                     FSM11STD::rethrow_exception(exc);
             }
-            iter->m_flags &= ~state_type::Active;
+            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke);
             iter->onExit(event);
         }
     }

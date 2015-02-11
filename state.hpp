@@ -954,9 +954,9 @@ private:
         SkipTransitionSelection = 0x01,
         InEnterSet              = 0x02,
         InExitSet               = 0x04,
-        StartInvoke             = 0x08,
-        Active                  = 0x10,
-        Invoked                 = 0x20,
+        StartInvoke             = 0x10,
+        Active                  = 0x20,
+        Invoked                 = 0x40,
 
         Transient               = 0x0F
     };
