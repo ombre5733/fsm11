@@ -1,7 +1,7 @@
 #ifndef FSM11_DETAIL_EVENTDISPATCHER_HPP
 #define FSM11_DETAIL_EVENTDISPATCHER_HPP
 
-#include "statemachine_fwd.hpp"
+#include "../statemachine_fwd.hpp"
 #include "scopeguard.hpp"
 
 #ifdef FSM11_USE_WEOS

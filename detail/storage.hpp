@@ -1,7 +1,7 @@
 #ifndef FSM11_DETAIL_STORAGE_HPP
 #define FSM11_DETAIL_STORAGE_HPP
 
-#include "statemachine_fwd.hpp"
+#include "../statemachine_fwd.hpp"
 #include "options.hpp"
 
 #ifdef FSM11_USE_WEOS

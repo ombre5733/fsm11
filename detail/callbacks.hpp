@@ -1,7 +1,7 @@
 #ifndef FSM11_DETAIL_CALLBACKS_HPP
 #define FSM11_DETAIL_CALLBACKS_HPP
 
-#include "statemachine_fwd.hpp"
+#include "../statemachine_fwd.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/functional.hpp>
