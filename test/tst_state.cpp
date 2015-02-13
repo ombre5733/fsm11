@@ -118,7 +118,7 @@ TEST_CASE("find a child", "[state]")
     REQUIRE(!std::strcmp("c12", found->name()));
 }
 #endif
-TEST_CASE("state relationship", "[state]")
+TEST_CASE("ancestor/descendant relationship", "[state]")
 {
     State_t p("p");
     State_t c1("c1", &p);
@@ -149,4 +149,37 @@ TEST_CASE("state relationship", "[state]")
     REQUIRE(!isProperAncestor(&c1, &p));
     REQUIRE(isProperAncestor(&p, &c1));
     REQUIRE(isProperAncestor(&p, &c11));
+}
+
+TEST_CASE("least common ancestor", "[state]")
+{
+    State_t p("p");
+    State_t c1("c1", &p);
+    State_t c2("c2", &p);
+    State_t c3("c3", &p);
+    State_t c11("c11", &c1);
+    State_t c12("c12", &c1);
+    State_t c31("c31", &c3);
+    State_t c32("c32", &c3);
+    State_t x("x");
+
+    REQUIRE(findLeastCommonProperAncestor(&p, &p) == nullptr);
+    REQUIRE(findLeastCommonProperAncestor(&c1, &c1) == &p);
+
+    REQUIRE(findLeastCommonProperAncestor(&c1, &p) == nullptr);
+    REQUIRE(findLeastCommonProperAncestor(&p, &c1) == nullptr);
+
+    REQUIRE(findLeastCommonProperAncestor(&c11, &c12) == &c1);
+    REQUIRE(findLeastCommonProperAncestor(&c12, &c11) == &c1);
+
+    REQUIRE(findLeastCommonProperAncestor(&c11, &c1) == &p);
+    REQUIRE(findLeastCommonProperAncestor(&c1, &c11) == &p);
+
+    REQUIRE(findLeastCommonProperAncestor(&c11, &c2) == &p);
+    REQUIRE(findLeastCommonProperAncestor(&c2, &c11) == &p);
+    REQUIRE(findLeastCommonProperAncestor(&c32, &c11) == &p);
+    REQUIRE(findLeastCommonProperAncestor(&c11, &c32) == &p);
+
+    REQUIRE(findLeastCommonProperAncestor(&x, &c1) == nullptr);
+    REQUIRE(findLeastCommonProperAncestor(&c1, &x) == nullptr);
 }

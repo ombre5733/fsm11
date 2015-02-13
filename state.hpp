@@ -1140,11 +1140,10 @@ template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(
         State<TStateMachine>* state1, State<TStateMachine>* state2)
 {
-    while (state1)
+    while ((state1 = state1->parent()))
     {
         if (isProperAncestor(state1, state2))
             return state1;
-        state1 = state1->parent();
     }
 
     return 0;
@@ -1167,12 +1166,21 @@ bool isAncestor(const State<TStateMachine>* ancestor,
     return false;
 }
 
+//! \brief Checks if a state is a proper ancestor of another state.
+//!
+//! Returns \p true, if \p ancestor is an ancestor of \p descendant
+//! and \p ancestor and \p descendant are not the same.
+//! In contrast to isAncestor(), isProperAncestor(s, s) is always false.
 template <typename TStateMachine>
-inline
 bool isProperAncestor(const State<TStateMachine>* ancestor,
                       const State<TStateMachine>* descendant)
 {
-    return isAncestor(ancestor, descendant->parent());
+    while ((descendant = descendant->parent()))
+    {
+        if (ancestor == descendant)
+            return true;
+    }
+    return false;
 }
 
 template <typename TStateMachine>
