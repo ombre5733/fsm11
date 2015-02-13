@@ -46,6 +46,7 @@ public:
         {
         case 0: waitForExitRequest(); break;
         case 1: waitForExitRequestFor(std::chrono::milliseconds(500)); break;
+        default: REQUIRE(false); break;
         }
 
         g_mutex.lock();
@@ -148,7 +149,8 @@ TEST_CASE("waitForExitRequestFor blocks an invoked action", "[threadedstate]")
     }
 }
 
-TEST_CASE("invoked action is left when state machine is destructed", "[threadedstate]")
+TEST_CASE("invoked action is left when state machine is destructed",
+          "[threadedstate]")
 {
     g_notify = false;
     g_invokeState = 0;
