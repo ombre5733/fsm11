@@ -35,7 +35,7 @@ struct get_options<StateMachineImpl<TOptions>>
 
 template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(
-        State<TStateMachine>* state1, State<TStateMachine>* state2);
+        State<TStateMachine>* state1, State<TStateMachine>* state2) noexcept;
 
 } // namespace fsm11
 

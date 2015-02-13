@@ -52,7 +52,7 @@ public:
     //! Constructs a state with given \p name which will be a child of the
     //! \p parent state. The \p parent may be a null-pointer. In this case
     //! the state is at the root of its hierarchy.
-    explicit State(const char* name, State* parent = 0);
+    explicit State(const char* name, State* parent = 0) noexcept;
 
     //! \brief Destroys the state.
     virtual ~State() {}
@@ -63,7 +63,7 @@ public:
     //! \brief Returns the child mode.
     //!
     //! Returns the current child mode. The default is Exclusive.
-    ChildMode childMode() const
+    ChildMode childMode() const noexcept
     {
         return m_childMode;
     }
@@ -74,13 +74,13 @@ public:
     //!
     //! Returns \p true, if the state is active, which means that it belongs
     //! to the current state machine configuration.
-    bool isActive() const;
+    bool isActive() const noexcept;
 
     //! \brief Checks for atomicity.
     //!
     //! Returns \p true, if this state is atomic which means that it does not
     //! have children.
-    bool isAtomic() const
+    bool isAtomic() const noexcept
     {
         return m_children == 0;
     }
@@ -90,7 +90,7 @@ public:
     //! Returns \p true, if this state is a compound state, i.e. it does
     //! have at least one child and the children are active exclusively.
     //! One and only one child of an active compound state will be active.
-    bool isCompound() const
+    bool isCompound() const noexcept
     {
         return !isAtomic() && m_childMode == Exclusive;
     }
@@ -100,7 +100,7 @@ public:
     //! Returns \p true, if this state is a parallel state, i.e. it does
     //! have at least one child and the children are active in parallel.
     //! All children of an active parallel state will be active.
-    bool isParallel() const
+    bool isParallel() const noexcept
     {
         return !isAtomic() && m_childMode == Parallel;
     }
@@ -108,7 +108,7 @@ public:
     //! \brief The name.
     //!
     //! Returns the state's name.
-    const char* name() const
+    const char* name() const noexcept
     {
         return m_name;
     }
@@ -148,7 +148,7 @@ public:
     //!
     //! Returns the state's parent or a null-pointer, if the state has no
     //! parent.
-    State* parent() const
+    State* parent() const noexcept
     {
         return m_parent;
     }
@@ -163,7 +163,7 @@ public:
     //! mode of one of its states changes. Changing the child mode while
     //! the associated state machine is running, results in undefined
     //! behaviour.
-    void setChildMode(ChildMode mode)
+    void setChildMode(ChildMode mode) noexcept
     {
         m_childMode = mode;
     }
@@ -176,14 +176,14 @@ public:
     //!
     //! \note Changing the parent state while the associated state machine
     //! is running results in undefined behaviour.
-    void setParent(State* parent);
+    void setParent(State* parent) noexcept;
 
     //! \brief Returns the state machine.
     //!
     //! Returns the state machine to which this state belongs. If the state
     //! has not been added to a state machine, yet, a null-pointer is
     //! returned.
-    state_machine_type* stateMachine() const
+    state_machine_type* stateMachine() const noexcept
     {
         return m_stateMachine;
     }
@@ -221,7 +221,7 @@ public:
     //!
     //! Returns a pre-order iterator to the first state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_begin().
-    pre_order_iterator begin()
+    pre_order_iterator begin() noexcept
     {
         return pre_order_begin();
     }
@@ -230,7 +230,7 @@ public:
     //!
     //! Returns a pre-order const-iterator to the first state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_begin().
-    const_pre_order_iterator begin() const
+    const_pre_order_iterator begin() const noexcept
     {
         return pre_order_begin();
     }
@@ -239,7 +239,7 @@ public:
     //!
     //! Returns a pre-order const-iterator to the first state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_cbegin().
-    const_pre_order_iterator cbegin() const
+    const_pre_order_iterator cbegin() const noexcept
     {
         return pre_order_cbegin();
     }
@@ -248,7 +248,7 @@ public:
     //!
     //! Returns a pre-order iterator past the last state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_end().
-    pre_order_iterator end()
+    pre_order_iterator end() noexcept
     {
         return pre_order_end();
     }
@@ -257,7 +257,7 @@ public:
     //!
     //! Returns a pre-order const-iterator past the last state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_end().
-    const_pre_order_iterator end() const
+    const_pre_order_iterator end() const noexcept
     {
         return pre_order_end();
     }
@@ -266,7 +266,7 @@ public:
     //!
     //! Returns a pre-order const-iterator past the last state of the sub-tree
     //! rooted at this state. This is a synonym for pre_order_cend().
-    const_pre_order_iterator cend() const
+    const_pre_order_iterator cend() const noexcept
     {
         return pre_order_cend();
     }
@@ -836,32 +836,32 @@ public:
     typedef TransitionIterator<true> const_transition_iterator;
 
 
-    transition_iterator beginTransitions()
+    transition_iterator beginTransitions() noexcept
     {
         return transition_iterator(m_transitions);
     }
 
-    const_transition_iterator beginTransitions() const
+    const_transition_iterator beginTransitions() const noexcept
     {
         return const_transition_iterator(m_transitions);
     }
 
-    const_transition_iterator cbeginTransitions() const
+    const_transition_iterator cbeginTransitions() const noexcept
     {
         return const_transition_iterator(m_transitions);
     }
 
-    transition_iterator endTransitions()
+    transition_iterator endTransitions() noexcept
     {
         return transition_iterator();
     }
 
-    const_transition_iterator endTransitions() const
+    const_transition_iterator endTransitions() const noexcept
     {
         return const_transition_iterator();
     }
 
-    const_transition_iterator cendTransitions() const
+    const_transition_iterator cendTransitions() const noexcept
     {
         return const_transition_iterator();
     }
@@ -881,27 +881,27 @@ public:
         typedef std::forward_iterator_tag iterator_category;
 
         //! Default constructs an end-iterator.
-        TransitionIterator()
+        TransitionIterator() noexcept
             : m_current(0)
         {
         }
 
         //! A copy-constructor with implicit conversion from a non-const
         //! iterator.
-        TransitionIterator(const TransitionIterator<false>& other)
+        TransitionIterator(const TransitionIterator<false>& other) noexcept
             : m_current(other.m_current)
         {
         }
 
         //! Prefix increment.
-        TransitionIterator& operator++()
+        TransitionIterator& operator++() noexcept
         {
             m_current = m_current->m_nextInSourceState;
             return *this;
         }
 
         //! Postfix increment.
-        TransitionIterator operator++ (int)
+        TransitionIterator operator++ (int) noexcept
         {
             TransitionIterator temp(m_current);
             m_current = m_current->m_next;
@@ -909,26 +909,26 @@ public:
         }
 
         //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator== (TransitionIterator other) const
+        bool operator== (TransitionIterator other) const noexcept
         {
             return m_current == other.m_current;
         }
 
         //! Returns \p true, if this iterator is not equal to the \p other
         //! iterator.
-        bool operator!= (TransitionIterator other) const
+        bool operator!= (TransitionIterator other) const noexcept
         {
             return m_current != other.m_current;
         }
 
         //! Returns a reference to the transition.
-        reference operator* () const
+        reference operator* () const noexcept
         {
             return *m_current;
         }
 
         //! Returns a pointer to the transition.
-        pointer operator-> () const
+        pointer operator-> () const noexcept
         {
             return m_current;
         }
@@ -980,9 +980,9 @@ private:
     FSM11STD::atomic_bool m_visibleActive;
 
     //! Adds a \p child.
-    void addChild(State* child);
+    void addChild(State* child) noexcept;
     //! Removes a \p child.
-    void removeChild(State* child);
+    void removeChild(State* child) noexcept;
 
     //! Adds a \p transition.
     void pushBackTransition(transition_type* transition) noexcept;
@@ -994,7 +994,7 @@ private:
 };
 
 template <typename TStateMachine>
-State<TStateMachine>::State(const char* name, State* parent)
+State<TStateMachine>::State(const char* name, State* parent) noexcept
     : m_name(name),
       m_stateMachine(parent ? parent->m_stateMachine : 0),
       m_parent(parent),
@@ -1040,13 +1040,13 @@ State<TStateMachine>* State<TStateMachine>::findChild(StringRef name) const
 
 template <typename TStateMachine>
 inline
-bool State<TStateMachine>::isActive() const
+bool State<TStateMachine>::isActive() const noexcept
 {
     return m_visibleActive;
 }
 
 template <typename TStateMachine>
-void State<TStateMachine>::setParent(State* parent)
+void State<TStateMachine>::setParent(State* parent) noexcept
 {
     if (parent == m_parent)
         return;
@@ -1069,7 +1069,7 @@ void State<TStateMachine>::setParent(State* parent)
 // ----=====================================================================----
 
 template <typename TStateMachine>
-void State<TStateMachine>::addChild(State* child)
+void State<TStateMachine>::addChild(State* child) noexcept
 {
     assert(child->m_nextSibling == 0);
 
@@ -1087,7 +1087,7 @@ void State<TStateMachine>::addChild(State* child)
 }
 
 template <typename TStateMachine>
-void State<TStateMachine>::removeChild(State* child)
+void State<TStateMachine>::removeChild(State* child) noexcept
 {
     assert(m_children != 0);
 
@@ -1138,7 +1138,7 @@ void State<TStateMachine>::pushBackTransition(transition_type* transition) noexc
 //! of \p S has this property.
 template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(
-        State<TStateMachine>* state1, State<TStateMachine>* state2)
+        State<TStateMachine>* state1, State<TStateMachine>* state2) noexcept
 {
     while ((state1 = state1->parent()))
     {
@@ -1155,7 +1155,7 @@ State<TStateMachine>* findLeastCommonProperAncestor(
 //! state is its own ancestor.
 template <typename TStateMachine>
 bool isAncestor(const State<TStateMachine>* ancestor,
-                const State<TStateMachine>* descendant)
+                const State<TStateMachine>* descendant) noexcept
 {
     if (!ancestor->isAtomic())
     {
@@ -1176,7 +1176,7 @@ bool isAncestor(const State<TStateMachine>* ancestor,
 //! In contrast to isAncestor(), isProperAncestor(s, s) is always false.
 template <typename TStateMachine>
 bool isProperAncestor(const State<TStateMachine>* ancestor,
-                      const State<TStateMachine>* descendant)
+                      const State<TStateMachine>* descendant) noexcept
 {
     if (!ancestor->isAtomic())
     {
@@ -1192,7 +1192,7 @@ bool isProperAncestor(const State<TStateMachine>* ancestor,
 template <typename TStateMachine>
 inline
 bool isDescendant(const State<TStateMachine>* descendant,
-                  const State<TStateMachine>* ancestor)
+                  const State<TStateMachine>* ancestor) noexcept
 {
     return isAncestor(ancestor, descendant);
 }
