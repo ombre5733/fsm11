@@ -1157,11 +1157,14 @@ template <typename TStateMachine>
 bool isAncestor(const State<TStateMachine>* ancestor,
                 const State<TStateMachine>* descendant)
 {
-    while (descendant)
+    if (!ancestor->isAtomic())
     {
-        if (ancestor == descendant)
-            return true;
-        descendant = descendant->parent();
+        while (descendant)
+        {
+            if (ancestor == descendant)
+                return true;
+            descendant = descendant->parent();
+        }
     }
     return false;
 }
@@ -1175,10 +1178,13 @@ template <typename TStateMachine>
 bool isProperAncestor(const State<TStateMachine>* ancestor,
                       const State<TStateMachine>* descendant)
 {
-    while ((descendant = descendant->parent()))
+    if (!ancestor->isAtomic())
     {
-        if (ancestor == descendant)
-            return true;
+        while ((descendant = descendant->parent()))
+        {
+            if (ancestor == descendant)
+                return true;
+        }
     }
     return false;
 }
