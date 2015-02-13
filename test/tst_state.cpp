@@ -20,6 +20,7 @@ TEST_CASE("construct a state", "[state]")
     REQUIRE(!s.isParallel());
     REQUIRE(s.stateMachine() == 0);
     REQUIRE(!s.isActive());
+    REQUIRE(s.initialState() == 0);
 
     REQUIRE(s.beginTransitions() == s.endTransitions());
     REQUIRE(s.cbeginTransitions() == s.cendTransitions());
@@ -95,6 +96,22 @@ TEST_CASE("change the child mode", "[state]")
     REQUIRE(State_t::Exclusive == s.childMode());
     REQUIRE(s.isCompound());
     REQUIRE(!s.isParallel());
+}
+
+TEST_CASE("set an initial state", "[state]")
+{
+    StateMachine_t sm;
+    State_t s1("s1", &sm);
+    State_t s2("s2");
+    State_t s3("s3", &s2);
+
+    REQUIRE(s2.initialState() == 0);
+    s2.setInitialState(&s3);
+    REQUIRE(s2.initialState() == &s3);
+
+    REQUIRE(sm.initialState() == 0);
+    sm.setInitialState(&s1);
+    REQUIRE(sm.initialState() == &s1);
 }
 
 #if 0

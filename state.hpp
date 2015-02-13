@@ -70,6 +70,16 @@ public:
 
     //State* findChild(StringRef name) const;
 
+    //! \brief Returns the initial state.
+    //!
+    //! Returns the initial state. By default, this is a null-pointer.
+    //!
+    //! \sa setInitialState()
+    State* initialState() const noexcept
+    {
+        return m_initialState;
+    }
+
     //! \brief Checks if the state is active.
     //!
     //! Returns \p true, if the state is active, which means that it belongs
@@ -168,6 +178,16 @@ public:
         m_flags &= ~ChildModeFlag;
         m_flags |= mode;
     }
+
+    //! \brief Sets the initial state.
+    //!
+    //! Sets the initial state to \p descendant. If \p descendant is no
+    //! proper descendant of this state, an exception is thrown.                TODO: which exception?
+    //!
+    //! The initial state will be entered, if this state or any of its
+    //! ancestors is the target of a transition and no other transition
+    //! targets a descendant.
+    void setInitialState(State* descendant);
 
     //! \brief Changes the parent.
     //!
@@ -973,6 +993,9 @@ private:
     State* m_children;
     //! A pointer to the next sibling in the linked list.
     State* m_nextSibling;
+    //! The initial state will be entered if this state is the target of
+    //! a transition.
+    State* m_initialState;
     //! A pointer to the first transition.
     transition_type* m_transitions;
     //! The flags.
@@ -1002,6 +1025,7 @@ State<TStateMachine>::State(const char* name, State* parent) noexcept
       m_parent(parent),
       m_children(0),
       m_nextSibling(0),
+      m_initialState(0),
       m_transitions(0),
       m_flags(0),
       m_visibleActive(false)
@@ -1044,6 +1068,15 @@ inline
 bool State<TStateMachine>::isActive() const noexcept
 {
     return m_visibleActive;
+}
+
+template <typename TStateMachine>
+void State<TStateMachine>::setInitialState(State* descendant)
+{
+    //if (!isProperAncestor(this, descendant))
+    //    throw ;
+
+    m_initialState = descendant;
 }
 
 template <typename TStateMachine>
