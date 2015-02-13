@@ -62,7 +62,7 @@ public:
     std::atomic_int invoked = 0;
 };
 
-TEST_CASE("transitions in sychronous statemachine", "[statemachine]")
+TEST_CASE("transitions in synchronous statemachine", "[statemachine]")
 {
     using namespace sync;
     StateMachine_t sm;
@@ -80,6 +80,8 @@ TEST_CASE("transitions in sychronous statemachine", "[statemachine]")
     sm += b  + event(3) == ab;
     sm += aa + event(4) == b;
     sm += ba + event(4) == a;
+    sm += a  + event(5) == ab;
+    sm += ab + event(6) == a;
 
     sm.start();
     REQUIRE(isActive(sm, {&sm, &a, &aa}));
@@ -170,6 +172,29 @@ TEST_CASE("transitions in sychronous statemachine", "[statemachine]")
         REQUIRE(ab.entered == 0);
     }
 
+    SECTION("between ancestor and descendant")
+    {
+        sm.addEvent(5);
+        REQUIRE(isActive(sm, {&sm, &a, &ab}));
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+        REQUIRE(b.entered == 0);
+
+        sm.addEvent(6);
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        REQUIRE(a.entered == 3);
+        REQUIRE(a.left == 2);
+        REQUIRE(aa.entered == 2);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 1);
+        REQUIRE(b.entered == 0);
+    }
+
     sm.stop();
     REQUIRE(isActive(sm, {}));
     for (auto state : {&a, &aa, &ab, &b, &ba, &bb})
@@ -177,7 +202,7 @@ TEST_CASE("transitions in sychronous statemachine", "[statemachine]")
 }
 
 #if 0
-TEST_CASE("transitions in asychronous statemachine", "[statemachine]")
+TEST_CASE("transitions in asynchronous statemachine", "[statemachine]")
 {
     using namespace async;
     StateMachine_t sm;
@@ -195,6 +220,8 @@ TEST_CASE("transitions in asychronous statemachine", "[statemachine]")
     sm += b  + event(3) == ab;
     sm += aa + event(4) == b;
     sm += ba + event(4) == a;
+    sm += a  + event(5) == ab;
+    sm += ab + event(6) == a;
 
     sm.start();
     REQUIRE(isActive(sm, {&sm, &a, &aa}));
@@ -283,6 +310,29 @@ TEST_CASE("transitions in asychronous statemachine", "[statemachine]")
         REQUIRE(aa.entered == 2);
         REQUIRE(aa.left == 1);
         REQUIRE(ab.entered == 0);
+    }
+
+    SECTION("between ancestor and descendant")
+    {
+        sm.addEvent(5);
+        REQUIRE(isActive(sm, {&sm, &a, &ab}));
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+        REQUIRE(b.entered == 0);
+
+        sm.addEvent(6);
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        REQUIRE(a.entered == 3);
+        REQUIRE(a.left == 2);
+        REQUIRE(aa.entered == 2);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 1);
+        REQUIRE(b.entered == 0);
     }
 
     sm.stop();
