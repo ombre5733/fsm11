@@ -65,7 +65,7 @@ public:
     //! Returns the current child mode. The default is Exclusive.
     ChildMode childMode() const noexcept
     {
-        return m_childMode;
+        return ChildMode(m_flags & ChildModeFlag);
     }
 
     //State* findChild(StringRef name) const;
@@ -92,7 +92,7 @@ public:
     //! One and only one child of an active compound state will be active.
     bool isCompound() const noexcept
     {
-        return !isAtomic() && m_childMode == Exclusive;
+        return !isAtomic() && ChildMode(m_flags & ChildModeFlag) == Exclusive;
     }
 
     //! \brief Checks for a parallel state.
@@ -102,7 +102,7 @@ public:
     //! All children of an active parallel state will be active.
     bool isParallel() const noexcept
     {
-        return !isAtomic() && m_childMode == Parallel;
+        return !isAtomic() && ChildMode(m_flags & ChildModeFlag) == Parallel;
     }
 
     //! \brief The name.
@@ -165,7 +165,8 @@ public:
     //! behaviour.
     void setChildMode(ChildMode mode) noexcept
     {
-        m_childMode = mode;
+        m_flags &= ~ChildModeFlag;
+        m_flags |= mode;
     }
 
     //! \brief Changes the parent.
@@ -951,14 +952,15 @@ public:
 private:
     enum Flags
     {
-        SkipTransitionSelection = 0x01,
-        InEnterSet              = 0x02,
-        InExitSet               = 0x04,
-        StartInvoke             = 0x10,
-        Active                  = 0x20,
-        Invoked                 = 0x40,
+        SkipTransitionSelection = 0x10,
+        InEnterSet              = 0x20,
+        InExitSet               = 0x40,
+        Transient               = 0xF0,
 
-        Transient               = 0x0F
+        ChildModeFlag           = 0x01,
+        StartInvoke             = 0x02,
+        Active                  = 0x04,
+        Invoked                 = 0x08,
     };
 
     //! The state's name.
@@ -973,9 +975,9 @@ private:
     State* m_nextSibling;
     //! A pointer to the first transition.
     transition_type* m_transitions;
-    //! This flag specifies if the children are active exclusively or parallely.
-    ChildMode m_childMode;
-    int m_flags; //! \todo This should be of type Flags
+    //! The flags.
+    //! \todo This should be of type Flags
+    int m_flags;
 
     FSM11STD::atomic_bool m_visibleActive;
 
@@ -1001,7 +1003,6 @@ State<TStateMachine>::State(const char* name, State* parent) noexcept
       m_children(0),
       m_nextSibling(0),
       m_transitions(0),
-      m_childMode(Exclusive),
       m_flags(0),
       m_visibleActive(false)
 {
