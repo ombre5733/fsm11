@@ -486,3 +486,102 @@ TEST_CASE("initial states are activated after start", "[transition]")
         REQUIRE(b.entered == 0);
     }
 }
+
+TEST_CASE("transition actions are executed before state entries",
+          "[transition]")
+{
+    //REQUIRE(false);
+}
+
+TEST_CASE("initial states during configuration change", "[transition]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    TrackingState<State_t> b("b", &sm);
+    TrackingState<State_t> ba("ba", &b);
+    TrackingState<State_t> baa("baa", &ba);
+    TrackingState<State_t> bb("bb", &b);
+
+    SECTION("without initial state")
+    {
+        sm += a + event(1) == b;
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
+
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 1);
+        REQUIRE(b.entered == 1);
+        REQUIRE(b.left == 0);
+        REQUIRE(ba.entered == 1);
+        REQUIRE(ba.left == 0);
+        REQUIRE(baa.entered == 1);
+        REQUIRE(baa.left == 0);
+        REQUIRE(bb.entered == 0);
+    }
+
+    SECTION("with initial state")
+    {
+        sm += a + event(1) == b;
+        b.setInitialState(&bb);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &b, &bb}));
+
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 1);
+        REQUIRE(b.entered == 1);
+        REQUIRE(b.left == 0);
+        REQUIRE(ba.entered == 0);
+        REQUIRE(bb.entered == 1);
+        REQUIRE(bb.left == 0);
+    }
+
+    SECTION("initial state is ignored if the target is a sibling")
+    {
+        sm += a + event(1) == ba;
+        b.setInitialState(&bb);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
+
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 1);
+        REQUIRE(b.entered == 1);
+        REQUIRE(b.left == 0);
+        REQUIRE(ba.entered == 1);
+        REQUIRE(ba.left == 0);
+        REQUIRE(baa.entered == 1);
+        REQUIRE(baa.left == 0);
+        REQUIRE(bb.entered == 0);
+    }
+
+    SECTION("initial state is ignored if the target is a descendant")
+    {
+        sm += a + event(1) == baa;
+        b.setInitialState(&bb);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
+
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 1);
+        REQUIRE(b.entered == 1);
+        REQUIRE(b.left == 0);
+        REQUIRE(ba.entered == 1);
+        REQUIRE(ba.left == 0);
+        REQUIRE(baa.entered == 1);
+        REQUIRE(baa.left == 0);
+        REQUIRE(bb.entered == 0);
+    }
+}
