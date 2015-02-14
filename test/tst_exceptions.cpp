@@ -7,6 +7,10 @@
 
 using namespace fsm11;
 
+struct ActionException
+{
+};
+
 struct GuardException
 {
 };
@@ -66,17 +70,7 @@ TEST_CASE("throw in addEvent", "[exception]")
 
     SECTION("throw")
     {
-        bool caught = false;
-        try
-        {
-            sm.addEvent(1);
-        }
-        catch (ListException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
     }
 
@@ -84,18 +78,7 @@ TEST_CASE("throw in addEvent", "[exception]")
     {
         sm.addEvent(0);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-
-        bool caught = false;
-        try
-        {
-            sm.addEvent(1);
-        }
-        catch (ListException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
     }
 }
@@ -127,35 +110,14 @@ TEST_CASE("throw in guard", "[exception]")
 
     SECTION("throw")
     {
-        bool caught = false;
-        try
-        {
-            sm.addEvent(3);
-        }
-        catch (GuardException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
     }
 
     SECTION("transit then throw")
     {
         sm.addEvent(0);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-
-        bool caught = false;
-        try
-        {
-            sm.addEvent(3);
-        }
-        catch (GuardException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
     }
 
     // The state machine must have been stopped.
@@ -186,7 +148,7 @@ TEST_CASE("throw in action", "[exception]")
 
     auto action = [](unsigned event) {
         if (event == 3)
-            throw GuardException();
+            throw ActionException();
     };
 
     sm += aa + event(0) / action == ba;
@@ -199,35 +161,14 @@ TEST_CASE("throw in action", "[exception]")
 
     SECTION("throw")
     {
-        bool caught = false;
-        try
-        {
-            sm.addEvent(3);
-        }
-        catch (GuardException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
     }
 
     SECTION("transit then throw")
     {
         sm.addEvent(0);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-
-        bool caught = false;
-        try
-        {
-            sm.addEvent(3);
-        }
-        catch (GuardException&)
-        {
-            caught = true;
-        }
-
-        REQUIRE(caught);
+        REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
     }
 
     // The state machine must have been stopped.
