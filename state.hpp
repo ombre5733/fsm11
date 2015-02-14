@@ -219,7 +219,7 @@ public:
     typedef PreOrderIterator<true>  const_pre_order_iterator;
 
     template <bool TIsConst>
-    class PreOrderView;
+    class PreOrderSubtree;
 
     template <bool TIsConst>
     class PostOrderIterator;
@@ -227,7 +227,7 @@ public:
     typedef PostOrderIterator<true>  const_post_order_iterator;
 
     template <bool TIsConst>
-    class PostOrderView;
+    class PostOrderSubtree;
 
     template <bool TIsConst>
     class SiblingIterator;
@@ -363,14 +363,14 @@ public:
     //!     // state accesses all descendants of root in pre-order.
     //! }
     //! \endcode
-    PreOrderView<false> pre_order_subtree() noexcept
+    PreOrderSubtree<false> pre_order_subtree() noexcept
     {
-        return PreOrderView<false>(this);
+        return PreOrderSubtree<false>(this);
     }
 
-    PreOrderView<true> pre_order_subtree() const noexcept
+    PreOrderSubtree<true> pre_order_subtree() const noexcept
     {
-        return PreOrderView<true>(this);
+        return PreOrderSubtree<true>(this);
     }
 
 
@@ -431,14 +431,14 @@ public:
         return ++const_post_order_iterator(this);
     }
 
-    PostOrderView<false> post_order_subtree() noexcept
+    PostOrderSubtree<false> post_order_subtree() noexcept
     {
-        return PostOrderView<false>(this);
+        return PostOrderSubtree<false>(this);
     }
 
-    PostOrderView<true> post_order_subtree() const noexcept
+    PostOrderSubtree<true> post_order_subtree() const noexcept
     {
-        return PostOrderView<true>(this);
+        return PostOrderSubtree<true>(this);
     }
 
 
@@ -613,12 +613,12 @@ public:
 
     //! \brief A view for pre-order iteration.
     template <bool TIsConst>
-    class PreOrderView
+    class PreOrderSubtree
     {
     public:
         using iterator = PreOrderIterator<TIsConst>;
 
-        explicit PreOrderView(typename iterator::pointer state) noexcept
+        explicit PreOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
         {
         }
@@ -737,12 +737,12 @@ public:
 
     //! \brief A view for post-order iteration.
     template <bool TIsConst>
-    class PostOrderView
+    class PostOrderSubtree
     {
     public:
         using iterator = PostOrderIterator<TIsConst>;
 
-        explicit PostOrderView(typename iterator::pointer state) noexcept
+        explicit PostOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
         {
         }
