@@ -62,7 +62,8 @@ public:
     std::atomic_int invoked = 0;
 };
 
-TEST_CASE("transitions in synchronous statemachine", "[statemachine]")
+TEST_CASE("simple configuration changes in synchronous statemachine",
+          "[transition]")
 {
     using namespace sync;
     StateMachine_t sm;
@@ -202,7 +203,8 @@ TEST_CASE("transitions in synchronous statemachine", "[statemachine]")
 }
 
 #if 0
-TEST_CASE("transitions in asynchronous statemachine", "[statemachine]")
+TEST_CASE("simple configuration changes in asynchronous statemachine",
+          "[transition]")
 {
     using namespace async;
     StateMachine_t sm;
@@ -342,7 +344,71 @@ TEST_CASE("transitions in asynchronous statemachine", "[statemachine]")
 }
 #endif
 
-TEST_CASE("initial states are activated after start", "[statemachine]")
+TEST_CASE("targetless transitions block an event", "[transition]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    TrackingState<State_t> aa("aa", &a);
+    TrackingState<State_t> aaa("aaa", &aa);
+    TrackingState<State_t> aab("aab", &aa);
+    TrackingState<State_t> ab("ab", &a);
+    TrackingState<State_t> aba("aba", &ab);
+    TrackingState<State_t> abb("abb", &ab);
+    TrackingState<State_t> b("b", &sm);
+    TrackingState<State_t> ba("ba", &b);
+    TrackingState<State_t> bb("bb", &b);
+
+    sm += aa + event(1) == ab;
+
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa, &aaa}));
+    REQUIRE(a.entered == 1);
+    REQUIRE(a.left == 0);
+    REQUIRE(aa.entered == 1);
+    REQUIRE(aa.left == 0);
+    REQUIRE(aaa.entered == 1);
+    REQUIRE(aaa.left == 0);
+    REQUIRE(ab.entered == 0);
+    REQUIRE(b.entered == 0);
+
+    SECTION("without targetless transition")
+    {
+        sm.addEvent(1);
+
+        REQUIRE(isActive(sm, {&sm, &a, &ab, &aba}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(aaa.entered == 1);
+        REQUIRE(aaa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+        REQUIRE(aba.entered == 1);
+        REQUIRE(aba.left == 0);
+        REQUIRE(b.entered == 0);
+    }
+
+    SECTION("with targetless transition")
+    {
+        sm += aaa + event(1) == noTarget;
+
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &aaa}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 0);
+        REQUIRE(aaa.entered == 1);
+        REQUIRE(aaa.left == 0);
+        REQUIRE(ab.entered == 0);
+        REQUIRE(b.entered == 0);
+    }
+}
+
+TEST_CASE("initial states are activated after start", "[transition]")
 {
     using namespace sync;
     StateMachine_t sm;
