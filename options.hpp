@@ -1,9 +1,11 @@
 #ifndef FSM11_OPTIONS_HPP
 #define FSM11_OPTIONS_HPP
 
+#include "statemachine_fwd.hpp"
 #include "detail/options.hpp"
 
 #include <deque>
+#include <memory>
 
 namespace fsm11
 {
@@ -15,6 +17,8 @@ struct default_options
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
     using storage = type_list<>;
+    using transition_allocator_type = std::allocator<Transition<void>>;
+
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
 
@@ -116,6 +120,18 @@ struct Storage
     struct pack : TBase
     {
         using storage = fsm11_detail::type_list<TTypes...>;
+    };
+    //! \endcond
+};
+
+template <typename TAllocator>
+struct TransitionAllocator
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using transition_allocator_type = TAllocator;
     };
     //! \endcond
 };

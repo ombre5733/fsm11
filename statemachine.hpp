@@ -348,6 +348,7 @@ public:
     using transition_type = Transition<type>;
     using event_type = typename TOptions::event_type;
     using event_list_type = typename TOptions::event_list_type;
+    using transition_allocator_type = typename TOptions::transition_allocator_type;
 
 private:
     using dispatcher_type = typename get_dispatcher<TOptions>::type;
@@ -432,7 +433,10 @@ template <typename TState, typename TEvent, typename TGuard,
 void StateMachineImpl<TOptions>::add(
         SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
-    transition_type* transition = new transition_type(FSM11STD::move(t));
+    using allocator_t = typename TOptions::transition_allocator_type::template rebind<transition_type>::other;
+    allocator_t alloc;
+    void* mem = alloc.allocate(1);
+    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
 
@@ -441,7 +445,10 @@ template <typename TState, typename TGuard, typename TAction>
 void StateMachineImpl<TOptions>::add(
         SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
-    transition_type* transition = new transition_type(FSM11STD::move(t));
+    using allocator_t = typename TOptions::transition_allocator_type::template rebind<transition_type>::other;
+    allocator_t alloc;
+    void* mem = alloc.allocate(1);
+    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
 

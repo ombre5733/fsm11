@@ -585,3 +585,48 @@ TEST_CASE("initial states during configuration change", "[transition]")
         REQUIRE(bb.entered == 0);
     }
 }
+
+
+
+int g_numTransitions; // TODO: HACK
+
+template <typename T>
+class TrackingTransitionAllocator : public std::allocator<T>
+{
+    using base = std::allocator<T>;
+
+public:
+    template <typename U>
+    struct rebind
+    {
+        using other = TrackingTransitionAllocator<U>;
+    };
+
+    using size_type = typename base::size_type;
+
+    TrackingTransitionAllocator()
+    {
+        g_numTransitions = 0;
+    }
+
+    T* allocate(size_type n)
+    {
+        ++g_numTransitions;
+        return base::allocate(n);
+    }
+};
+
+TEST_CASE("transition allocator", "[transition]")
+{
+    using StateMachine_t = fsm11::StateMachine<TransitionAllocator<TrackingTransitionAllocator<Transition<void>>>>;
+    using State_t = StateMachine_t::state_type;
+
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    TrackingState<State_t> b("b", &sm);
+
+    sm += a + event(1) == b;
+
+    REQUIRE(g_numTransitions == 1);
+}
