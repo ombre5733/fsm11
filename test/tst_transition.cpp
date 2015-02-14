@@ -342,3 +342,81 @@ TEST_CASE("transitions in asynchronous statemachine", "[statemachine]")
 }
 #endif
 
+TEST_CASE("initial states are activated after start", "[statemachine]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    TrackingState<State_t> aa("aa", &a);
+    TrackingState<State_t> aaa("aaa", &aa);
+    TrackingState<State_t> aab("aab", &aa);
+    TrackingState<State_t> ab("ab", &a);
+    TrackingState<State_t> aba("aba", &ab);
+    TrackingState<State_t> abb("abb", &ab);
+    TrackingState<State_t> b("b", &sm);
+    TrackingState<State_t> ba("ba", &b);
+    TrackingState<State_t> bb("bb", &b);
+
+    SECTION("the first child is the default initial state")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &aaa}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 0);
+        REQUIRE(aaa.entered == 1);
+        REQUIRE(aaa.left == 0);
+        REQUIRE(ab.entered == 0);
+        REQUIRE(b.entered == 0);
+    }
+
+    SECTION("initial state is a child")
+    {
+        a.setInitialState(&ab);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &ab, &aba}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 0);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+        REQUIRE(aba.entered == 1);
+        REQUIRE(aba.left == 0);
+        REQUIRE(b.entered == 0);
+    }
+
+    SECTION("initial state is a descendant of the first child")
+    {
+        a.setInitialState(&aab);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &aab}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 0);
+        REQUIRE(aab.entered == 1);
+        REQUIRE(aab.left == 0);
+        REQUIRE(ab.entered == 0);
+        REQUIRE(b.entered == 0);
+    }
+
+    SECTION("initial state is a descendant of another child")
+    {
+        a.setInitialState(&aba);
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &ab, &aba}));
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 0);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+        REQUIRE(aba.entered == 1);
+        REQUIRE(aba.left == 0);
+        REQUIRE(b.entered == 0);
+    }
+}

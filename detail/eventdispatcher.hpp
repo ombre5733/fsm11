@@ -127,7 +127,8 @@ void EventDispatcherBase<TDerived>::clearEnabledTransitionsSet() noexcept
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::selectTransitions(bool eventless, event_type event)
+void EventDispatcherBase<TDerived>::selectTransitions(bool eventless,
+                                                      event_type event)
 {
     transition_type** outputIter = &m_enabledTransitions;
 
@@ -234,8 +235,18 @@ void EventDispatcherBase<TDerived>::markDescendantsForEntry()
 
             if (!childMarked)
             {
-                //! \todo Add the possibility to have an initial state
-                state->m_children->m_flags |= state_type::InEnterSet;
+                if (state_type* initialState = state->initialState())
+                {
+                    do
+                    {
+                        initialState->m_flags |= state_type::InEnterSet;
+                        initialState = initialState->parent();
+                    } while (initialState != &*state);
+                }
+                else
+                {
+                    state->m_children->m_flags |= state_type::InEnterSet;
+                }
             }
         }
         else if (state->isParallel())

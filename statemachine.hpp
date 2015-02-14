@@ -432,7 +432,6 @@ template <typename TState, typename TEvent, typename TGuard,
 void StateMachineImpl<TOptions>::add(
         SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
-    using namespace std;
     transition_type* transition = new transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
@@ -442,7 +441,6 @@ template <typename TState, typename TGuard, typename TAction>
 void StateMachineImpl<TOptions>::add(
         SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
-    using namespace std;
     transition_type* transition = new transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
