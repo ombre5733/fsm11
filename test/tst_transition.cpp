@@ -588,7 +588,6 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
 
 
-int g_numTransitions; // TODO: HACK
 
 template <typename T>
 class TrackingTransitionAllocator : public std::allocator<T>
@@ -602,31 +601,60 @@ public:
         using other = TrackingTransitionAllocator<U>;
     };
 
+    using pointer = typename base::pointer;
     using size_type = typename base::size_type;
 
-    TrackingTransitionAllocator()
+    TrackingTransitionAllocator(int& counter)
+        : m_numTransitions(counter)
     {
-        g_numTransitions = 0;
+        m_numTransitions = 0;
     }
 
-    T* allocate(size_type n)
+    template <typename U>
+    TrackingTransitionAllocator(const TrackingTransitionAllocator<U>& other)
+        : m_numTransitions(other.m_numTransitions)
     {
-        ++g_numTransitions;
+    }
+
+    pointer allocate(size_type n)
+    {
+        ++m_numTransitions;
         return base::allocate(n);
     }
+
+    void deallocate(pointer p, size_type s)
+    {
+        --m_numTransitions;
+        base::deallocate(p, s);
+    }
+
+private:
+    int& m_numTransitions;
+
+    template <typename U>
+    friend class TrackingTransitionAllocator;
 };
 
-TEST_CASE("transition allocator", "[transition]")
+TEST_CASE("transition allocator by copy-construction", "[transition]")
 {
     using StateMachine_t = fsm11::StateMachine<TransitionAllocator<TrackingTransitionAllocator<Transition<void>>>>;
     using State_t = StateMachine_t::state_type;
 
-    StateMachine_t sm;
+    int numTransitions = 0;
 
-    TrackingState<State_t> a("a", &sm);
-    TrackingState<State_t> b("b", &sm);
+    {
+        StateMachine_t sm{TrackingTransitionAllocator<void>(numTransitions)};
 
-    sm += a + event(1) == b;
+        TrackingState<State_t> a("a", &sm);
+        TrackingState<State_t> b("b", &sm);
 
-    REQUIRE(g_numTransitions == 1);
+        sm += a + event(1) == b;
+        REQUIRE(numTransitions == 1);
+        sm += a + event(2) == b;
+        REQUIRE(numTransitions == 2);
+        sm += a + event(3) == b;
+        REQUIRE(numTransitions == 3);
+    }
+
+    REQUIRE(numTransitions == 0);
 }

@@ -353,6 +353,10 @@ public:
 private:
     using dispatcher_type = typename get_dispatcher<TOptions>::type;
     using storage_type = typename get_storage<TOptions>::type;
+    using rebound_transition_allocator_t
+        = typename transition_allocator_type::
+          template rebind<transition_type>::other;
+
     friend dispatcher_type;
     friend storage_type;
 
@@ -363,10 +367,20 @@ public:
         state_type::m_stateMachine = this;
     }
 
+    StateMachineImpl(const transition_allocator_type& alloc)
+        : state_type("(StateMachine)"),
+          m_transitionAllocator(alloc)
+    {
+        state_type::m_stateMachine = this;
+    }
+
     //! \brief Destroys the state machine.
     virtual ~StateMachineImpl()
     {
         this->stop();
+
+        for (auto& state : *this)
+            state.deleteTransitions(m_transitionAllocator);
     }
 
     StateMachineImpl(const StateMachineImpl&) = delete;
@@ -422,6 +436,8 @@ public:
 private:
     //! A list of events which have to be handled by the event loop.
     event_list_type m_eventList;
+    //! The allocator for transitions.
+    rebound_transition_allocator_t m_transitionAllocator;
 
 
     friend class EventDispatcherBase<StateMachineImpl>;
@@ -433,9 +449,7 @@ template <typename TState, typename TEvent, typename TGuard,
 void StateMachineImpl<TOptions>::add(
         SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
-    using allocator_t = typename TOptions::transition_allocator_type::template rebind<transition_type>::other;
-    allocator_t alloc;
-    void* mem = alloc.allocate(1);
+    void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }
@@ -445,9 +459,7 @@ template <typename TState, typename TGuard, typename TAction>
 void StateMachineImpl<TOptions>::add(
         SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
-    using allocator_t = typename TOptions::transition_allocator_type::template rebind<transition_type>::other;
-    allocator_t alloc;
-    void* mem = alloc.allocate(1);
+    void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
 }

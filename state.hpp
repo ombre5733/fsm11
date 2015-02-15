@@ -1011,6 +1011,9 @@ private:
 
     //! Adds a \p transition.
     void pushBackTransition(transition_type* transition) noexcept;
+    //! Deletes all transitions.
+    template <typename TAlloc>
+    void deleteTransitions(TAlloc& alloc) noexcept;
 
     friend state_machine_type;
 
@@ -1157,6 +1160,19 @@ void State<TStateMachine>::pushBackTransition(transition_type* transition) noexc
         while (iter->m_nextInSourceState)
             iter = iter->m_nextInSourceState;
         iter->m_nextInSourceState = transition;
+    }
+}
+
+template <typename TStateMachine>
+template <typename TAlloc>
+void State<TStateMachine>::deleteTransitions(TAlloc& alloc) noexcept
+{
+    while (m_transitions)
+    {
+        auto next = m_transitions->m_nextInSourceState;
+        m_transitions->~transition_type();
+        alloc.deallocate(m_transitions, sizeof(transition_type));
+        m_transitions = next;
     }
 }
 
