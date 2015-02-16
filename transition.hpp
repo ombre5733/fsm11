@@ -50,7 +50,7 @@ private:
     TAction m_action;
 
     template <typename TStateMachine>
-    friend class Transition;
+    friend class fsm11::Transition;
 };
 
 template <typename TState, typename TEvent, typename TGuard, typename TAction>
@@ -111,7 +111,14 @@ struct EventGuardAction
     {
     }
 
-    EventGuardAction(const EventGuardAction&) = default;
+    EventGuardAction(EventGuardAction&& other) noexcept
+        : m_event(FSM11STD::forward<TEvent>(other.m_event)),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    EventGuardAction(const EventGuardAction&) = delete;
     EventGuardAction& operator=(const EventGuardAction&) = delete;
 
     TEvent m_event;
@@ -131,7 +138,13 @@ struct EventGuard
     {
     }
 
-    EventGuard(const EventGuard&) = default;
+    EventGuard(EventGuard&& other) noexcept
+        : m_event(FSM11STD::forward<TEvent>(other.m_event)),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard))
+    {
+    }
+
+    EventGuard(const EventGuard&) = delete;
     EventGuard& operator=(const EventGuard&) = delete;
 
     template <typename TAction>
@@ -157,7 +170,12 @@ struct Event
     {
     }
 
-    Event(const Event&) = default;
+    Event(Event&& other) noexcept
+        : m_event(FSM11STD::forward<TEvent>(other.m_event))
+    {
+    }
+
+    Event(const Event&) = delete;
     Event& operator=(const Event&) = delete;
 
     template <typename TGuard>
@@ -243,7 +261,7 @@ private:
     TAction m_action;
 
     template <typename TStateMachine>
-    friend class Transition;
+    friend class fsm11::Transition;
 };
 
 template <typename TState, typename TGuard, typename TAction>
@@ -296,7 +314,13 @@ struct NoEventGuardAction
     {
     }
 
-    NoEventGuardAction(const NoEventGuardAction&) = default;
+    NoEventGuardAction(NoEventGuardAction&& other) noexcept
+        : m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    NoEventGuardAction(const NoEventGuardAction&) = delete;
     NoEventGuardAction& operator=(const NoEventGuardAction&) = delete;
 
     TGuard m_guard;
@@ -313,7 +337,12 @@ struct NoEventGuard
     {
     }
 
-    NoEventGuard(const NoEventGuard&) = default;
+    NoEventGuard(NoEventGuard&& other) noexcept
+        : m_guard(FSM11STD::forward<TGuard>(other.m_guard))
+    {
+    }
+
+    NoEventGuard(const NoEventGuard&) = delete;
     NoEventGuard& operator=(const NoEventGuard&) = delete;
 
     template <typename TAction>
