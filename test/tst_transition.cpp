@@ -586,9 +586,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
     }
 }
 
-
-
-
+// An allocator to keep track of the number of transitions.
 template <typename T>
 class TrackingTransitionAllocator : public std::allocator<T>
 {
