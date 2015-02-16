@@ -32,13 +32,6 @@ class ThreadedState : public State<TStateMachine>
 public:
     using type = ThreadedState<TStateMachine>;
 
-    //! \brief Creates a state with a threaded invoke action.
-    explicit ThreadedState(const char* name,
-                           base_type* parent = 0)
-        : base_type(name, parent)
-    {
-    }
-
 #ifdef FSM11_USE_WEOS
     //! \brief Creates a state with a threaded invoke action.
     explicit ThreadedState(const char* name,
@@ -46,6 +39,13 @@ public:
                            base_type* parent = 0)
         : base_type(name, parent),
           m_invokeThreadAttributes(attrs)
+    {
+    }
+#else
+    //! \brief Creates a state with a threaded invoke action.
+    explicit ThreadedState(const char* name,
+                           base_type* parent = 0)
+        : base_type(name, parent)
     {
     }
 #endif // FSM11_USE_WEOS
