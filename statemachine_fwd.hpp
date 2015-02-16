@@ -1,7 +1,23 @@
 #ifndef FSM11_STATEMACHINE_FWD_HPP
 #define FSM11_STATEMACHINE_FWD_HPP
 
-#define FSM11STD   std
+// If the compile switch FSM11_USER_CONFIG is set, it points to the user's
+// configuration file. If the switch is not set, we assume that the
+// user configuration is somewhere in the path.
+#if defined(FSM11_USER_CONFIG)
+    #include FSM11_USER_CONFIG
+#else
+    #include "fsm11_user_config.hpp"
+#endif // FSM11_USER_CONFIG
+
+
+
+#ifdef FSM11_USE_WEOS
+    #define FSM11STD   weos
+#else
+    #define FSM11STD   std
+#endif // FSM11_USE_WEOS
+
 
 namespace fsm11
 {
