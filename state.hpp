@@ -6,10 +6,12 @@
 #ifdef FSM11_USE_WEOS
 #include <weos/atomic.hpp>
 #include <weos/exception.hpp>
+#include <weos/initializer_list.hpp>
 #include <weos/type_traits.hpp>
 #else
 #include <atomic>
 #include <exception>
+#include <initializer_list>
 #include <type_traits>
 #endif // FSM11_USE_WEOS
 
@@ -68,7 +70,26 @@ public:
         return ChildMode(m_flags & ChildModeFlag);
     }
 
-    //State* findChild(StringRef name) const;
+    //! Finds a child.
+    //!
+    //! Returns a pointer to the child with the given \p name or a
+    //! null-pointer if no such child exists.
+    State* findChild(const char* name) const noexcept;
+
+    //! Finds a descendant.
+    //!
+    //! Recursively looks for a descendant state. On each hierarchy level the
+    //! a child with a name from the corresponding \p nameList element is
+    //! searched.
+    //!
+    //! For example, the expression
+    //! \code
+    //! s.findChild({"A", "B"});
+    //! \endcode
+    //! returns a pointer to the grand-child \p B, which is a child of
+    //! state \p A, which in turn is a child of \p s.
+    template <typename T>
+    State* findDescendant(std::initializer_list<T> nameList) const noexcept;
 
     //! \brief Returns the initial state.
     //!
@@ -1086,34 +1107,39 @@ State<TStateMachine>::State(const char* name, State* parent) noexcept
         parent->addChild(this);
 }
 
-#if 0
 template <typename TStateMachine>
-State<TStateMachine>* State<TStateMachine>::findChild(StringRef name) const
+State<TStateMachine>* State<TStateMachine>::findChild(
+        const char* name) const noexcept
 {
-    const State* parent = this;
-    while (1)
+    for (const_sibling_iterator child = child_begin();
+         child != child_end(); ++child)
     {
-        std::pair<StringRef, StringRef> splitName = name.split('.');
-        if (splitName.first.empty())
-            return 0;
+        if (child->name() == name)
+            return const_cast<State*>(&*child);
+    }
+    return nullptr;
+}
 
-        const_child_iterator child = parent->child_begin();
-        for (; child != parent->child_end(); ++child)
+template <typename TStateMachine>
+template <typename T>
+State<TStateMachine>* State<TStateMachine>::findDescendant(
+        std::initializer_list<T> nameList) const noexcept
+{
+    const State* state = this;
+    for (auto&& name : nameList)
+    {
+        const_sibling_iterator child = state->child_begin();
+        for (; child != state->child_end(); ++child)
         {
-            if (child->name() == splitName.first)
+            if (child->name() == name)
                 break;
         }
-        if (child == parent->child_end())
-            return 0;
-        if (splitName.second.empty())
-            return const_cast<State*>(&*child);
-
-        parent = &*child;
-        name = splitName.second;
+        if (child == state->child_end())
+            return nullptr;
+        state = &*child;
     }
-    return 0;
+    return const_cast<State*>(state);
 }
-#endif
 
 template <typename TStateMachine>
 inline
@@ -1197,7 +1223,8 @@ void State<TStateMachine>::removeChild(State* child) noexcept
 }
 
 template <typename TStateMachine>
-void State<TStateMachine>::pushBackTransition(transition_type* transition) noexcept
+void State<TStateMachine>::pushBackTransition(
+        transition_type* transition) noexcept
 {
     if (!m_transitions)
     {

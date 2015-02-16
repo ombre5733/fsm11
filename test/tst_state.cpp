@@ -114,7 +114,6 @@ TEST_CASE("set an initial state", "[state]")
     REQUIRE(sm.initialState() == &s1);
 }
 
-#if 0
 TEST_CASE("find a child", "[state]")
 {
     State_t p("p");
@@ -126,15 +125,56 @@ TEST_CASE("find a child", "[state]")
     State_t c31("c31", &c3);
     State_t c32("c32", &c3);
 
-    State_t* found = p.findChild("c1");
-    REQUIRE(found != 0);
-    REQUIRE(!std::strcmp("c1", found->name()));
+    State_t* found;
 
-    found = p.findChild("c1", "c12");
-    REQUIRE(found != 0);
-    REQUIRE(!std::strcmp("c12", found->name()));
+    found = p.findChild("c1");
+    REQUIRE(found == &c1);
+
+    found = c3.findChild("c32");
+    REQUIRE(found == &c32);
+
+    found = p.findChild("p");
+    REQUIRE(found == nullptr);
+
+    found = c1.findChild("p");
+    REQUIRE(found == nullptr);
+
+    found = c1.findChild("");
+    REQUIRE(found == nullptr);
 }
-#endif
+
+TEST_CASE("find a descendant", "[state]")
+{
+    State_t p("p");
+    State_t c1("c1", &p);
+    State_t c2("c2", &p);
+    State_t c3("c3", &p);
+    State_t c11("c11", &c1);
+    State_t c12("c12", &c1);
+    State_t c31("c31", &c3);
+    State_t c32("c32", &c3);
+
+    State_t* found;
+
+    found = p.findDescendant({"c1"});
+    REQUIRE(found == &c1);
+
+    found = c3.findDescendant({"c32"});
+    REQUIRE(found == &c32);
+
+    found = p.findDescendant({"c3", "c32"});
+    REQUIRE(found == &c32);
+
+    found = p.findDescendant({"p"});
+    REQUIRE(found == nullptr);
+
+    found = c1.findDescendant({"p"});
+    REQUIRE(found == nullptr);
+
+    found = c1.findDescendant({""});
+    REQUIRE(found == nullptr);
+}
+
 TEST_CASE("ancestor/descendant relationship", "[state]")
 {
     State_t p("p");
