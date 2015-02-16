@@ -489,7 +489,9 @@ public:
         {
             auto event = derived().m_eventList.front();
             derived().m_eventList.pop_front();
+
             derived().invokeEventDispatchCallback(event);
+            derived().invokeUpdateStorageCallback();
 
             this->clearTransientStateFlags();
             this->selectTransitions(false, event);
@@ -525,6 +527,7 @@ public:
                 this->leaveConfiguration();
             };
 
+            derived().invokeUpdateStorageCallback();
             this->enterInitialStates();
             this->runToCompletion(true);
             m_running = true;
@@ -534,6 +537,7 @@ public:
     void stop()
     {
         auto lock = derived().getLock();
+        derived().invokeUpdateStorageCallback();
         this->leaveConfiguration();
         m_running = false;
     }
@@ -647,6 +651,7 @@ private:
                 this->leaveConfiguration();
             };
 
+            derived().invokeUpdateStorageCallback();
             this->enterInitialStates();
             this->runToCompletion(true);
         }
@@ -662,7 +667,12 @@ private:
                         eventLoopLock,
                         [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
             if (m_stopRequest)
+            {
+                auto lock = derived().getLock();
+                derived().invokeUpdateStorageCallback();
+                this->leaveConfiguration();
                 return;
+            }
             // Get the next event from the event list.
             event = derived().m_eventList.front();
             derived().m_eventList.pop_front(); // TODO: What if this throws?
@@ -675,6 +685,7 @@ private:
             };
 
             derived().invokeEventDispatchCallback(event);
+            derived().invokeUpdateStorageCallback();
 
             this->clearTransientStateFlags();
             this->selectTransitions(false, event);

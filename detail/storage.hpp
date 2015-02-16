@@ -54,6 +54,19 @@ public:
         FSM11STD::get<TIndex>(m_data) = FSM11STD::forward<TType>(value);
     }
 
+    template <typename TType>
+    void setUpdateStorageCallback(TType&&)
+    {
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "No storage specified");
+    }
+
+protected:
+    inline
+    void invokeUpdateStorageCallback()
+    {
+    }
+
 private:
     tuple_type m_data;
 
@@ -83,6 +96,23 @@ public:
     {
         static_assert(TIndex != TIndex, "No storage specified");
     }
+
+    template <typename TType>
+    void setUpdateStorageCallback(TType&& callback)
+    {
+        m_updateStorageCallback = FSM11STD::forward<TType>(callback);
+    }
+
+protected:
+    inline
+    void invokeUpdateStorageCallback()
+    {
+        if (m_updateStorageCallback)
+            m_updateStorageCallback();
+    }
+
+private:
+    FSM11STD::function<void()> m_updateStorageCallback;
 };
 
 template <typename TOptions>
