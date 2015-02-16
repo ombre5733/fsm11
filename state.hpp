@@ -442,6 +442,55 @@ public:
     }
 
 
+    //! \brief An iterator to the first child.
+    //!
+    //! Returns an iterator to the first child.
+    sibling_iterator child_begin() noexcept
+    {
+        return sibling_iterator(m_children);
+    }
+
+    //! \brief A const-iterator to the first child.
+    //!
+    //! Returns a const-iterator to the first child.
+    const_sibling_iterator child_begin() const noexcept
+    {
+        return sibling_iterator(m_children);
+    }
+
+    //! \brief A const-iterator to the first child.
+    //!
+    //! Returns a const-iterator to the first child.
+    const_sibling_iterator child_cbegin() const noexcept
+    {
+        return sibling_iterator(m_children);
+    }
+
+    //! \brief An iterator past the last child.
+    //!
+    //! Returns an iterator past the last child.
+    sibling_iterator child_end() noexcept
+    {
+        return sibling_iterator();
+    }
+
+    //! \brief A const-iterator past the last child.
+    //!
+    //! Returns a const-iterator past the last child.
+    const_sibling_iterator child_end() const noexcept
+    {
+        return sibling_iterator();
+    }
+
+    //! \brief A const-iterator past the last child.
+    //!
+    //! Returns a const-iterator past the last child.
+    const_sibling_iterator child_cend() const noexcept
+    {
+        return sibling_iterator();
+    }
+
+
     //! \brief A pre-order iterator.
     //!
     //! The PreOrderIterator is a pre-order depth-first iterator over a
@@ -1190,7 +1239,7 @@ template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(
         State<TStateMachine>* state1, State<TStateMachine>* state2) noexcept
 {
-    while ((state1 = state1->parent()))
+    while ((state1 = state1->parent()) != 0)
     {
         if (isProperAncestor(state1, state2))
             return state1;
@@ -1230,7 +1279,7 @@ bool isProperAncestor(const State<TStateMachine>* ancestor,
 {
     if (!ancestor->isAtomic())
     {
-        while ((descendant = descendant->parent()))
+        while ((descendant = descendant->parent()) != 0)
         {
             if (ancestor == descendant)
                 return true;

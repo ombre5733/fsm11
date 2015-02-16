@@ -63,6 +63,15 @@ TEST_CASE("iterate over a single state", "[iteration]")
         REQUIRE(&s == &*cs.post_order_begin());
         REQUIRE(&s == &*cs.post_order_cbegin());
     }
+
+    SECTION("child iterator")
+    {
+        REQUIRE(s.child_begin() == s.child_end());
+        REQUIRE(s.child_cbegin() == s.child_cend());
+
+        REQUIRE(cs.child_begin() == cs.child_end());
+        REQUIRE(cs.child_cbegin() == cs.child_cend());
+    }
 }
 
 TEST_CASE("iterate over state hierarchy", "[iteration]")
@@ -333,6 +342,15 @@ TEST_CASE("iterate over empty state machine", "[iteration]")
 //        REQUIRE(++csm.atomic_begin()  == csm.atomic_end());
 //        REQUIRE(++csm.atomic_cbegin() == csm.atomic_cend());
 //    }
+
+    SECTION("child iterator")
+    {
+        REQUIRE(sm.child_begin() == sm.child_end());
+        REQUIRE(sm.child_cbegin() == sm.child_cend());
+
+        REQUIRE(csm.child_begin() == csm.child_end());
+        REQUIRE(csm.child_cbegin() == csm.child_cend());
+    }
 }
 
 TEST_CASE("iterate over non-empty state machine", "[iteration]")
@@ -531,52 +549,4 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
 //        REQUIRE(std::count_if(csm.atomic_cbegin(), csm.atomic_cend(),
 //                              predicate) == 5);
     }
-}
-
-TEST_CASE("start empty fsm", "[start]")
-{
-    StateMachine_t sm;
-
-    REQUIRE(sm.running() == false);
-    sm.start();
-    REQUIRE(sm.running() == true);
-    sm.stop();
-    REQUIRE(sm.running() == false);
-    sm.start();
-    REQUIRE(sm.running() == true);
-    sm.stop();
-    REQUIRE(sm.running() == false);
-}
-
-TEST_CASE("restart empty fsm", "[start]")
-{
-    StateMachine_t sm;
-
-    REQUIRE(sm.running() == false);
-    sm.start();
-    REQUIRE(sm.running() == true);
-    sm.start();
-    REQUIRE(sm.running() == true);
-    sm.stop();
-    REQUIRE(sm.running() == false);
-    sm.stop();
-    REQUIRE(sm.running() == false);
-}
-
-TEST_CASE("start fsm with compound state", "[start]")
-{
-    StateMachine_t sm;
-
-    State_t a("a", &sm);
-    State_t b("b", &sm);
-    State_t c("c", &sm);
-
-    REQUIRE(sm.running() == false);
-    REQUIRE(sm.isActive() == false);
-
-    sm.start();
-    REQUIRE(sm.running() == true);
-
-    sm.stop();
-    REQUIRE(sm.running() == false);
 }
