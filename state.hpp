@@ -1220,7 +1220,7 @@ void State<TStateMachine>::deleteTransitions(TAlloc& alloc) noexcept
     {
         auto next = m_transitions->m_nextInSourceState;
         m_transitions->~transition_type();
-        alloc.deallocate(m_transitions, sizeof(transition_type));
+        alloc.deallocate(m_transitions, 1);
         m_transitions = next;
     }
 }
