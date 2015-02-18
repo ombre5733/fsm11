@@ -1,10 +1,10 @@
 #ifndef FSM11_USER_CONFIG_HPP
 #define FSM11_USER_CONFIG_HPP
 
+// If this macro is set, assertions are enabled.
+// #define FSM11_ENABLE_ASSERT
 
-// #define FSM11_ASSERT()
-
-// If the following define is set, the framework uses WEOS.
+// If this macro is set, the framework uses WEOS rather than the STL.
 // #define FSM11_USE_WEOS
 
 // ----=====================================================================----

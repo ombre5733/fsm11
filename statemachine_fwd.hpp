@@ -10,7 +10,20 @@
     #include "fsm11_user_config.hpp"
 #endif // FSM11_USER_CONFIG
 
+// ----=====================================================================----
+//     Assertion handling
+// ----=====================================================================----
 
+#if defined(FSM11_ENABLE_ASSERT)
+    #include <cassert>
+    #define FSM11_ASSERT(cond)   assert(cond)
+#else
+    #define FSM11_ASSERT(cond)   ((void)0)
+#endif // FSM11_ENABLE_ASSERT
+
+// ----=====================================================================----
+//     WEOS integration
+// ----=====================================================================----
 
 #ifdef FSM11_USE_WEOS
     #define FSM11STD   weos

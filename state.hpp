@@ -15,7 +15,6 @@
 #include <type_traits>
 #endif // FSM11_USE_WEOS
 
-#include <cassert> // TODO
 #include <cstring>
 #include <iterator>
 
@@ -548,7 +547,8 @@ public:
         //! Prefix increment.
         PreOrderIterator& operator++() noexcept
         {
-            //assert(m_current)
+            FSM11_ASSERT(m_current);
+
             if (m_current->m_children && !m_skipChildren)
             {
                 // Visit the first child.
@@ -742,7 +742,7 @@ public:
         //! Prefix increment.
         PostOrderIterator& operator++() noexcept
         {
-            //assert(m_current)
+            FSM11_ASSERT(m_current);
 
             if (m_current->m_nextSibling)
             {
@@ -1184,7 +1184,7 @@ void State<TStateMachine>::setParent(State* parent) noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::addChild(State* child) noexcept
 {
-    assert(child->m_nextSibling == 0);
+    FSM11_ASSERT(child->m_nextSibling == 0);
 
     if (!m_children)
     {
@@ -1202,7 +1202,7 @@ void State<TStateMachine>::addChild(State* child) noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::removeChild(State* child) noexcept
 {
-    assert(m_children != 0);
+    FSM11_ASSERT(m_children != 0);
 
     if (child == m_children)
         m_children = child->m_nextSibling;
@@ -1211,7 +1211,8 @@ void State<TStateMachine>::removeChild(State* child) noexcept
         State* iter = m_children;
         while (1)
         {
-            assert(iter != 0);
+            FSM11_ASSERT(iter != 0);
+
             if (iter->m_nextSibling == child)
             {
                 iter->m_nextSibling = child->m_nextSibling;

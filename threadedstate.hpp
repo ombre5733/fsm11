@@ -55,7 +55,7 @@ public:
         // If the invoked thread is joinable, exitInvoke() has not been
         // called. This is the case if the state is destructed before the
         // state machine is stopped.
-        assert(!m_invokeThread.joinable());
+        FSM11_ASSERT(!m_invokeThread.joinable());
     }
 
     bool exitRequested() const
@@ -104,7 +104,7 @@ public:
     //! Joins with the thread in which the invoked action is running.
     virtual FSM11STD::exception_ptr exitInvoke() override
     {
-        assert(m_invokeThread.joinable());
+        FSM11_ASSERT(m_invokeThread.joinable());
 
         m_mutex.lock();
         m_exitRequested = true;
