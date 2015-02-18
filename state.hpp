@@ -16,6 +16,7 @@
 #endif // FSM11_USE_WEOS
 
 #include <cassert> // TODO
+#include <cstring>
 #include <iterator>
 
 namespace fsm11
@@ -1114,7 +1115,7 @@ State<TStateMachine>* State<TStateMachine>::findChild(
     for (const_sibling_iterator child = child_begin();
          child != child_end(); ++child)
     {
-        if (child->name() == name)
+        if (std::strcmp(child->name(), name) == 0)
             return const_cast<State*>(&*child);
     }
     return nullptr;
@@ -1131,7 +1132,7 @@ State<TStateMachine>* State<TStateMachine>::findDescendant(
         const_sibling_iterator child = state->child_begin();
         for (; child != state->child_end(); ++child)
         {
-            if (child->name() == name)
+            if (std::strcmp(child->name(), name) == 0)
                 break;
         }
         if (child == state->child_end())
