@@ -88,8 +88,8 @@ public:
     //! \endcode
     //! returns a pointer to the grand-child \p B, which is a child of
     //! state \p A, which in turn is a child of \p s.
-    template <typename T>
-    State* findDescendant(std::initializer_list<T> nameList) const noexcept;
+    State* findDescendant(
+            std::initializer_list<const char*> nameList) const noexcept;
 
     //! \brief Returns the initial state.
     //!
@@ -1122,9 +1122,8 @@ State<TStateMachine>* State<TStateMachine>::findChild(
 }
 
 template <typename TStateMachine>
-template <typename T>
 State<TStateMachine>* State<TStateMachine>::findDescendant(
-        std::initializer_list<T> nameList) const noexcept
+        std::initializer_list<const char*> nameList) const noexcept
 {
     const State* state = this;
     for (auto&& name : nameList)
