@@ -8,6 +8,12 @@ using State_t = fsm11::FunctionState<StateMachine_t>;
 
 TEST_CASE("construct function state", "[functionstate]")
 {
+    State_t s0("s0");
+    REQUIRE(!s0.isActive());
+    REQUIRE(s0.parent() == 0);
+    REQUIRE(!s0.entryFunction());
+    REQUIRE(!s0.exitFunction());
+
     State_t s1("s1", nullptr, nullptr);
     REQUIRE(!s1.isActive());
     REQUIRE(s1.parent() == 0);
@@ -42,4 +48,44 @@ TEST_CASE("construct function state", "[functionstate]")
     s4.exitFunction()(0);
     REQUIRE(entered == 2);
     REQUIRE(left == 2);
+}
+
+TEST_CASE("set actions of function state", "[functionstate]")
+{
+    int entered = 0;
+    int left = 0;
+    auto enter = [&](unsigned ev) { entered += ev; };
+    auto leave = [&](unsigned ev) { left += ev; };
+
+    State_t s("s");
+    REQUIRE(!s.entryFunction());
+    REQUIRE(!s.exitFunction());
+
+    s.setEntryFunction(enter);
+    REQUIRE(s.entryFunction() != nullptr);
+    REQUIRE(!s.exitFunction());
+
+    s.entryFunction()(3);
+    REQUIRE(entered == 3);
+    REQUIRE(left == 0);
+    REQUIRE(s.entryFunction() != nullptr);
+    REQUIRE(!s.exitFunction());
+
+    s.setExitFunction(leave);
+    REQUIRE(s.entryFunction() != nullptr);
+    REQUIRE(s.exitFunction() != nullptr);
+
+    s.exitFunction()(5);
+    REQUIRE(entered == 3);
+    REQUIRE(left == 5);
+    REQUIRE(s.entryFunction() != nullptr);
+    REQUIRE(s.exitFunction() != nullptr);
+
+    s.setEntryFunction(nullptr);
+    REQUIRE(!s.entryFunction());
+    REQUIRE(s.exitFunction() != nullptr);
+
+    s.setExitFunction(nullptr);
+    REQUIRE(!s.entryFunction());
+    REQUIRE(!s.exitFunction());
 }

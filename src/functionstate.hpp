@@ -25,10 +25,15 @@ public:
     using function_type = FSM11STD::function<void(event_type)>;
     using type = FunctionState<TStateMachine>;
 
+    explicit FunctionState(const char* name, base_type* parent = 0)
+        : base_type(name, parent)
+    {
+    }
+
     template <typename TEntry, typename TExit>
-    explicit FunctionState(const char* name,
-                           TEntry&& entryFn, TExit&& exitFn,
-                           base_type* parent = 0)
+    FunctionState(const char* name,
+                  TEntry&& entryFn, TExit&& exitFn,
+                  base_type* parent = 0)
         : base_type(name, parent),
           m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
           m_exitFunction(FSM11STD::forward<TExit>(exitFn))
