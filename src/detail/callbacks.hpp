@@ -168,7 +168,6 @@ template <typename TDerived>
 class WithoutStateCallbacks
 {
 public:
-    using options = typename get_options<TDerived>::type;
     using state_type = State<TDerived>;
 
     template <typename TType>
@@ -201,7 +200,6 @@ template <typename TDerived>
 class WithStateCallbacks
 {
 public:
-    using options = typename get_options<TDerived>::type;
     using state_type = State<TDerived>;
 
     template <typename TType>
@@ -236,21 +234,66 @@ private:
     FSM11STD::function<void(state_type*)> m_stateExitCallback;
 };
 
-template <bool TEnabled, typename TOptions>
-struct get_state_callbacks_helper
+template <typename TOptions>
+struct get_state_callbacks
 {
-    typedef WithoutStateCallbacks<StateMachineImpl<TOptions>> type;
+    using type = typename FSM11STD::conditional<
+                     TOptions::state_callbacks_enable,
+                     WithStateCallbacks<StateMachineImpl<TOptions>>,
+                     WithoutStateCallbacks<StateMachineImpl<TOptions>>>::type;
+};
+
+// ----=====================================================================----
+//     State exception callbacks
+// ----=====================================================================----
+
+class WithoutStateExceptionCallbacks
+{
+public:
+    template <typename TType>
+    void setStateExceptionCallback(TType&&)
+    {
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "State exception callbacks are disabled");
+    }
+
+protected:
+    inline
+    void invokeStateExceptionCallback(FSM11STD::exception_ptr&&)
+    {
+        FSM11_ASSERT(false);
+    }
+};
+
+template <typename TDerived>
+class WithStateExceptionCallbacks
+{
+public:
+    template <typename TType>
+    void setStateExceptionCallback(TType&& callback)
+    {
+        m_stateExceptionCallback = FSM11STD::forward<TType>(callback);
+    }
+
+protected:
+    inline
+    void invokeStateExceptionCallback(FSM11STD::exception_ptr&& eptr)
+    {
+        if (m_stateExceptionCallback)
+            m_stateExceptionCallback(FSM11STD::move(eptr));
+    }
+
+private:
+    FSM11STD::function<void(FSM11STD::exception_ptr)> m_stateExceptionCallback;
 };
 
 template <typename TOptions>
-struct get_state_callbacks_helper<true, TOptions>
+struct get_state_exception_callbacks
 {
-    typedef WithStateCallbacks<StateMachineImpl<TOptions>> type;
-};
-
-template <typename TOptions>
-struct get_state_callbacks : public get_state_callbacks_helper<TOptions::state_callbacks_enable, TOptions>
-{
+    using type = typename FSM11STD::conditional<
+                     TOptions::state_exception_callbacks_enable,
+                     WithStateExceptionCallbacks<StateMachineImpl<TOptions>>,
+                     WithoutStateExceptionCallbacks>::type;
 };
 
 } // namespace fsm11_detail

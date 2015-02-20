@@ -14,43 +14,31 @@ namespace fsm11_detail
 
 struct default_options
 {
+    // Types
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
     using storage = type_list<>;
     using transition_allocator_type = std::allocator<Transition<void>>;
 
+    // Multithreading
     static constexpr bool synchronous_dispatch = true;
-    static constexpr bool multithreading_enable = false;
+    static constexpr bool multithreading_enable = true; // TODO: Have an option
 
+    // Callbacks
     static constexpr bool event_callbacks_enable = false;
     static constexpr bool configuration_change_callbacks_enable = false;
     static constexpr bool state_callbacks_enable = false;
+
+    // Callbacks for exeptions
+    static constexpr bool state_exception_callbacks_enable = false;
 };
 
 } // namespace fsm11_detail
 
 
-struct SynchronousEventDispatching
-{
-    //! \cond
-    template <typename TBase>
-    struct pack : TBase
-    {
-        static constexpr bool synchronous_dispatch = true;
-    };
-    //! \endcond
-};
-
-struct AsynchronousEventDispatching
-{
-    //! \cond
-    template <typename TBase>
-    struct pack : TBase
-    {
-        static constexpr bool synchronous_dispatch = false;
-    };
-    //! \endcond
-};
+// ----=====================================================================----
+//     Types
+// ----=====================================================================----
 
 template <typename TType>
 struct EventType
@@ -75,6 +63,60 @@ struct EventListType
     };
     //! \endcond
 };
+
+template <typename... TTypes>
+struct Storage
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using storage = fsm11_detail::type_list<TTypes...>;
+    };
+    //! \endcond
+};
+
+template <typename TAllocator>
+struct TransitionAllocator
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        using transition_allocator_type = TAllocator;
+    };
+    //! \endcond
+};
+
+// ----=====================================================================----
+//     Multithreading
+// ----=====================================================================----
+
+struct SynchronousEventDispatching
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool synchronous_dispatch = true;
+    };
+    //! \endcond
+};
+
+struct AsynchronousEventDispatching
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool synchronous_dispatch = false;
+    };
+    //! \endcond
+};
+
+// ----=====================================================================----
+//     Callbacks
+// ----=====================================================================----
 
 template <bool TEnable>
 struct EnableEventCallbacks
@@ -112,26 +154,18 @@ struct EnableStateCallbacks
     //! \endcond
 };
 
-template <typename... TTypes>
-struct Storage
-{
-    //! \cond
-    template <typename TBase>
-    struct pack : TBase
-    {
-        using storage = fsm11_detail::type_list<TTypes...>;
-    };
-    //! \endcond
-};
+// ----=====================================================================----
+//     Exception callbacks
+// ----=====================================================================----
 
-template <typename TAllocator>
-struct TransitionAllocator
+template <bool TEnable>
+struct EnableStateExceptionCallbacks
 {
     //! \cond
     template <typename TBase>
     struct pack : TBase
     {
-        using transition_allocator_type = TAllocator;
+        static constexpr bool state_exception_callbacks_enable = TEnable;
     };
     //! \endcond
 };

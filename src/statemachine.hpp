@@ -339,6 +339,7 @@ class StateMachineImpl :
         public get_configuration_change_callbacks<TOptions>::type,
         public get_event_callbacks<TOptions>::type,
         public get_state_callbacks<TOptions>::type,
+        public get_state_exception_callbacks<TOptions>::type,
         public get_storage<TOptions>::type,
         public State<StateMachineImpl<TOptions>>
 {

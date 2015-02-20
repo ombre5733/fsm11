@@ -270,7 +270,18 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
             && !(iter->m_flags & state_type::Active))
         {
             derived().invokeStateEntryCallback(&*iter);
-            iter->onEntry(event);
+            try
+            {
+                iter->onEntry(event);
+            }
+            catch (...)
+            {
+                if (options::state_exception_callbacks_enable)
+                    derived().invokeStateExceptionCallback(
+                                FSM11STD::current_exception());
+                else
+                    throw;
+            }
             iter->m_flags |= (state_type::Active | state_type::StartInvoke);
         }
     }
