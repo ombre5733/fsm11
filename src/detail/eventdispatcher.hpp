@@ -301,10 +301,27 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                 iter->m_flags &= ~state_type::Invoked;
                 FSM11STD::exception_ptr exc = iter->exitInvoke();
                 if (exc)
-                    FSM11STD::rethrow_exception(exc);
+                {
+                    if (options::state_exception_callbacks_enable)
+                        derived().invokeStateExceptionCallback(
+                                    FSM11STD::current_exception());
+                    else
+                        FSM11STD::rethrow_exception(exc);
+                }
             }
             iter->m_flags &= ~(state_type::Active | state_type::StartInvoke);
-            iter->onExit(event);
+            try
+            {
+                iter->onExit(event);
+            }
+            catch (...)
+            {
+                if (options::state_exception_callbacks_enable)
+                    derived().invokeStateExceptionCallback(
+                                FSM11STD::current_exception());
+                else
+                    throw;
+            }
         }
     }
 }
