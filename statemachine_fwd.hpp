@@ -1,8 +1,8 @@
 #ifndef FSM11_STATEMACHINE_FWD_HPP
 #define FSM11_STATEMACHINE_FWD_HPP
 
-// If the compile switch FSM11_USER_CONFIG is set, it points to the user's
-// configuration file. If the switch is not set, we assume that the
+// If the macro FSM11_USER_CONFIG is set, it points to the user's
+// configuration file. If the macro is not set, we assume that the
 // user configuration is somewhere in the path.
 #if defined(FSM11_USER_CONFIG)
     #include FSM11_USER_CONFIG
@@ -60,7 +60,7 @@ struct get_options<StateMachineImpl<TOptions>>
     typedef TOptions type;
 };
 
-} // namespace detail
+} // namespace fsm11_detail
 
 template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(

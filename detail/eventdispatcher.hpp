@@ -537,9 +537,19 @@ public:
     void stop()
     {
         auto lock = derived().getLock();
-        derived().invokeUpdateStorageCallback();
-        this->leaveConfiguration();
-        m_running = false;
+        if (m_running)
+        {
+            m_running = false;
+            SCOPE_EXIT { this->leaveConfiguration(); };
+            derived().invokeUpdateStorageCallback();
+        }
+    }
+
+    template <typename T = void>
+    void eventLoop()
+    {
+        static_assert(!FSM11STD::is_same<T, T>::value,
+                      "A synchronous statemachine has no eventLoop().");
     }
 
 private:
@@ -566,7 +576,9 @@ public:
     using event_type = typename options::event_type;
 
     AsynchronousEventDispatcher()
-        : m_stopRequest(false)
+        : m_startRequest(false),
+          m_stopRequest(false),
+          m_running(false)
     {
     }
 
@@ -586,50 +598,122 @@ public:
     bool running() const
     {
         auto lock = derived().getLock();
-        return m_eventLoopThread.joinable();
+        return m_running;
     }
 
     void start()
     {
-        start(0);
-    }
-
-    void start(int /*attrs*/)
-    {
-        auto lock = derived().getLock();
-        if (!m_eventLoopThread.joinable())
-        {
-            m_stopRequest = false;
-            m_eventLoopThread = FSM11STD::thread(
-                                    // TODO: attrs
-                                    &AsynchronousEventDispatcher::eventLoop,
-                                    this);
-        }
+        m_eventLoopMutex.lock();
+        m_startRequest = true;
+        m_eventLoopMutex.unlock();
+        m_continueEventLoop.notify_one();
     }
 
     void stop()
     {
-        auto lock = derived().getLock();
-        if (m_eventLoopThread.joinable())
+        m_eventLoopMutex.lock();
+        m_stopRequest = true;
+        m_eventLoopMutex.unlock();
+        m_continueEventLoop.notify_one();
+    }
+
+    void eventLoop()
+    {
+        do
         {
-            m_eventLoopMutex.lock();
-            m_stopRequest = true;
-            m_eventLoopMutex.unlock();
-            m_continueEventLoop.notify_one();
-            m_eventLoopThread.join();
-        }
+            {
+                // Wait until a start or stop request has been sent.
+                FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+                m_continueEventLoop.wait(eventLoopLock,
+                                         [this]{ return m_startRequest || m_stopRequest; });
+                m_startRequest = false;
+                if (m_stopRequest)
+                {
+                    m_stopRequest = false;
+                    return;
+                }
+                eventLoopLock.unlock();
+
+                auto lock = derived().getLock();
+                SCOPE_FAILURE {
+                    this->clearEnabledTransitionsSet();
+                    this->leaveConfiguration();
+                };
+
+                derived().invokeUpdateStorageCallback();
+                this->enterInitialStates();
+                this->runToCompletion(true);
+                m_running = true;
+            }
+
+            while (true)
+            {
+                typename options::event_type event;
+
+                // Wait until either an event is added to the list or
+                // an FSM stop has been requested.
+                FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+                m_continueEventLoop.wait(
+                            eventLoopLock,
+                            [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
+                m_startRequest = false;
+                if (m_stopRequest)
+                {
+                    m_stopRequest = false;
+                    auto lock = derived().getLock();
+                    m_running = false;
+                    SCOPE_EXIT { this->leaveConfiguration(); };
+                    derived().invokeUpdateStorageCallback();
+                    return;
+                }
+
+                // Get the next event from the event list.
+                event = derived().m_eventList.front();
+                derived().m_eventList.pop_front(); // TODO: What if this throws?
+                eventLoopLock.unlock();
+
+                auto lock = derived().getLock();
+                SCOPE_FAILURE {
+                    m_running = false;
+                    this->clearEnabledTransitionsSet();
+                    this->leaveConfiguration();
+                };
+
+                derived().invokeEventDispatchCallback(event);
+                derived().invokeUpdateStorageCallback();
+
+                this->clearTransientStateFlags();
+                this->selectTransitions(false, event);
+                bool followedTransition = false;
+                if (this->m_enabledTransitions)
+                {
+                    followedTransition = true;
+                    this->microstep(FSM11STD::move(event));
+                    this->clearEnabledTransitionsSet();
+                }
+                else
+                {
+                    derived().invokeEventDiscardedCallback(FSM11STD::move(event));
+                }
+
+                this->runToCompletion(followedTransition);
+            }
+        } while (false); // TODO: have an option to continue looping even after a stop request
     }
 
 private:
-    //! A handle to the thread which dispatches the events.
-    FSM11STD::thread m_eventLoopThread;
-    //! A mutex to suppress concurrent modifications to the thread handle.
+    //! A mutex to prevent concurrent modifications of the request flags.
     mutable FSM11STD::mutex m_eventLoopMutex;
-
-    //! A control event to steer the event loop.
-    bool m_stopRequest;
     //! This CV signals that a new control event is available.
     FSM11STD::condition_variable m_continueEventLoop;
+    //! Set if starting the state machine has been requested.
+    bool m_startRequest;
+    //! Set if stopping the state machine has been requested.
+    bool m_stopRequest;
+
+    //! Set if the state machine is running. Guarded by the multithreading
+    //! lock but not by m_eventLoopMutex.
+    bool m_running;
 
 
     TDerived& derived()
@@ -640,69 +724,6 @@ private:
     const TDerived& derived() const
     {
         return *static_cast<const TDerived*>(this);
-    }
-
-    void eventLoop()
-    {
-        {
-            auto lock = derived().getLock();
-            SCOPE_FAILURE {
-                this->clearEnabledTransitionsSet();
-                this->leaveConfiguration();
-            };
-
-            derived().invokeUpdateStorageCallback();
-            this->enterInitialStates();
-            this->runToCompletion(true);
-        }
-
-        while (true)
-        {
-            typename options::event_type event;
-
-            // Wait until either an event is added to the list or
-            // an FSM stop has been requested.
-            FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
-            m_continueEventLoop.wait(
-                        eventLoopLock,
-                        [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
-            if (m_stopRequest)
-            {
-                auto lock = derived().getLock();
-                derived().invokeUpdateStorageCallback();
-                this->leaveConfiguration();
-                return;
-            }
-            // Get the next event from the event list.
-            event = derived().m_eventList.front();
-            derived().m_eventList.pop_front(); // TODO: What if this throws?
-            eventLoopLock.unlock();
-
-            auto lock = derived().getLock();
-            SCOPE_FAILURE {
-                this->clearEnabledTransitionsSet();
-                this->leaveConfiguration();
-            };
-
-            derived().invokeEventDispatchCallback(event);
-            derived().invokeUpdateStorageCallback();
-
-            this->clearTransientStateFlags();
-            this->selectTransitions(false, event);
-            bool followedTransition = false;
-            if (this->m_enabledTransitions)
-            {
-                followedTransition = true;
-                this->microstep(FSM11STD::move(event));
-                this->clearEnabledTransitionsSet();
-            }
-            else
-            {
-                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
-            }
-
-            this->runToCompletion(followedTransition);
-        }
     }
 };
 

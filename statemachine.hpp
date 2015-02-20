@@ -367,7 +367,7 @@ public:
         state_type::m_stateMachine = this;
     }
 
-    StateMachineImpl(const transition_allocator_type& alloc)
+    explicit StateMachineImpl(const transition_allocator_type& alloc)
         : state_type("(StateMachine)"),
           m_transitionAllocator(alloc)
     {
