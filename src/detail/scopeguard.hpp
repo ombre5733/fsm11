@@ -48,7 +48,7 @@ public:
         other.m_dismissed = true;
     }
 
-    ~ScopeGuard() noexcept
+    ~ScopeGuard() noexcept(false)
     {
         if (!m_dismissed)
         {
@@ -142,7 +142,7 @@ ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, false> operator+(
 
 #define SCOPE_EXIT \
     auto WEOS_ANONYMOUS_VARIABLE(_weos_scopeGuard_) = \
-    weos_exception_detail::OnScopeExit() + [&]() noexcept
+    weos_exception_detail::OnScopeExit() + [&]()
 
 #define SCOPE_FAILURE \
     auto WEOS_ANONYMOUS_VARIABLE(_weos_scopeGuard_) = \
@@ -150,6 +150,6 @@ ExceptionScopeGuard<typename FSM11STD::decay<TCallable>::type, false> operator+(
 
 #define SCOPE_SUCCESS \
     auto WEOS_ANONYMOUS_VARIABLE(_weos_scopeGuard_) = \
-    weos_exception_detail::OnScopeSuccess() + [&]() noexcept
+    weos_exception_detail::OnScopeSuccess() + [&]()
 
 #endif // SCOPEGUARD_HPP
