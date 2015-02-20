@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
-#include "../functionstate.hpp"
-#include "../statemachine.hpp"
+#include "../src/functionstate.hpp"
+#include "../src/statemachine.hpp"
 
 using StateMachine_t = fsm11::StateMachine<>;
 using State_t = fsm11::FunctionState<StateMachine_t>;

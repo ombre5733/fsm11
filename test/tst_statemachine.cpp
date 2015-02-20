@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../statemachine.hpp"
+#include "../src/statemachine.hpp"
 #include <future>
 
 using namespace fsm11;

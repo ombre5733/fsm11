@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../statemachine.hpp"
+#include "../src/statemachine.hpp"
 
 using StateMachine_t = fsm11::StateMachine<fsm11::EnableStateCallbacks<true>>;
 using State_t = fsm11::State<StateMachine_t>;

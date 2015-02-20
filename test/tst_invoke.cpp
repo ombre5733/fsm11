@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../statemachine.hpp"
+#include "../src/statemachine.hpp"
 #include "testutils.hpp"
 
 using StateMachine_t = fsm11::StateMachine<>;

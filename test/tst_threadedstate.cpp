@@ -1,7 +1,7 @@
 #include "catch.hpp"
 
-#include "../threadedstate.hpp"
-#include "../statemachine.hpp"
+#include "../src/threadedstate.hpp"
+#include "../src/statemachine.hpp"
 
 #include <condition_variable>
 #include <mutex>
