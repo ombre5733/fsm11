@@ -1,6 +1,6 @@
 #include "catch.hpp"
 
-#include "../src/statemachine.hpp"hpp"
+#include "../src/statemachine.hpp"
 #include "testutils.hpp"
 
 using namespace fsm11;
@@ -17,50 +17,6 @@ namespace async
 using StateMachine_t = StateMachine<AsynchronousEventDispatching>;
 using State_t = StateMachine_t::state_type;
 } // namespace async
-
-
-template <typename TBase>
-class TrackingState : public TBase
-{
-public:
-    using event_type = typename TBase::event_type;
-
-    template <typename T>
-    explicit TrackingState(const char* name, T* parent = 0)
-        : TBase(name, parent),
-          entered(0),
-          left(0),
-          invoked(0)
-    {
-    }
-
-    virtual void onEntry(event_type) override
-    {
-        ++entered;
-    }
-
-    virtual void onExit(event_type) override
-    {
-        ++left;
-    }
-
-    virtual void enterInvoke() override
-    {
-        REQUIRE(invoked == 0);
-        ++invoked;
-    }
-
-    virtual std::exception_ptr exitInvoke() override
-    {
-        REQUIRE(invoked == 1);
-        --invoked;
-        return nullptr;
-    }
-
-    std::atomic_int entered = 0;
-    std::atomic_int left = 0;
-    std::atomic_int invoked = 0;
-};
 
 TEST_CASE("simple configuration changes in synchronous statemachine",
           "[transition]")
