@@ -695,7 +695,7 @@ public:
                     SCOPE_FAILURE { this->leaveConfiguration(); };
                     derived().invokeUpdateStorageCallback();
                     this->leaveConfiguration();
-                    return;
+                    break;
                 }
 
                 // Get the next event from the event list.
