@@ -110,6 +110,7 @@ struct AsynchronousEventDispatching
     struct pack : TBase
     {
         static constexpr bool synchronous_dispatch = false;
+        static constexpr bool multithreading_enable = true;
     };
     //! \endcond
 };
