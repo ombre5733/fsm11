@@ -35,7 +35,7 @@ public:
 #ifdef FSM11_USE_WEOS
     //! \brief Creates a state with a threaded invoke action.
     explicit ThreadedState(const char* name,
-                           weos::thread::attributes attrs,
+                           const weos::thread::attributes& attrs,
                            base_type* parent = 0)
         : base_type(name, parent),
           m_invokeThreadAttributes(attrs)
