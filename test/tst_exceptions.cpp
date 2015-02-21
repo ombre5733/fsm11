@@ -238,3 +238,89 @@ TEST_CASE("throw in onExit", "[exception]")
     REQUIRE(aa.entered == 1);
     REQUIRE(aa.left == 1);
 }
+
+#if 0
+TEST_CASE("async sm: throw in transition guard", "[exception]")
+{
+    using StateMachine_t = StateMachine<AsynchronousEventDispatching,
+                                        EventListType<ThrowingList>,
+                                        ConfigurationChangeCallbacksEnable<true>>;
+    using State_t = StateMachine_t::state_type;
+    using FunctionState_t = FunctionState<StateMachine_t>;
+
+    std::future<void> result;
+
+    StateMachine_t sm;
+
+    State_t a("a", &sm);
+    State_t aa("aa", &a);
+    State_t ab("ab", &a);
+    State_t b("b", &sm);
+    State_t ba("ba", &b);
+    State_t bb("bb", &b);
+
+    auto guard = [](unsigned event) {
+        if (event == 3)
+            throw GuardException();
+        return event % 2 == 0;
+    };
+
+    sm += aa + event(0) [guard] == ba;
+    sm += aa + event(3) [guard] == ba;
+    sm += ba + event(3) [guard] == bb;
+
+    std::mutex mutex;
+    bool configurationChanged = false;
+    std::condition_variable cv;
+
+    sm.setConfigurationChangeCallback([&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        configurationChanged = true;
+        cv.notify_all();
+    });
+
+    auto waitForConfigurationChange = [&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait(lock, [&] { return configurationChanged; });
+        configurationChanged = false;
+    };
+
+    result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+
+    REQUIRE(isActive(sm, {}));
+    sm.start();
+    return;
+    waitForConfigurationChange();
+#if 0
+    return;
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+    SECTION("throw")
+    {
+        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+    }
+
+    SECTION("transit then throw")
+    {
+        sm.addEvent(0);
+        waitForConfigurationChange();
+        REQUIRE(isActive(sm, {&sm, &b, &ba}));
+        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+    }
+
+    // The state machine must have been stopped.
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
+
+    // Restart the state machine.
+    sm.start();
+    REQUIRE(isActive(sm, {&sm, &a, &aa}));
+    sm.addEvent(0);
+    REQUIRE(isActive(sm, {&sm, &b, &ba}));
+    sm.stop();
+
+    REQUIRE(!sm.running());
+    REQUIRE(isActive(sm, {}));
+#endif
+}
+#endif

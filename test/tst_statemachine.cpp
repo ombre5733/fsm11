@@ -1,7 +1,6 @@
 #include "catch.hpp"
 
 #include "../src/statemachine.hpp"
-#include <future>
 
 using namespace fsm11;
 
@@ -47,7 +46,7 @@ TEST_CASE("the eventloop of an asynchronous statemachine is left upon destructio
         REQUIRE(!sm.running());
         REQUIRE(sm.numConfigurationChanges() == 0);
 
-        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+        result = sm.startAsyncEventLoop();
     }
 }
 
@@ -94,7 +93,7 @@ TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
     REQUIRE(!sm.running());
     for (int cnt = 0; cnt < 2; ++cnt)
     {
-        auto result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+        auto result = sm.startAsyncEventLoop();
 
         sm.start();
         waitForConfigurationChange();
@@ -115,16 +114,40 @@ TEST_CASE("an asynchronous statemachine is stopped upon destruction",
     using namespace async;
     std::future<void> result;
 
+    std::mutex mutex;
+    bool configurationChanged = false;
+    std::condition_variable cv;
+
+    auto waitForConfigurationChange = [&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait(lock, [&] { return configurationChanged; });
+        configurationChanged = false;
+    };
+
     SECTION("without starting")
     {
         StateMachine_t sm;
-        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+        result = sm.startAsyncEventLoop();
     }
 
     SECTION("with starting")
     {
         StateMachine_t sm;
-        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+        result = sm.startAsyncEventLoop();
         sm.start();
+    }
+
+    SECTION("with starting and waiting for a configuration change")
+    {
+        StateMachine_t sm;
+        sm.setConfigurationChangeCallback([&] {
+            std::unique_lock<std::mutex> lock(mutex);
+            configurationChanged = true;
+            cv.notify_all();
+        });
+
+        result = sm.startAsyncEventLoop();
+        sm.start();
+        waitForConfigurationChange();
     }
 }

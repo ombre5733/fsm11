@@ -2,7 +2,6 @@
 
 #include "../src/statemachine.hpp"
 #include "testutils.hpp"
-#include <future>
 
 using namespace fsm11;
 
@@ -200,7 +199,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     sm += a  + event(5) == ab;
     sm += ab + event(6) == a;
 
-    result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+    result = sm.startAsyncEventLoop();
 
     sm.start();
     waitForConfigurationChange();

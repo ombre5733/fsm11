@@ -7,12 +7,14 @@
 #ifdef FSM11_USE_WEOS
 #include <weos/atomic.hpp>
 #include <weos/condition_variable.hpp>
+#include <weos/future.hpp>
 #include <weos/mutex.hpp>
 #include <weos/utility.hpp>
 #include <weos/thread.hpp>
 #else
 #include <atomic>
 #include <condition_variable>
+#include <future>
 #include <mutex>
 #include <utility>
 #include <thread>
@@ -579,7 +581,20 @@ public:
     void eventLoop()
     {
         static_assert(!FSM11STD::is_same<T, T>::value,
-                      "A synchronous statemachine has no eventLoop().");
+                      "A synchronous statemachine has no event-loop.");
+    }
+
+    template <typename T = void>
+    void startAsyncEventLoop()
+    {
+        static_assert(!FSM11STD::is_same<T, T>::value,
+                      "A synchronous statemachine has no event-loop.");
+    }
+
+protected:
+    void halt()
+    {
+        stop();
     }
 
 private:
@@ -649,6 +664,78 @@ public:
 
     void eventLoop()
     {
+        {
+            FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+            // TODO: if (m_eventLoopRunning) throw;
+            m_eventLoopActive = true;
+        }
+
+        doEventLoop();
+    }
+
+#ifdef FSM11_USE_WEOS
+    FSM11STD::future<void> startAsyncEventLoop(const weos::thread::attributes& attrs)
+    {
+        FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+        // TODO: if (m_eventLoopRunning) throw;
+        m_eventLoopActive = true;
+        return FSM11STD::async(attrs, &AsynchronousEventDispatcher::doEventLoop, this);
+    }
+#else
+    FSM11STD::future<void> startAsyncEventLoop()
+    {
+        FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+        // TODO: if (m_eventLoopRunning) throw;
+        m_eventLoopActive = true;
+        return FSM11STD::async(std::launch::async,
+                               &AsynchronousEventDispatcher::doEventLoop, this);
+    }
+#endif
+
+protected:
+    void halt()
+    {
+        stop();
+        FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+        m_continueEventLoop.wait(eventLoopLock,
+                                 [this]{ return !m_eventLoopActive; });
+    }
+
+private:
+    //! A mutex to prevent concurrent modifications of the request flags.
+    mutable FSM11STD::mutex m_eventLoopMutex;
+    //! This CV signals that a new control event is available.
+    FSM11STD::condition_variable m_continueEventLoop;
+    //! Set if starting the state machine has been requested.
+    bool m_startRequest;
+    //! Set if stopping the state machine has been requested.
+    bool m_stopRequest;
+    //! Set if the event loop is running.
+    bool m_eventLoopActive;
+
+    //! Set if the state machine is running. Guarded by the multithreading
+    //! lock but not by m_eventLoopMutex.
+    bool m_running;
+
+    TDerived& derived()
+    {
+        return *static_cast<TDerived*>(this);
+    }
+
+    const TDerived& derived() const
+    {
+        return *static_cast<const TDerived*>(this);
+    }
+
+    void doEventLoop()
+    {
+        SCOPE_EXIT {
+            m_eventLoopMutex.lock();
+            m_eventLoopActive = false;
+            m_eventLoopMutex.unlock();
+            m_continueEventLoop.notify_all();
+        };
+
         do
         {
             {
@@ -730,31 +817,6 @@ public:
                 this->runToCompletion(followedTransition);
             }
         } while (false); // TODO: have an option to continue looping even after a stop request
-    }
-
-private:
-    //! A mutex to prevent concurrent modifications of the request flags.
-    mutable FSM11STD::mutex m_eventLoopMutex;
-    //! This CV signals that a new control event is available.
-    FSM11STD::condition_variable m_continueEventLoop;
-    //! Set if starting the state machine has been requested.
-    bool m_startRequest;
-    //! Set if stopping the state machine has been requested.
-    bool m_stopRequest;
-
-    //! Set if the state machine is running. Guarded by the multithreading
-    //! lock but not by m_eventLoopMutex.
-    bool m_running;
-
-
-    TDerived& derived()
-    {
-        return *static_cast<TDerived*>(this);
-    }
-
-    const TDerived& derived() const
-    {
-        return *static_cast<const TDerived*>(this);
     }
 };
 

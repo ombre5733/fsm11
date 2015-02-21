@@ -378,7 +378,7 @@ public:
     //! \brief Destroys the state machine.
     virtual ~StateMachineImpl()
     {
-        this->stop();
+        this->halt();
 
         for (auto& state : *this)
             state.deleteTransitions(m_transitionAllocator);
