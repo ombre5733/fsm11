@@ -116,11 +116,25 @@ struct AsynchronousEventDispatching
 };
 
 // ----=====================================================================----
+//
+// ----=====================================================================----
+
+template <bool TEnable>
+struct StopTransitionSelectionAfterMatch
+        // ContinueTransitionSelectionAfterMatch
+        // MatchingTransitionStopsSelection
+        // ConsiderAllTransitionsInSelection
+        // TransitionSelectionStopsAfterMatch
+{
+
+};
+
+// ----=====================================================================----
 //     Callbacks
 // ----=====================================================================----
 
 template <bool TEnable>
-struct EnableEventCallbacks
+struct EventCallbacksEnable
 {
     //! \cond
     template <typename TBase>
@@ -132,7 +146,7 @@ struct EnableEventCallbacks
 };
 
 template <bool TEnable>
-struct EnableConfigurationChangeCallbacks
+struct ConfigurationChangeCallbacksEnable
 {
     //! \cond
     template <typename TBase>
@@ -144,7 +158,7 @@ struct EnableConfigurationChangeCallbacks
 };
 
 template <bool TEnable>
-struct EnableStateCallbacks
+struct StateCallbacksEnable
 {
     //! \cond
     template <typename TBase>
@@ -160,7 +174,7 @@ struct EnableStateCallbacks
 // ----=====================================================================----
 
 template <bool TEnable>
-struct EnableStateExceptionCallbacks
+struct StateExceptionCallbacksEnable
 {
     //! \cond
     template <typename TBase>

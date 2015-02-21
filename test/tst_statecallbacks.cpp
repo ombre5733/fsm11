@@ -2,7 +2,7 @@
 
 #include "../src/statemachine.hpp"
 
-using StateMachine_t = fsm11::StateMachine<fsm11::EnableStateCallbacks<true>>;
+using StateMachine_t = fsm11::StateMachine<fsm11::StateCallbacksEnable<true>>;
 using State_t = fsm11::State<StateMachine_t>;
 
 TEST_CASE("create state machine with state callbacks", "[callbacks]")

@@ -16,7 +16,7 @@ using State_t = StateMachine_t::state_type;
 namespace async
 {
 using StateMachine_t = StateMachine<AsynchronousEventDispatching,
-                                    EnableConfigurationChangeCallbacks<true>>;
+                                    ConfigurationChangeCallbacksEnable<true>>;
 using State_t = StateMachine_t::state_type;
 } // namespace async
 

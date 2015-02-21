@@ -43,8 +43,7 @@ public:
     }
 #else
     //! \brief Creates a state with a threaded invoke action.
-    explicit ThreadedState(const char* name,
-                           base_type* parent = 0)
+    explicit ThreadedState(const char* name, base_type* parent = 0)
         : base_type(name, parent)
     {
     }
@@ -81,7 +80,7 @@ public:
     //! \brief The actual invoke action.
     //!
     //! This method is called in a new thread. Derived classes have to
-    //! override this function.
+    //! provide an implementation.
     virtual void invoke() = 0;
 
     //! Enteres the invoked thread.
