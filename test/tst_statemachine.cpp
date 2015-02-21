@@ -20,12 +20,35 @@ using State_t = StateMachine_t::state_type;
 } // namespace async
 
 
-TEST_CASE("construct a statemachine", "[statemachine]")
+TEST_CASE("construct a synchronous statemachine", "[statemachine]")
 {
     using namespace sync;
     StateMachine_t sm;
     REQUIRE(!sm.running());
     REQUIRE(sm.numConfigurationChanges() == 0);
+}
+
+TEST_CASE("construct an asynchronous statemachine", "[statemachine]")
+{
+    using namespace async;
+    StateMachine_t sm;
+    REQUIRE(!sm.running());
+    REQUIRE(sm.numConfigurationChanges() == 0);
+}
+
+TEST_CASE("the eventloop of an asynchronous statemachine is left upon destruction",
+          "[statemachine]")
+{
+    std::future<void> result;
+
+    {
+        using namespace async;
+        StateMachine_t sm;
+        REQUIRE(!sm.running());
+        REQUIRE(sm.numConfigurationChanges() == 0);
+
+        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+    }
 }
 
 TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
@@ -83,5 +106,25 @@ TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
         REQUIRE(!sm.running());
         REQUIRE(!sm.isActive());
         REQUIRE(sm.numConfigurationChanges() == 2 * cnt + 2);
+    }
+}
+
+TEST_CASE("an asynchronous statemachine is stopped upon destruction",
+          "[statemachine]")
+{
+    using namespace async;
+    std::future<void> result;
+
+    SECTION("without starting")
+    {
+        StateMachine_t sm;
+        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+    }
+
+    SECTION("with starting")
+    {
+        StateMachine_t sm;
+        result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+        sm.start();
     }
 }
