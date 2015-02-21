@@ -2,6 +2,7 @@
 
 #include "../src/statemachine.hpp"
 #include "testutils.hpp"
+#include <future>
 
 using namespace fsm11;
 
@@ -14,7 +15,8 @@ using State_t = StateMachine_t::state_type;
 
 namespace async
 {
-using StateMachine_t = StateMachine<AsynchronousEventDispatching>;
+using StateMachine_t = StateMachine<AsynchronousEventDispatching,
+                                    EnableConfigurationChangeCallbacks<true>>;
 using State_t = StateMachine_t::state_type;
 } // namespace async
 
@@ -158,12 +160,29 @@ TEST_CASE("simple configuration changes in synchronous statemachine",
         REQUIRE(state->entered == state->left);
 }
 
-#if 0
 TEST_CASE("simple configuration changes in asynchronous statemachine",
           "[transition]")
 {
+    std::future<void> result;
+
+    std::mutex mutex;
+    bool configurationChanged = false;
+    std::condition_variable cv;
+
+    auto waitForConfigurationChange = [&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait(lock, [&] { return configurationChanged; });
+        configurationChanged = false;
+    };
+
     using namespace async;
     StateMachine_t sm;
+
+    sm.setConfigurationChangeCallback([&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        configurationChanged = true;
+        cv.notify_all();
+    });
 
     TrackingState<State_t> a("a", &sm);
     TrackingState<State_t> aa("aa", &a);
@@ -181,7 +200,10 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     sm += a  + event(5) == ab;
     sm += ab + event(6) == a;
 
+    result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+
     sm.start();
+    waitForConfigurationChange();
     REQUIRE(isActive(sm, {&sm, &a, &aa}));
     REQUIRE(a.entered == 1);
     REQUIRE(a.left == 0);
@@ -189,10 +211,10 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     REQUIRE(aa.left == 0);
     REQUIRE(ab.entered == 0);
     REQUIRE(b.entered == 0);
-
     SECTION("from atomic to atomic")
     {
         sm.addEvent(2);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
         REQUIRE(a.entered == 1);
         REQUIRE(a.left == 1);
@@ -206,6 +228,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
         REQUIRE(bb.entered == 0);
 
         sm.addEvent(2);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &b, &bb}));
         REQUIRE(b.entered == 1);
         REQUIRE(b.left == 0);
@@ -218,6 +241,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     SECTION("from compound to atomic")
     {
         sm.addEvent(3);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &b, &bb}));
         REQUIRE(a.entered == 1);
         REQUIRE(a.left == 1);
@@ -231,6 +255,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
         REQUIRE(bb.left == 0);
 
         sm.addEvent(3);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &a, &ab}));
         REQUIRE(b.entered == 1);
         REQUIRE(b.left == 1);
@@ -245,6 +270,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     SECTION("from atomic to compound")
     {
         sm.addEvent(4);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
         REQUIRE(a.entered == 1);
         REQUIRE(a.left == 1);
@@ -258,6 +284,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
         REQUIRE(bb.entered == 0);
 
         sm.addEvent(4);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
         REQUIRE(b.entered == 1);
         REQUIRE(b.left == 1);
@@ -273,6 +300,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     SECTION("between ancestor and descendant")
     {
         sm.addEvent(5);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &a, &ab}));
         REQUIRE(a.entered == 2);
         REQUIRE(a.left == 1);
@@ -283,6 +311,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
         REQUIRE(b.entered == 0);
 
         sm.addEvent(6);
+        waitForConfigurationChange();
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
         REQUIRE(a.entered == 3);
         REQUIRE(a.left == 2);
@@ -294,11 +323,11 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     }
 
     sm.stop();
+    waitForConfigurationChange();
     REQUIRE(isActive(sm, {}));
     for (auto state : {&a, &aa, &ab, &b, &ba, &bb})
         REQUIRE(state->entered == state->left);
 }
-#endif
 
 TEST_CASE("targetless transitions block an event", "[transition]")
 {
@@ -443,11 +472,14 @@ TEST_CASE("initial states are activated after start", "[transition]")
     }
 }
 
+// TODO
+#if 0
 TEST_CASE("transition actions are executed before state entries",
           "[transition]")
 {
     //REQUIRE(false);
 }
+#endif
 
 TEST_CASE("initial states during configuration change", "[transition]")
 {
