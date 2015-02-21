@@ -309,7 +309,8 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                         FSM11STD::rethrow_exception(exc);
                 }
             }
-            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke);
+            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke
+                               | state_type::InExitSet);
             try
             {
                 iter->onExit(event);
@@ -568,8 +569,9 @@ public:
         if (m_running)
         {
             m_running = false;
-            SCOPE_EXIT { this->leaveConfiguration(); };
+            SCOPE_FAILURE { this->leaveConfiguration(); };
             derived().invokeUpdateStorageCallback();
+            this->leaveConfiguration();
         }
     }
 
@@ -690,8 +692,9 @@ public:
                     m_stopRequest = false;
                     auto lock = derived().getLock();
                     m_running = false;
-                    SCOPE_EXIT { this->leaveConfiguration(); };
+                    SCOPE_FAILURE { this->leaveConfiguration(); };
                     derived().invokeUpdateStorageCallback();
+                    this->leaveConfiguration();
                     return;
                 }
 

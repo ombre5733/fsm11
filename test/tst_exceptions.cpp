@@ -1,5 +1,6 @@
 #include "catch.hpp"
 
+#include "../src/functionstate.hpp"
 #include "../src/statemachine.hpp"
 #include "testutils.hpp"
 
@@ -16,6 +17,10 @@ struct GuardException
 };
 
 struct ListException
+{
+};
+
+struct StateException
 {
 };
 
@@ -48,8 +53,9 @@ private:
     std::deque<unsigned> m_events;
 };
 
-using StateMachine_t = fsm11::StateMachine<EventListType<ThrowingList>>;
+using StateMachine_t = StateMachine<EventListType<ThrowingList>>;
 using State_t = StateMachine_t::state_type;
+using FunctionState_t = FunctionState<StateMachine_t>;
 
 TEST_CASE("throw in addEvent", "[exception]")
 {
@@ -83,7 +89,7 @@ TEST_CASE("throw in addEvent", "[exception]")
     }
 }
 
-TEST_CASE("throw in guard", "[exception]")
+TEST_CASE("throw in transition guard", "[exception]")
 {
     StateMachine_t sm;
 
@@ -135,7 +141,7 @@ TEST_CASE("throw in guard", "[exception]")
     REQUIRE(isActive(sm, {}));
 }
 
-TEST_CASE("throw in action", "[exception]")
+TEST_CASE("throw in transition action", "[exception]")
 {
     StateMachine_t sm;
 
@@ -184,4 +190,51 @@ TEST_CASE("throw in action", "[exception]")
 
     REQUIRE(!sm.running());
     REQUIRE(isActive(sm, {}));
+}
+
+TEST_CASE("throw in onEntry", "[exception]")
+{
+    using TrackingState_t = TrackingState<FunctionState_t>;
+
+    StateMachine_t sm;
+
+    TrackingState_t a("a", &sm);
+    TrackingState_t aa("aa", &a);
+    State_t ab("ab", &a);
+    State_t b("b", &sm);
+    State_t ba("ba", &b);
+    State_t bb("bb", &b);
+
+    a.setEntryFunction([](unsigned) { throw StateException(); });
+
+    REQUIRE_THROWS_AS(sm.start(), StateException);
+    REQUIRE(a.entered == 1);
+    REQUIRE(a.left == 0);
+
+    REQUIRE(aa.entered == 0);
+    REQUIRE(aa.left == 0);
+}
+
+TEST_CASE("throw in onExit", "[exception]")
+{
+    using TrackingState_t = TrackingState<FunctionState_t>;
+
+    StateMachine_t sm;
+
+    TrackingState_t a("a", &sm);
+    TrackingState_t aa("aa", &a);
+    State_t ab("ab", &a);
+    State_t b("b", &sm);
+    State_t ba("ba", &b);
+    State_t bb("bb", &b);
+
+    aa.setExitFunction([](unsigned) { throw StateException(); });
+
+    sm.start();
+    REQUIRE_THROWS_AS(sm.stop(), StateException);
+    REQUIRE(a.entered == 1);
+    REQUIRE(a.left == 1);
+
+    REQUIRE(aa.entered == 1);
+    REQUIRE(aa.left == 1);
 }
