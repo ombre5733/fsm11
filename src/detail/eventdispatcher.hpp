@@ -509,8 +509,8 @@ public:
             return;
 
         m_dispatching = true;
-        SCOPE_EXIT { m_dispatching = false; };
-        SCOPE_FAILURE {
+        FSM11_SCOPE_EXIT { m_dispatching = false; };
+        FSM11_SCOPE_FAILURE {
             this->clearEnabledTransitionsSet();
             this->leaveConfiguration();
             m_running = false;
@@ -553,7 +553,7 @@ public:
         auto lock = derived().getLock();
         if (!m_running)
         {
-            SCOPE_FAILURE {
+            FSM11_SCOPE_FAILURE {
                 this->clearEnabledTransitionsSet();
                 this->leaveConfiguration();
             };
@@ -571,7 +571,7 @@ public:
         if (m_running)
         {
             m_running = false;
-            SCOPE_FAILURE { this->leaveConfiguration(); };
+            FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
             derived().invokeUpdateStorageCallback();
             this->leaveConfiguration();
         }
@@ -729,7 +729,7 @@ private:
 
     void doEventLoop()
     {
-        SCOPE_EXIT {
+        FSM11_SCOPE_EXIT {
             m_eventLoopMutex.lock();
             m_eventLoopActive = false;
             m_eventLoopMutex.unlock();
@@ -752,7 +752,7 @@ private:
                 eventLoopLock.unlock();
 
                 auto lock = derived().getLock();
-                SCOPE_FAILURE {
+                FSM11_SCOPE_FAILURE {
                     this->clearEnabledTransitionsSet();
                     this->leaveConfiguration();
                 };
@@ -779,7 +779,7 @@ private:
                     m_stopRequest = false;
                     auto lock = derived().getLock();
                     m_running = false;
-                    SCOPE_FAILURE { this->leaveConfiguration(); };
+                    FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
                     derived().invokeUpdateStorageCallback();
                     this->leaveConfiguration();
                     break;
@@ -791,7 +791,7 @@ private:
                 eventLoopLock.unlock();
 
                 auto lock = derived().getLock();
-                SCOPE_FAILURE {
+                FSM11_SCOPE_FAILURE {
                     m_running = false;
                     this->clearEnabledTransitionsSet();
                     this->leaveConfiguration();
