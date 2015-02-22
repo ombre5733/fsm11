@@ -72,23 +72,23 @@ TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
 TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
 {
     using namespace async;
-    StateMachine_t sm;
 
     std::mutex mutex;
     bool configurationChanged = false;
     std::condition_variable cv;
-
-    sm.setConfigurationChangeCallback([&] {
-        std::unique_lock<std::mutex> lock(mutex);
-        configurationChanged = true;
-        cv.notify_all();
-    });
 
     auto waitForConfigurationChange = [&] {
         std::unique_lock<std::mutex> lock(mutex);
         cv.wait(lock, [&] { return configurationChanged; });
         configurationChanged = false;
     };
+
+    StateMachine_t sm;
+    sm.setConfigurationChangeCallback([&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        configurationChanged = true;
+        cv.notify_all();
+    });
 
     REQUIRE(!sm.running());
     for (int cnt = 0; cnt < 2; ++cnt)

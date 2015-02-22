@@ -250,6 +250,16 @@ TEST_CASE("async sm: throw in transition guard", "[exception]")
 
     std::future<void> result;
 
+    std::mutex mutex;
+    bool configurationChanged = false;
+    std::condition_variable cv;
+
+    auto waitForConfigurationChange = [&] {
+        std::unique_lock<std::mutex> lock(mutex);
+        cv.wait(lock, [&] { return configurationChanged; });
+        configurationChanged = false;
+    };
+
     StateMachine_t sm;
 
     State_t a("a", &sm);
@@ -269,35 +279,24 @@ TEST_CASE("async sm: throw in transition guard", "[exception]")
     sm += aa + event(3) [guard] == ba;
     sm += ba + event(3) [guard] == bb;
 
-    std::mutex mutex;
-    bool configurationChanged = false;
-    std::condition_variable cv;
-
     sm.setConfigurationChangeCallback([&] {
         std::unique_lock<std::mutex> lock(mutex);
         configurationChanged = true;
         cv.notify_all();
     });
 
-    auto waitForConfigurationChange = [&] {
-        std::unique_lock<std::mutex> lock(mutex);
-        cv.wait(lock, [&] { return configurationChanged; });
-        configurationChanged = false;
-    };
-
-    result = std::async(std::launch::async, &StateMachine_t::eventLoop, &sm);
+    result = sm.startAsyncEventLoop();
 
     REQUIRE(isActive(sm, {}));
     sm.start();
-    return;
     waitForConfigurationChange();
-#if 0
-    return;
     REQUIRE(isActive(sm, {&sm, &a, &aa}));
 
     SECTION("throw")
     {
-        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+        REQUIRE(result.valid());
+        sm.addEvent(3);
+        REQUIRE_THROWS_AS(result.get(), GuardException);
     }
 
     SECTION("transit then throw")
@@ -321,6 +320,5 @@ TEST_CASE("async sm: throw in transition guard", "[exception]")
 
     REQUIRE(!sm.running());
     REQUIRE(isActive(sm, {}));
-#endif
 }
 #endif
