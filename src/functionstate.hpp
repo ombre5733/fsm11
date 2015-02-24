@@ -38,6 +38,12 @@
 namespace fsm11
 {
 
+struct entryFunction_t {};
+constexpr entryFunction_t entryFunction = entryFunction_t();
+
+struct exitFunction_t {};
+constexpr exitFunction_t exitFunction = exitFunction_t();
+
 template <typename TStateMachine>
 class FunctionState : public State<TStateMachine>
 {
@@ -49,7 +55,7 @@ public:
     using function_type = FSM11STD::function<void(event_type)>;
     using type = FunctionState<TStateMachine>;
 
-    explicit FunctionState(const char* name, base_type* parent = 0)
+    explicit FunctionState(const char* name, base_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -57,7 +63,36 @@ public:
     template <typename TEntry, typename TExit>
     FunctionState(const char* name,
                   TEntry&& entryFn, TExit&& exitFn,
-                  base_type* parent = 0)
+                  base_type* parent = nullptr)
+        : base_type(name, parent),
+          m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
+          m_exitFunction(FSM11STD::forward<TExit>(exitFn))
+    {
+    }
+
+    template <typename TEntry>
+    FunctionState(const char* name,
+                  entryFunction_t, TEntry&& fn,
+                  base_type* parent = nullptr)
+        : base_type(name, parent),
+          m_entryFunction(FSM11STD::forward<TEntry>(fn))
+    {
+    }
+
+    template <typename TExit>
+    FunctionState(const char* name,
+                  exitFunction_t, TExit&& fn,
+                  base_type* parent = nullptr)
+        : base_type(name, parent),
+          m_exitFunction(FSM11STD::forward<TExit>(fn))
+    {
+    }
+
+    template <typename TEntry, typename TExit>
+    FunctionState(const char* name,
+                  entryFunction_t, TEntry&& entryFn,
+                  exitFunction_t, TExit&& exitFn,
+                  base_type* parent = nullptr)
         : base_type(name, parent),
           m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
           m_exitFunction(FSM11STD::forward<TExit>(exitFn))
