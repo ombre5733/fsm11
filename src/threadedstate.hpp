@@ -26,22 +26,15 @@
 #define FSM11_THREADEDSTATE_HPP
 
 #include "statemachine_fwd.hpp"
+#include "exitrequest.hpp"
 #include "state.hpp"
 
 #ifdef FSM11_USE_WEOS
-#include <weos/chrono.hpp>
-#include <weos/condition_variable.hpp>
 #include <weos/exception.hpp>
-#include <weos/mutex.hpp>
 #include <weos/thread.hpp>
-#include <weos/type_traits.hpp>
 #else
-#include <chrono>
-#include <condition_variable>
 #include <exception>
-#include <mutex>
 #include <thread>
-#include <type_traits>
 #endif // FSM11_USE_WEOS
 
 namespace fsm11
@@ -81,38 +74,18 @@ public:
         FSM11_ASSERT(!m_invokeThread.joinable());
     }
 
-    bool exitRequested() const
-    {
-        FSM11STD::lock_guard<FSM11STD::mutex> lock(m_mutex);
-        return m_exitRequested;
-    }
-
-    void waitForExitRequest()
-    {
-        FSM11STD::unique_lock<FSM11STD::mutex> lock(m_mutex);
-        m_cv.wait(lock, [&] { return m_exitRequested; });
-    }
-
-    template <typename TRep, typename TPeriod>
-    bool waitForExitRequestFor(
-            const FSM11STD::chrono::duration<TRep, TPeriod>& timeout)
-    {
-        FSM11STD::unique_lock<FSM11STD::mutex> lock(m_mutex);
-        return m_cv.wait_for(lock, timeout, [&] { return m_exitRequested; });
-    }
-
     //! \brief The actual invoke action.
     //!
     //! This method is called in a new thread. Derived classes have to
     //! provide an implementation.
-    virtual void invoke() = 0;
+    virtual void invoke(ExitRequest& exitRequest) = 0;
 
     //! Enteres the invoked thread.
     virtual void enterInvoke() override
     {
-        m_mutex.lock();
-        m_exitRequested = false;
-        m_mutex.unlock();
+        m_exitRequest.m_mutex.lock();
+        m_exitRequest.m_requested = false;
+        m_exitRequest.m_mutex.unlock();
 
         m_exceptionPointer = nullptr;
         m_invokeThread = FSM11STD::thread(
@@ -129,10 +102,10 @@ public:
     {
         FSM11_ASSERT(m_invokeThread.joinable());
 
-        m_mutex.lock();
-        m_exitRequested = true;
-        m_mutex.unlock();
-        m_cv.notify_one();
+        m_exitRequest.m_mutex.lock();
+        m_exitRequest.m_requested = true;
+        m_exitRequest.m_mutex.unlock();
+        m_exitRequest.m_cv.notify_one();
 
         m_invokeThread.join();
         return m_exceptionPointer;
@@ -146,15 +119,13 @@ private:
     FSM11STD::thread m_invokeThread;
     FSM11STD::exception_ptr m_exceptionPointer;
 
-    mutable FSM11STD::mutex m_mutex;
-    FSM11STD::condition_variable m_cv;
-    bool m_exitRequested;
+    ExitRequest m_exitRequest;
 
     void invokeWrapper()
     {
         try
         {
-            invoke();
+            invoke(m_exitRequest);
         }
         catch (...)
         {

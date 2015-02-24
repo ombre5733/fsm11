@@ -45,7 +45,7 @@ class TestState : public State_t
 public:
     using State_t::State_t;
 
-    virtual void invoke() override
+    virtual void invoke(fsm11::ExitRequest&) override
     {
         std::lock_guard<std::mutex> lock(g_mutex);
         g_id = std::this_thread::get_id();
@@ -58,7 +58,7 @@ class WaitingState : public State_t
 public:
     using State_t::State_t;
 
-    virtual void invoke() override
+    virtual void invoke(fsm11::ExitRequest& request) override
     {
         g_mutex.lock();
         g_notify = true;
@@ -68,8 +68,8 @@ public:
 
         switch (TFn)
         {
-        case 0: waitForExitRequest(); break;
-        case 1: waitForExitRequestFor(std::chrono::milliseconds(500)); break;
+        case 0: request.wait(); break;
+        case 1: request.waitFor(std::chrono::milliseconds(500)); break;
         default: REQUIRE(false); break;
         }
 
