@@ -135,3 +135,21 @@ TEST_CASE("access storage in guard", "[storage]")
         REQUIRE(isActive(sm, {&sm, &c}));
     }
 }
+
+TEST_CASE("capture storage callback is executed", "[storage]")
+{
+    using StateMachine_t = fsm11::StateMachine<CaptureStorage<int>>;
+    using State_t = StateMachine_t::state_type;
+
+    StateMachine_t sm;
+    State_t a("a", &sm);
+    State_t b("b", &sm);
+    State_t c("c", &sm);
+
+    int value = 0;
+    sm.setCaptureStorageCallback([&] { sm.store<0>(value); });
+
+    value = 31;
+    sm.start();
+    REQUIRE(sm.load<0>() == 31);
+}

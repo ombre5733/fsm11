@@ -546,7 +546,7 @@ public:
             derived().m_eventList.pop_front();
 
             derived().invokeEventDispatchCallback(event);
-            derived().invokeUpdateStorageCallback();
+            derived().invokeCaptureStorageCallback();
 
             this->clearTransientStateFlags();
             this->selectTransitions(false, event);
@@ -582,7 +582,7 @@ public:
                 this->leaveConfiguration();
             };
 
-            derived().invokeUpdateStorageCallback();
+            derived().invokeCaptureStorageCallback();
             this->enterInitialStates();
             this->runToCompletion(true);
             m_running = true;
@@ -596,7 +596,7 @@ public:
         {
             m_running = false;
             FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
-            derived().invokeUpdateStorageCallback();
+            derived().invokeCaptureStorageCallback();
             this->leaveConfiguration();
         }
     }
@@ -781,7 +781,7 @@ private:
                     this->leaveConfiguration();
                 };
 
-                derived().invokeUpdateStorageCallback();
+                derived().invokeCaptureStorageCallback();
                 this->enterInitialStates();
                 this->runToCompletion(true);
                 m_running = true;
@@ -804,7 +804,7 @@ private:
                     auto lock = derived().getLock();
                     m_running = false;
                     FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
-                    derived().invokeUpdateStorageCallback();
+                    derived().invokeCaptureStorageCallback();
                     this->leaveConfiguration();
                     break;
                 }
@@ -822,7 +822,7 @@ private:
                 };
 
                 derived().invokeEventDispatchCallback(event);
-                derived().invokeUpdateStorageCallback();
+                derived().invokeCaptureStorageCallback();
 
                 this->clearTransientStateFlags();
                 this->selectTransitions(false, event);

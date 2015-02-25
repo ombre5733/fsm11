@@ -44,10 +44,10 @@ namespace fsm11_detail
 {
 
 template <typename TDerived, typename TList>
-class Storage;
+class CaptureStorage;
 
 template <typename TDerived, typename... TTypes>
-class Storage<TDerived, type_list<TTypes...>>
+class CaptureStorage<TDerived, type_list<TTypes...>>
 {
     typedef FSM11STD::tuple<TTypes...> tuple_type;
 
@@ -79,20 +79,22 @@ public:
     }
 
     template <typename TType>
-    void setUpdateStorageCallback(TType&&)
+    void setCaptureStorageCallback(TType&& callback)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
-                      "No storage specified");
+        m_updateStorageCallback = FSM11STD::forward<TType>(callback);
     }
 
 protected:
     inline
-    void invokeUpdateStorageCallback()
+    void invokeCaptureStorageCallback()
     {
+        if (m_updateStorageCallback)
+            m_updateStorageCallback();
     }
 
 private:
     tuple_type m_data;
+    FSM11STD::function<void()> m_updateStorageCallback;
 
     TDerived& derived()
     {
@@ -106,44 +108,40 @@ private:
 };
 
 template <typename TDerived>
-class Storage<TDerived, type_list<>>
+class CaptureStorage<TDerived, type_list<>>
 {
 public:
     template <std::size_t TIndex>
     void load() const
     {
-        static_assert(TIndex != TIndex, "No storage specified");
+        static_assert(TIndex != TIndex, "No capture storage specified");
     }
 
     template <std::size_t TIndex, typename TType>
     void store(TType&& /*value*/)
     {
-        static_assert(TIndex != TIndex, "No storage specified");
+        static_assert(TIndex != TIndex, "No capture storage specified");
     }
 
     template <typename TType>
-    void setUpdateStorageCallback(TType&& callback)
+    void setCaptureStorageCallback(TType&&)
     {
-        m_updateStorageCallback = FSM11STD::forward<TType>(callback);
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "No capture storage specified");
     }
 
 protected:
     inline
-    void invokeUpdateStorageCallback()
+    void invokeCaptureStorageCallback()
     {
-        if (m_updateStorageCallback)
-            m_updateStorageCallback();
     }
-
-private:
-    FSM11STD::function<void()> m_updateStorageCallback;
 };
 
 template <typename TOptions>
 struct get_storage
 {
-    typedef Storage<StateMachineImpl<TOptions>,
-                    typename TOptions::capture_storage> type;
+    typedef CaptureStorage<StateMachineImpl<TOptions>,
+                           typename TOptions::capture_storage> type;
 };
 
 } // namespace fsm11_detail
