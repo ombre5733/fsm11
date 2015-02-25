@@ -31,7 +31,7 @@ using namespace fsm11;
 
 TEST_CASE("empty storage", "[storage]")
 {
-    using StateMachine_t = fsm11::StateMachine<Storage<>>;
+    using StateMachine_t = fsm11::StateMachine<CaptureStorage<>>;
     StateMachine_t sm;
 }
 
@@ -39,7 +39,7 @@ TEST_CASE("storage with one built-in type", "[storage]")
 {
     SECTION("int")
     {
-        using StateMachine_t = fsm11::StateMachine<Storage<int>>;
+        using StateMachine_t = fsm11::StateMachine<CaptureStorage<int>>;
         StateMachine_t sm;
         sm.store<0>(21);
         REQUIRE(sm.load<0>() == 21);
@@ -49,7 +49,7 @@ TEST_CASE("storage with one built-in type", "[storage]")
 
     SECTION("double")
     {
-        using StateMachine_t = fsm11::StateMachine<Storage<double>>;
+        using StateMachine_t = fsm11::StateMachine<CaptureStorage<double>>;
         StateMachine_t sm;
         sm.store<0>(3.14);
         REQUIRE(sm.load<0>() == 3.14);
@@ -61,7 +61,7 @@ TEST_CASE("storage with one built-in type", "[storage]")
     {
         const char* greeting = "hello";
         const char* person = "Manuel";
-        using StateMachine_t = fsm11::StateMachine<Storage<const char*>>;
+        using StateMachine_t = fsm11::StateMachine<CaptureStorage<const char*>>;
         StateMachine_t sm;
         sm.store<0>(greeting);
         REQUIRE(sm.load<0>() == greeting);
@@ -72,7 +72,7 @@ TEST_CASE("storage with one built-in type", "[storage]")
 
 TEST_CASE("storage with two built-in types", "[storage]")
 {
-    using StateMachine_t = fsm11::StateMachine<Storage<double, int>>;
+    using StateMachine_t = fsm11::StateMachine<CaptureStorage<double, int>>;
     StateMachine_t sm;
 
     sm.store<0>(3.14);
@@ -91,7 +91,7 @@ enum Color
 
 TEST_CASE("storage with user-defined enum", "[storage]")
 {
-    using StateMachine_t = fsm11::StateMachine<Storage<Color>>;
+    using StateMachine_t = fsm11::StateMachine<CaptureStorage<Color>>;
     StateMachine_t sm;
 
     sm.store<0>(Red);
@@ -103,7 +103,7 @@ TEST_CASE("storage with user-defined enum", "[storage]")
 
 TEST_CASE("access storage in guard", "[storage]")
 {
-    using StateMachine_t = fsm11::StateMachine<Storage<int>>;
+    using StateMachine_t = fsm11::StateMachine<CaptureStorage<int>>;
     using State_t = StateMachine_t::state_type;
 
     StateMachine_t sm;

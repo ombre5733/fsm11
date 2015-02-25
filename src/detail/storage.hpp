@@ -143,7 +143,7 @@ template <typename TOptions>
 struct get_storage
 {
     typedef Storage<StateMachineImpl<TOptions>,
-                    typename TOptions::storage> type;
+                    typename TOptions::capture_storage> type;
 };
 
 } // namespace fsm11_detail

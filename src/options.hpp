@@ -41,7 +41,7 @@ struct default_options
     // Types
     using event_type = unsigned;
     using event_list_type = std::deque<unsigned>;
-    using storage = type_list<>;
+    using capture_storage = type_list<>;
     using transition_allocator_type = std::allocator<Transition<void>>;
 
     // Multithreading
@@ -89,13 +89,13 @@ struct EventListType
 };
 
 template <typename... TTypes>
-struct Storage
+struct CaptureStorage
 {
     //! \cond
     template <typename TBase>
     struct pack : TBase
     {
-        using storage = fsm11_detail::type_list<TTypes...>;
+        using capture_storage = fsm11_detail::type_list<TTypes...>;
     };
     //! \endcond
 };
