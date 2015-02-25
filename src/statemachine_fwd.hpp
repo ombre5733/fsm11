@@ -63,6 +63,12 @@ template <typename TStateMachine>
 class State;
 
 template <typename TStateMachine>
+class ThreadedState;
+
+template <typename TStateMachine>
+class ThreadedFunctionState;
+
+template <typename TStateMachine>
 class Transition;
 
 namespace fsm11_detail

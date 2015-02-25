@@ -85,6 +85,9 @@ private:
 
     template <typename TStateMachine>
     friend class ThreadedState;
+
+    template <typename TStateMachine>
+    friend class ThreadedFunctionState;
 };
 
 } // namespace fsm11
