@@ -46,7 +46,7 @@ struct default_options
 
     // Multithreading
     static constexpr bool synchronous_dispatch = true;
-    static constexpr bool multithreading_enable = true; // TODO: Have an option
+    static constexpr bool multithreading_enable = false;
 
     // Callbacks
     static constexpr bool event_callbacks_enable = false;
@@ -134,7 +134,18 @@ struct AsynchronousEventDispatching
     struct pack : TBase
     {
         static constexpr bool synchronous_dispatch = false;
-        static constexpr bool multithreading_enable = true;
+    };
+    //! \endcond
+};
+
+template <bool TEnable>
+struct MultithreadingEnable
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool multithreading_enable = TEnable;
     };
     //! \endcond
 };
