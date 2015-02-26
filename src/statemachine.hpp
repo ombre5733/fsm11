@@ -31,9 +31,9 @@
 #include "transition.hpp"
 
 #include "detail/callbacks.hpp"
+#include "detail/capturestorage.hpp"
 #include "detail/eventdispatcher.hpp"
 #include "detail/multithreading.hpp"
-#include "detail/storage.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/mutex.hpp>

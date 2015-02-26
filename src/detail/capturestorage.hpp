@@ -22,8 +22,8 @@
   SOFTWARE.
 *******************************************************************************/
 
-#ifndef FSM11_DETAIL_STORAGE_HPP
-#define FSM11_DETAIL_STORAGE_HPP
+#ifndef FSM11_DETAIL_CAPTURESTORAGE_HPP
+#define FSM11_DETAIL_CAPTURESTORAGE_HPP
 
 #include "../statemachine_fwd.hpp"
 #include "options.hpp"
@@ -147,4 +147,4 @@ struct get_storage
 } // namespace fsm11_detail
 } // namespace fsm11
 
-#endif // FSM11_DETAIL_STORAGE_HPP
+#endif // FSM11_DETAIL_CAPTURESTORAGE_HPP
