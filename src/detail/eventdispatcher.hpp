@@ -647,6 +647,7 @@ public:
     AsynchronousEventDispatcher()
         : m_startRequest(false),
           m_stopRequest(false),
+          m_eventLoopActive(false),
           m_running(false)
     {
     }
