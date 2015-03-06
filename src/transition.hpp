@@ -66,6 +66,18 @@ public:
     {
     }
 
+    SourceEventGuardActionTarget(SourceEventGuardActionTarget&& other) noexcept
+        : m_source(other.m_source),
+          m_target(other.m_target),
+          m_event(FSM11STD::forward<TEvent>(other.m_event)),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    SourceEventGuardActionTarget(const SourceEventGuardActionTarget&) = delete;
+    SourceEventGuardActionTarget& operator=(const SourceEventGuardActionTarget&) = delete;
+
 private:
     TState* m_source;
     TState* m_target;
@@ -93,6 +105,17 @@ public:
           m_action(FSM11STD::forward<TAction>(action))
     {
     }
+
+    SourceEventGuardAction(SourceEventGuardAction&& other) noexcept
+        : m_source(other.m_source),
+          m_event(FSM11STD::forward<TEvent>(other.m_event)),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    SourceEventGuardAction(const SourceEventGuardAction&) = delete;
+    SourceEventGuardAction& operator=(const SourceEventGuardAction&) = delete;
 
     SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
             TState& target) const noexcept
@@ -278,6 +301,17 @@ public:
     {
     }
 
+    SourceNoEventGuardActionTarget(SourceNoEventGuardActionTarget&& other) noexcept
+        : m_source(other.m_source),
+          m_target(other.m_target),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    SourceNoEventGuardActionTarget(const SourceNoEventGuardActionTarget&) = delete;
+    SourceNoEventGuardActionTarget& operator=(const SourceNoEventGuardActionTarget&) = delete;
+
 private:
     TState* m_source;
     TState* m_target;
@@ -301,6 +335,16 @@ public:
           m_action(FSM11STD::forward<TAction>(action))
     {
     }
+
+    SourceNoEventGuardAction(SourceNoEventGuardAction&& other) noexcept
+        : m_source(other.m_source),
+          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
+          m_action(FSM11STD::forward<TAction>(other.m_action))
+    {
+    }
+
+    SourceNoEventGuardAction(const SourceNoEventGuardAction&) = delete;
+    SourceNoEventGuardAction& operator=(const SourceNoEventGuardAction&) = delete;
 
     SourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
             TState& target) const noexcept
@@ -467,7 +511,7 @@ public:
     {
     }
 
-    //! \brief Creates a transition.
+    //! \brief Creates an eventless transition.
     //!
     //! Creates an eventless transition from the specification \p rhs.
     template <typename TState, typename TGuard, typename TAction>
