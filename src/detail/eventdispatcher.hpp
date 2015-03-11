@@ -219,10 +219,16 @@ void EventDispatcherBase<TDerived>::selectTransitions(bool eventless,
 }
 
 template <typename TDerived>
-auto EventDispatcherBase<TDerived>::transitionDomain(const transition_type* transition) -> state_type*
+auto EventDispatcherBase<TDerived>::transitionDomain(
+        const transition_type* transition) -> state_type*
 {
-    //if (t.isInternal() && t->source().isCompound() && isDescendant(t->target(), t->source()))
-    //    return t.source();
+    if (transition->isInternal()
+        && transition->source()->isCompound()
+        && isDescendant(transition->target(), transition->source()))
+    {
+        return transition->source();
+    }
+
     return findLeastCommonProperAncestor(transition->source(),
                                          transition->target());
 }

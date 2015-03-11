@@ -597,6 +597,143 @@ TEST_CASE("initial states during configuration change", "[transition]")
     }
 }
 
+TEST_CASE("internal and external transitions from compound state", "[transition]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    TrackingState<State_t> aa("aa", &a);
+    TrackingState<State_t> ab("ab", &a);
+
+    sm += external> a + event(1) == ab;
+    sm += internal> a + event(2) == ab;
+    sm +=           a + event(3) == ab;
+
+    SECTION("external transition leaves the source state")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &a, &ab}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+    }
+
+    SECTION("internal transition does not leave the source state")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &a, &ab}));
+
+        REQUIRE(a.entered == 1);
+        REQUIRE(a.left == 0);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+    }
+
+    SECTION("by default a transition is an external one")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        sm.addEvent(3);
+        REQUIRE(isActive(sm, {&sm, &a, &ab}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 1);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 1);
+        REQUIRE(ab.left == 0);
+    }
+}
+
+TEST_CASE("internal and external transitions from parallel state", "[transition]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+    a.setChildMode(State_t::Parallel);
+    TrackingState<State_t> aa("aa", &a);
+    TrackingState<State_t> ab("ab", &a);
+
+    sm += external> a + event(1) == ab;
+    sm += internal> a + event(2) == ab;
+    sm +=           a + event(3) == ab;
+
+    SECTION("external transition leaves the source state")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &ab}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &ab}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 2);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 2);
+        REQUIRE(ab.left == 1);
+    }
+
+    SECTION("internal transition behaves like an external one")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &ab}));
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &a, &aa, &ab}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+        REQUIRE(aa.entered == 2);
+        REQUIRE(aa.left == 1);
+        REQUIRE(ab.entered == 2);
+        REQUIRE(ab.left == 1);
+    }
+}
+
+TEST_CASE("internal and external transitions from atomic state", "[transition]")
+{
+    using namespace sync;
+    StateMachine_t sm;
+
+    TrackingState<State_t> a("a", &sm);
+
+    sm += external> a + event(1) == a;
+    sm += internal> a + event(2) == a;
+
+    SECTION("external transition leaves the source state")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(1);
+        REQUIRE(isActive(sm, {&sm, &a}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+    }
+
+    SECTION("internal transition behaves like an external one")
+    {
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &a}));
+
+        REQUIRE(a.entered == 2);
+        REQUIRE(a.left == 1);
+    }
+}
+
 // An allocator to keep track of the number of transitions.
 template <typename T>
 class TrackingTransitionAllocator : public std::allocator<T>

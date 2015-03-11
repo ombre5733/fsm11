@@ -352,10 +352,10 @@ private:
 
 //! \brief A finite state machine.
 //!
-//! The StateMachine implements the logic for a finite state machine.
-//!
-//! Every state machine has an implicit root state. All top-level states of
-//! a state machine, must be added as child of this root state.
+//! The StateMachine implements the logic for a finite state machine. The
+//! state machine itself derives from State and so every state machine has
+//! an implicit root state. All top-level states of a state machine, are
+//! children of this root state.
 template <typename TOptions>
 class StateMachineImpl :
         public get_multithreading<TOptions>::type,
@@ -429,21 +429,21 @@ public:
     //! \p spec.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
-    void add(SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
+    void add(TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
     //!
     //! Adds a transition, which will be created from a transition specification
     //! \p spec.
     template <typename TState, typename TGuard, typename TAction>
-    void add(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t);
+    void add(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     inline
     StateMachineImpl& operator+=(
-            SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
+            TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
         add(FSM11STD::move(t));
         return *this;
@@ -452,7 +452,7 @@ public:
     //! \brief Adds a transition.
     template <typename TState, typename TGuard, typename TAction>
     inline
-    StateMachineImpl& operator+=(SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    StateMachineImpl& operator+=(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
         add(FSM11STD::move(t));
         return *this;
@@ -472,8 +472,9 @@ template <typename TOptions>
 template <typename TState, typename TEvent, typename TGuard,
           typename TAction>
 void StateMachineImpl<TOptions>::add(
-        SourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
+        TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
 {
+    // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
@@ -482,8 +483,9 @@ void StateMachineImpl<TOptions>::add(
 template <typename TOptions>
 template <typename TState, typename TGuard, typename TAction>
 void StateMachineImpl<TOptions>::add(
-        SourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+        TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
 {
+    // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
