@@ -52,8 +52,8 @@ TEST_CASE("no invoke in case of an eventless transition", "[invoke]")
     InvokeChecker b("b", &sm);
     InvokeChecker c("c", &sm);
 
-    sm += a + event(1) == b;
-    sm += b + noEvent  == c;
+    sm += a + event(1) > b;
+    sm += b + noEvent  > c;
 
     REQUIRE(!a.invoked);
     REQUIRE(!b.invoked);

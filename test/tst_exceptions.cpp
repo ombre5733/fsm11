@@ -92,7 +92,7 @@ TEST_CASE("throw in addEvent", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    sm += aa + event(0) == ba;
+    sm += aa + event(0) > ba;
 
     REQUIRE(isActive(sm, {}));
     sm.start();
@@ -130,9 +130,9 @@ TEST_CASE("throw in transition guard", "[exception]")
         return event % 2 == 0;
     };
 
-    sm += aa + event(0) [guard] == ba;
-    sm += aa + event(3) [guard] == ba;
-    sm += ba + event(3) [guard] == bb;
+    sm += aa + event(0) [guard] > ba;
+    sm += aa + event(3) [guard] > ba;
+    sm += ba + event(3) [guard] > bb;
 
     REQUIRE(isActive(sm, {}));
     sm.start();
@@ -181,9 +181,9 @@ TEST_CASE("throw in transition action", "[exception]")
             throw ActionException();
     };
 
-    sm += aa + event(0) / action == ba;
-    sm += aa + event(3) / action == ba;
-    sm += ba + event(3) / action == bb;
+    sm += aa + event(0) / action > ba;
+    sm += aa + event(3) / action > ba;
+    sm += ba + event(3) / action > bb;
 
     REQUIRE(isActive(sm, {}));
     sm.start();

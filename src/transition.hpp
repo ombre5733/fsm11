@@ -125,7 +125,7 @@ public:
     TypeSourceEventGuardAction(const TypeSourceEventGuardAction&) = delete;
     TypeSourceEventGuardAction& operator=(const TypeSourceEventGuardAction&) = delete;
 
-    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
+    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator>(
             TState& target) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
@@ -136,7 +136,7 @@ public:
                     m_isExternal);
     }
 
-    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
+    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator>(
             noTarget_t) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
@@ -183,7 +183,7 @@ public:
     SourceEventGuardAction(const SourceEventGuardAction&) = delete;
     SourceEventGuardAction& operator=(const SourceEventGuardAction&) = delete;
 
-    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
+    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator>(
             TState& target) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
@@ -193,7 +193,7 @@ public:
                     FSM11STD::forward<TAction>(m_action));
     }
 
-    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator==(
+    TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction> operator>(
             noTarget_t) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
@@ -260,7 +260,7 @@ struct EventGuard
     EventGuard& operator=(const EventGuard&) = delete;
 
     template <typename TAction>
-    EventGuardAction<TEvent, TGuard, TAction&&> operator/ (TAction&& action) const noexcept
+    EventGuardAction<TEvent, TGuard, TAction&&> operator/(TAction&& action) const noexcept
     {
         return EventGuardAction<TEvent, TGuard, TAction&&>(
                    FSM11STD::forward<TEvent>(m_event),
@@ -443,7 +443,7 @@ public:
     TypeSourceNoEventGuardAction(const TypeSourceNoEventGuardAction&) = delete;
     TypeSourceNoEventGuardAction& operator=(const TypeSourceNoEventGuardAction&) = delete;
 
-    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator>(
             TState& target) const noexcept
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
@@ -453,7 +453,7 @@ public:
                     m_isExternal);
     }
 
-    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator>(
             noTarget_t) const noexcept
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
@@ -494,7 +494,7 @@ public:
     SourceNoEventGuardAction(const SourceNoEventGuardAction&) = delete;
     SourceNoEventGuardAction& operator=(const SourceNoEventGuardAction&) = delete;
 
-    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator>(
             TState& target) const noexcept
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
@@ -503,7 +503,7 @@ public:
                     FSM11STD::forward<TAction>(m_action));
     }
 
-    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator==(
+    TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction> operator>(
             noTarget_t) const noexcept
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(

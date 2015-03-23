@@ -56,14 +56,14 @@ TEST_CASE("simple configuration changes in synchronous statemachine",
     TrackingState<State_t> ba("ba", &b);
     TrackingState<State_t> bb("bb", &b);
 
-    sm += aa + event(2) == ba;
-    sm += ba + event(2) == bb;
-    sm += a  + event(3) == bb;
-    sm += b  + event(3) == ab;
-    sm += aa + event(4) == b;
-    sm += ba + event(4) == a;
-    sm += a  + event(5) == ab;
-    sm += ab + event(6) == a;
+    sm += aa + event(2) > ba;
+    sm += ba + event(2) > bb;
+    sm += a  + event(3) > bb;
+    sm += b  + event(3) > ab;
+    sm += aa + event(4) > b;
+    sm += ba + event(4) > a;
+    sm += a  + event(5) > ab;
+    sm += ab + event(6) > a;
 
     sm.start();
     REQUIRE(isActive(sm, {&sm, &a, &aa}));
@@ -214,14 +214,14 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     TrackingState<State_t> ba("ba", &b);
     TrackingState<State_t> bb("bb", &b);
 
-    sm += aa + event(2) == ba;
-    sm += ba + event(2) == bb;
-    sm += a  + event(3) == bb;
-    sm += b  + event(3) == ab;
-    sm += aa + event(4) == b;
-    sm += ba + event(4) == a;
-    sm += a  + event(5) == ab;
-    sm += ab + event(6) == a;
+    sm += aa + event(2) > ba;
+    sm += ba + event(2) > bb;
+    sm += a  + event(3) > bb;
+    sm += b  + event(3) > ab;
+    sm += aa + event(4) > b;
+    sm += ba + event(4) > a;
+    sm += a  + event(5) > ab;
+    sm += ab + event(6) > a;
 
     result = sm.startAsyncEventLoop();
 
@@ -368,7 +368,7 @@ TEST_CASE("targetless transitions block an event", "[transition]")
     TrackingState<State_t> ba("ba", &b);
     TrackingState<State_t> bb("bb", &b);
 
-    sm += aa + event(1) == ab;
+    sm += aa + event(1) > ab;
 
     sm.start();
     REQUIRE(isActive(sm, {&sm, &a, &aa, &aaa}));
@@ -401,7 +401,7 @@ TEST_CASE("targetless transitions block an event", "[transition]")
 
     SECTION("with targetless transition")
     {
-        sm += aaa + event(1) == noTarget;
+        sm += aaa + event(1) > noTarget;
 
         sm.addEvent(1);
         REQUIRE(isActive(sm, {&sm, &a, &aa, &aaa}));
@@ -517,7 +517,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
     SECTION("without initial state")
     {
-        sm += a + event(1) == b;
+        sm += a + event(1) > b;
 
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a}));
@@ -537,7 +537,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
     SECTION("with initial state")
     {
-        sm += a + event(1) == b;
+        sm += a + event(1) > b;
         b.setInitialState(&bb);
 
         sm.start();
@@ -556,7 +556,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
     SECTION("initial state is ignored if the target is a sibling")
     {
-        sm += a + event(1) == ba;
+        sm += a + event(1) > ba;
         b.setInitialState(&bb);
 
         sm.start();
@@ -577,7 +577,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
     SECTION("initial state is ignored if the target is a descendant")
     {
-        sm += a + event(1) == baa;
+        sm += a + event(1) > baa;
         b.setInitialState(&bb);
 
         sm.start();
@@ -606,9 +606,9 @@ TEST_CASE("internal and external transitions from compound state", "[transition]
     TrackingState<State_t> aa("aa", &a);
     TrackingState<State_t> ab("ab", &a);
 
-    sm += external> a + event(1) == ab;
-    sm += internal> a + event(2) == ab;
-    sm +=           a + event(3) == ab;
+    sm += external> a + event(1) > ab;
+    sm += internal> a + event(2) > ab;
+    sm +=           a + event(3) > ab;
 
     SECTION("external transition leaves the source state")
     {
@@ -666,9 +666,9 @@ TEST_CASE("internal and external transitions from parallel state", "[transition]
     TrackingState<State_t> aa("aa", &a);
     TrackingState<State_t> ab("ab", &a);
 
-    sm += external> a + event(1) == ab;
-    sm += internal> a + event(2) == ab;
-    sm +=           a + event(3) == ab;
+    sm += external> a + event(1) > ab;
+    sm += internal> a + event(2) > ab;
+    sm +=           a + event(3) > ab;
 
     SECTION("external transition leaves the source state")
     {
@@ -708,8 +708,8 @@ TEST_CASE("internal and external transitions from atomic state", "[transition]")
 
     TrackingState<State_t> a("a", &sm);
 
-    sm += external> a + event(1) == a;
-    sm += internal> a + event(2) == a;
+    sm += external> a + event(1) > a;
+    sm += internal> a + event(2) > a;
 
     SECTION("external transition leaves the source state")
     {
@@ -794,11 +794,11 @@ TEST_CASE("transition allocator by copy-construction", "[transition]")
         TrackingState<State_t> a("a", &sm);
         TrackingState<State_t> b("b", &sm);
 
-        sm += a + event(1) == b;
+        sm += a + event(1) > b;
         REQUIRE(numTransitions == 1);
-        sm += a + event(2) == b;
+        sm += a + event(2) > b;
         REQUIRE(numTransitions == 2);
-        sm += a + event(3) == b;
+        sm += a + event(3) > b;
         REQUIRE(numTransitions == 3);
     }
 
