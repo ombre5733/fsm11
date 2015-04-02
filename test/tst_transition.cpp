@@ -30,23 +30,23 @@
 using namespace fsm11;
 
 
-namespace sync
+namespace syncSM
 {
 using StateMachine_t = fsm11::StateMachine<>;
 using State_t = StateMachine_t::state_type;
-} // namespace sync
+} // namespace syncSM
 
-namespace async
+namespace asyncSM
 {
 using StateMachine_t = StateMachine<AsynchronousEventDispatching,
                                     ConfigurationChangeCallbacksEnable<true>>;
 using State_t = StateMachine_t::state_type;
-} // namespace async
+} // namespace asyncSM
 
 TEST_CASE("simple configuration changes in synchronous statemachine",
           "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -198,7 +198,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
         configurationChanged = false;
     };
 
-    using namespace async;
+    using namespace asyncSM;
     StateMachine_t sm;
 
     sm.setConfigurationChangeCallback([&] {
@@ -354,7 +354,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
 
 TEST_CASE("targetless transitions block an event", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -418,7 +418,7 @@ TEST_CASE("targetless transitions block an event", "[transition]")
 
 TEST_CASE("initial states are activated after start", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -506,7 +506,7 @@ TEST_CASE("transition actions are executed before state entries",
 
 TEST_CASE("initial states during configuration change", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -599,7 +599,7 @@ TEST_CASE("initial states during configuration change", "[transition]")
 
 TEST_CASE("internal and external transitions from compound state", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -658,7 +658,7 @@ TEST_CASE("internal and external transitions from compound state", "[transition]
 
 TEST_CASE("internal and external transitions from parallel state", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -703,7 +703,7 @@ TEST_CASE("internal and external transitions from parallel state", "[transition]
 
 TEST_CASE("internal and external transitions from atomic state", "[transition]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
@@ -803,4 +803,39 @@ TEST_CASE("transition allocator by copy-construction", "[transition]")
     }
 
     REQUIRE(numTransitions == 0);
+}
+
+TEST_CASE("an event matches a guarded eventless transition", "[transition]")
+{
+    using namespace syncSM;
+    StateMachine_t sm;
+
+    State_t a("a", &sm);
+    State_t b("b", &sm);
+
+    SECTION("guard is independent")
+    {
+        bool guard = false;
+        sm += a + noEvent ([&] (unsigned) { return guard; }) > b;
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &a}));
+        guard = true;
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &b}));
+    }
+
+    SECTION("guard depends on event")
+    {
+        sm += a + noEvent ([&] (unsigned event) { return event == 3; }) > b;
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(2);
+        REQUIRE(isActive(sm, {&sm, &a}));
+        sm.addEvent(3);
+        REQUIRE(isActive(sm, {&sm, &b}));
+    }
 }
