@@ -98,10 +98,10 @@ protected:
     //! \brief Selects matching transitions.
     //!
     //! Loops over all states and selects all transitions matching the given
-    //! criteria. If \p eventless is set, only transitions without events are
-    //! selected. Otherwise, a transition is selected, if it's trigger event
+    //! criteria. If \p onlyEventless is set, only transitions without events
+    //! are selected. Otherwise, a transition is selected, if it's trigger event
     //! equals the given \p event.
-    void selectTransitions(bool eventless, event_type event);
+    void selectTransitions(bool onlyEventless, event_type event);
 
     //! Computes the transition domain of the given \p transition.
     static state_type* transitionDomain(const transition_type* transition);
@@ -153,7 +153,7 @@ void EventDispatcherBase<TDerived>::clearEnabledTransitionsSet() noexcept
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::selectTransitions(bool eventless,
+void EventDispatcherBase<TDerived>::selectTransitions(bool onlyEventless,
                                                       event_type event)
 {
     transition_type** outputIter = &m_enabledTransitions;
@@ -176,11 +176,16 @@ void EventDispatcherBase<TDerived>::selectTransitions(bool eventless,
         for (auto transitionIter = stateIter->beginTransitions();
              transitionIter != stateIter->endTransitions(); ++transitionIter)
         {
-            if (eventless != transitionIter->eventless())
+            // Skip transitions with events in microstepping mode.
+            if (onlyEventless && !transitionIter->eventless())
                 continue;
 
-            if (!eventless && transitionIter->event() != event)
+            // If a transition has an event, the event must match.
+            if (!transitionIter->eventless()
+                && transitionIter->event() != event)
+            {
                 continue;
+            }
 
             // If the transition has a guard, it must evaluate to true in order
             // to select the transition. A transition without guard is selected
