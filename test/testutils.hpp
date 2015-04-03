@@ -26,7 +26,10 @@
 #define FSM11_TESTUTILS_HPP
 
 #include "catch.hpp"
+#include <array>
+#include <atomic>
 #include <set>
+#include <tuple>
 
 template <typename T>
 bool isActive(const T& sm,
@@ -46,16 +49,40 @@ bool isActive(const T& sm,
 template <typename TBase>
 class TrackingState : public TBase
 {
+    // TODO: Can I has an index_sequence<>, please?
+    template <std::size_t I, std::size_t N, typename T>
+    bool all(const T& t, std::true_type) const
+    {
+        return std::get<I>(t) == counters.at(I)
+               && all<I+1, N>(t, std::integral_constant<bool, (I + 1 < N)>());
+    }
+
+    template <std::size_t I, std::size_t N, typename T>
+    bool all(const T&, std::false_type) const
+    {
+        return true;
+    }
+
 public:
     using event_type = typename TBase::event_type;
 
     template <typename T>
-    explicit TrackingState(const char* name, T* parent = 0)
+    explicit TrackingState(const char* name, T* parent = nullptr)
         : TBase(name, parent),
-          entered(0),
-          left(0),
-          invoked(0)
+          entered(counters[0]),
+          left(counters[1]),
+          enteredInvoke(counters[2]),
+          leftInvoke(counters[3])
     {
+        for (auto& cnt : counters)
+            cnt = 0;
+    }
+
+    template <typename... TArgs>
+    bool operator==(const std::tuple<TArgs...>& t) const
+    {
+        return all<0, sizeof...(TArgs)>(
+                   t, std::integral_constant<bool, sizeof...(TArgs)>());
     }
 
     virtual void onEntry(event_type event) override
@@ -72,21 +99,26 @@ public:
 
     virtual void enterInvoke() override
     {
-        REQUIRE(invoked == 0);
-        ++invoked;
+        REQUIRE(isInvoked.exchange(true) == false);
+        ++enteredInvoke;
         TBase::enterInvoke();
     }
 
     virtual std::exception_ptr exitInvoke() override
     {
-        REQUIRE(invoked == 1);
-        --invoked;
+        REQUIRE(isInvoked.exchange(false) == true);
+        ++leftInvoke;
         return TBase::exitInvoke();
     }
 
-    std::atomic_int entered = 0;
-    std::atomic_int left = 0;
-    std::atomic_int invoked = 0;
+    std::atomic_bool isInvoked{false};
+    // The number of onEntry(), onExit(), enterInvoke(), exitInvoke() calls.
+    std::array<std::atomic_int, 4> counters;
+
+    std::atomic_int& entered;
+    std::atomic_int& left;
+    std::atomic_int& enteredInvoke;
+    std::atomic_int& leftInvoke;
 };
 
 #endif // FSM11_TESTUTILS_HPP
