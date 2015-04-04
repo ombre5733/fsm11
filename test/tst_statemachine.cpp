@@ -33,6 +33,23 @@ namespace syncSM
 {
 using StateMachine_t = StateMachine<>;
 using State_t = StateMachine_t::state_type;
+
+struct TrackingStateMachine : public StateMachine<>
+{
+    virtual void onEntry(int) override
+    {
+        ++entered;
+    }
+
+    virtual void onExit(int) override
+    {
+        ++left;
+    }
+
+    std::atomic_int entered{0};
+    std::atomic_int left{0};
+};
+
 } // namespace syncSM
 
 namespace asyncSM
@@ -40,6 +57,23 @@ namespace asyncSM
 using StateMachine_t = StateMachine<AsynchronousEventDispatching,
                                     ConfigurationChangeCallbacksEnable<true>>;
 using State_t = StateMachine_t::state_type;
+
+struct TrackingStateMachine : public StateMachine_t
+{
+    virtual void onEntry(int) override
+    {
+        ++entered;
+    }
+
+    virtual void onExit(int) override
+    {
+        ++left;
+    }
+
+    std::atomic_int entered{0};
+    std::atomic_int left{0};
+};
+
 } // namespace asyncSM
 
 
@@ -173,5 +207,107 @@ TEST_CASE("an asynchronous statemachine is stopped upon destruction",
         result = sm.startAsyncEventLoop();
         sm.start();
         waitForConfigurationChange();
+    }
+}
+
+SCENARIO("state machine actions are executed", "[statemachine]")
+{
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+
+        TrackingStateMachine sm;
+
+        WHEN ("the state machine is not started")
+        {
+            REQUIRE(!sm.running());
+            THEN ("neither onEntry() nor onExit() is called")
+            {
+                REQUIRE(sm.entered == 0);
+                REQUIRE(sm.left == 0);
+            }
+        }
+
+        WHEN ("the state machine is started")
+        {
+            sm.start();
+            THEN ("the state machine executes its onEntry() method")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(sm.entered == 1);
+                REQUIRE(sm.left == 0);
+            }
+
+            WHEN ("the state machine is stopped")
+            {
+                sm.stop();
+                THEN ("the state machine executes its onExit() method")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(sm.entered == 1);
+                    REQUIRE(sm.left == 1);
+                }
+            }
+        }
+    }
+
+    GIVEN ("an asynchronous FSM")
+    {
+        using namespace asyncSM;
+
+        std::future<void> result;
+
+        std::mutex mutex;
+        bool configurationChanged = false;
+        std::condition_variable cv;
+
+        auto waitForConfigurationChange = [&] {
+            std::unique_lock<std::mutex> lock(mutex);
+            cv.wait(lock, [&] { return configurationChanged; });
+            configurationChanged = false;
+        };
+
+        TrackingStateMachine sm;
+        sm.setConfigurationChangeCallback([&] {
+            std::unique_lock<std::mutex> lock(mutex);
+            configurationChanged = true;
+            cv.notify_all();
+        });
+
+        result = sm.startAsyncEventLoop();
+
+        WHEN ("the state machine is not started")
+        {
+            REQUIRE(!sm.running());
+            THEN ("neither onEntry() nor onExit() is called")
+            {
+                REQUIRE(sm.entered == 0);
+                REQUIRE(sm.left == 0);
+            }
+        }
+
+        WHEN ("the state machine is started")
+        {
+            sm.start();
+            waitForConfigurationChange();
+            THEN ("the state machine executes its onEntry() method")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(sm.entered == 1);
+                REQUIRE(sm.left == 0);
+            }
+
+            WHEN ("the state machine is stopped")
+            {
+                sm.stop();
+                waitForConfigurationChange();
+                THEN ("the state machine executes its onExit() method")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(sm.entered == 1);
+                    REQUIRE(sm.left == 1);
+                }
+            }
+        }
     }
 }
