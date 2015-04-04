@@ -56,7 +56,7 @@ public:
         return m_events.empty();
     }
 
-    unsigned& front()
+    int& front()
     {
         return m_events.front();
     }
@@ -66,7 +66,7 @@ public:
         m_events.pop_front();
     }
 
-    void push_back(unsigned event)
+    void push_back(int event)
     {
         if (event == 1)
             throw ListException();
@@ -74,7 +74,7 @@ public:
     }
 
 private:
-    std::deque<unsigned> m_events;
+    std::deque<int> m_events;
 };
 
 using StateMachine_t = StateMachine<EventListType<ThrowingList>>;
@@ -124,7 +124,7 @@ TEST_CASE("throw in transition guard", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    auto guard = [](unsigned event) {
+    auto guard = [](int event) {
         if (event == 3)
             throw GuardException();
         return event % 2 == 0;
@@ -176,7 +176,7 @@ TEST_CASE("throw in transition action", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    auto action = [](unsigned event) {
+    auto action = [](int event) {
         if (event == 3)
             throw ActionException();
     };
@@ -229,7 +229,7 @@ TEST_CASE("throw in onEntry", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    a.setEntryFunction([](unsigned) { throw StateException(); });
+    a.setEntryFunction([](int) { throw StateException(); });
 
     REQUIRE_THROWS_AS(sm.start(), StateException);
     REQUIRE(a.entered == 1);
@@ -252,7 +252,7 @@ TEST_CASE("throw in onExit", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    aa.setExitFunction([](unsigned) { throw StateException(); });
+    aa.setExitFunction([](int) { throw StateException(); });
 
     sm.start();
     REQUIRE_THROWS_AS(sm.stop(), StateException);
@@ -293,7 +293,7 @@ TEST_CASE("async sm: throw in transition guard", "[exception]")
     State_t ba("ba", &b);
     State_t bb("bb", &b);
 
-    auto guard = [](unsigned event) {
+    auto guard = [](int event) {
         if (event == 3)
             throw GuardException();
         return event % 2 == 0;

@@ -674,9 +674,9 @@ public:
           m_target(rhs.m_target),
           m_nextInSourceState(0),
           m_nextInEnabledSet(0),
-          m_guard(FSM11STD::forward<TGuard>(rhs.m_guard)),
-          m_action(FSM11STD::forward<TAction>(rhs.m_action)),
-          m_event(FSM11STD::forward<TEvent>(rhs.m_event)),
+          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
+          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
+          m_event{FSM11STD::forward<TEvent>(rhs.m_event)},
           m_eventless(false),
           m_isExternal(rhs.m_isExternal)
     {
@@ -692,8 +692,8 @@ public:
           m_target(rhs.m_target),
           m_nextInSourceState(0),
           m_nextInEnabledSet(0),
-          m_guard(FSM11STD::forward<TGuard>(rhs.m_guard)),
-          m_action(FSM11STD::forward<TAction>(rhs.m_action)),
+          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
+          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
           m_event(),
           m_eventless(true),
           m_isExternal(rhs.m_isExternal)

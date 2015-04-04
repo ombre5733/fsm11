@@ -46,8 +46,8 @@ TEST_CASE("construct function state", "[functionstate]")
 
     int entered = 0;
     int left = 0;
-    auto enter = [&](unsigned) { ++entered; };
-    auto leave = [&](unsigned) { ++left; };
+    auto enter = [&](int) { ++entered; };
+    auto leave = [&](int) { ++left; };
 
     State_t s2("s2", enter, nullptr, &s1);
     REQUIRE(s2.parent() == &s1);
@@ -78,8 +78,8 @@ TEST_CASE("set actions of function state", "[functionstate]")
 {
     int entered = 0;
     int left = 0;
-    auto enter = [&](unsigned ev) { entered += ev; };
-    auto leave = [&](unsigned ev) { left += ev; };
+    auto enter = [&](int ev) { entered += ev; };
+    auto leave = [&](int ev) { left += ev; };
 
     State_t s("s");
     REQUIRE(!s.entryFunction());

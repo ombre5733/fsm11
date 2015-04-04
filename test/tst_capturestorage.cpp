@@ -111,8 +111,8 @@ TEST_CASE("access storage in guard", "[storage]")
     State_t b("b", &sm);
     State_t c("c", &sm);
 
-    sm += a + noEvent ([&](unsigned){ return sm.load<0>() == 1; }) > b;
-    sm += a + noEvent ([&](unsigned){ return sm.load<0>() == 2; }) > c;
+    sm += a + noEvent ([&](int){ return sm.load<0>() == 1; }) > b;
+    sm += a + noEvent ([&](int){ return sm.load<0>() == 2; }) > c;
 
     SECTION("set to 0")
     {

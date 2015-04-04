@@ -39,8 +39,8 @@ namespace fsm11_detail
 struct default_options
 {
     // Types
-    using event_type = unsigned;
-    using event_list_type = std::deque<unsigned>;
+    using event_type = int;
+    using event_list_type = std::deque<int>;
     using capture_storage = type_list<>;
     using transition_allocator_type = std::allocator<Transition<void>>;
 

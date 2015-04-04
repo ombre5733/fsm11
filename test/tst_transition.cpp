@@ -816,7 +816,7 @@ TEST_CASE("an event matches a guarded eventless transition", "[transition]")
     SECTION("guard is independent")
     {
         bool guard = false;
-        sm += a + noEvent ([&] (unsigned) { return guard; }) > b;
+        sm += a + noEvent ([&] (int) { return guard; }) > b;
 
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a}));
@@ -829,7 +829,7 @@ TEST_CASE("an event matches a guarded eventless transition", "[transition]")
 
     SECTION("guard depends on event")
     {
-        sm += a + noEvent ([&] (unsigned event) { return event == 3; }) > b;
+        sm += a + noEvent ([&] (int event) { return event == 3; }) > b;
 
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a}));
