@@ -426,7 +426,7 @@ public:
     //! \brief Adds a transition.
     //!
     //! Adds a transition, which will be created from a transition specification
-    //! \p spec.
+    //! \p t.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     void add(TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
@@ -434,7 +434,7 @@ public:
     //! \brief Adds a transition.
     //!
     //! Adds a transition, which will be created from a transition specification
-    //! \p spec.
+    //! \p t.
     template <typename TState, typename TGuard, typename TAction>
     void add(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t);
 
