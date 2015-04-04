@@ -297,6 +297,16 @@ SCENARIO("configuration changes with respect to special transitions",
             }
         }
 
+        WHEN ("a target-less transition is encountered")
+        {
+            sm.addEvent(3);
+            THEN ("the configuration does not change")
+            {
+                REQUIRE(numInvokes == 1);
+                REQUIRE(sm.numConfigurationChanges() == 1);
+            }
+        }
+
         WHEN ("an event does not match a transition")
         {
             sm.addEvent(4);
@@ -306,7 +316,6 @@ SCENARIO("configuration changes with respect to special transitions",
                 REQUIRE(sm.numConfigurationChanges() == 1);
             }
         }
-
     }
 }
 
@@ -348,6 +357,28 @@ SCENARIO("configuration callbacks can be reset", "[callback]")
             {
                 REQUIRE(numInvokes == 1);
                 REQUIRE(sm.numConfigurationChanges() == 2);
+            }
+
+            WHEN ("it is reset again")
+            {
+                sm.setConfigurationChangeCallback(nullptr);
+                sm.addEvent(1);
+                THEN ("this is a no-op")
+                {
+                    REQUIRE(numInvokes == 1);
+                    REQUIRE(sm.numConfigurationChanges() == 3);
+                }
+            }
+
+            WHEN ("it is turned on again")
+            {
+                sm.setConfigurationChangeCallback([&](){ ++numInvokes; });
+                sm.addEvent(1);
+                THEN ("it is invoked again")
+                {
+                    REQUIRE(numInvokes == 2);
+                    REQUIRE(sm.numConfigurationChanges() == 3);
+                }
             }
         }
     }

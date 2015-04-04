@@ -123,13 +123,18 @@ protected:
     //! Leaves all states in the exit-set.
     void leaveStatesInExitSet(event_type event);
 
-    //! Performs a microstep.
-    void microstep(event_type event);
+    //! \brief Performs a microstep.
+    //!
+    //! Performs a microstep. The given \p event is passed to the onEntry()
+    //! and onExit() functions. The return value is \p true, if the
+    //! configuration has been changed.
+    bool microstep(event_type event);
 
     //! Follows all eventless transitions. Invokes the configuration change
-    //! callback, if either followedTransition is set or at least one
-    //! eventless transition triggered.
-    void runToCompletion(bool followedTransition);
+    //! callback, if either \p changedConfiguration is set or at least one
+    //! eventless transition has been triggered, which changed the
+    //! configuration.
+    void runToCompletion(bool changedConfiguration);
 
     //! Enters the initial states and thus brings up the state machine.
     void enterInitialStates();
@@ -365,16 +370,20 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::microstep(event_type event)
+bool EventDispatcherBase<TDerived>::microstep(event_type event)
 {
+    bool changedConfiguration = false;
+
     // 1. Mark the states in the exit set for exit and the target state of the
     //    transition for entry.
-    for (transition_type *prev = 0, *transition = m_enabledTransitions;
-         transition != 0;
+    for (transition_type *prev = nullptr, *transition = m_enabledTransitions;
+         transition != nullptr;
          prev = transition, transition = transition->m_nextInEnabledSet)
     {
         if (!transition->target())
             continue;
+
+        changedConfiguration = true;
 
         state_type* domain = transitionDomain(transition);
 
@@ -435,7 +444,7 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
 
     // 4. Execute the transitions' actions.
     for (transition_type* transition = m_enabledTransitions;
-         transition != 0;
+         transition != nullptr;
          transition = transition->m_nextInEnabledSet)
     {
         if (transition->action())
@@ -444,10 +453,12 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
 
     // 5. Enter the states in the enter set.
     enterStatesInEnterSet(event);
+
+    return changedConfiguration;
 }
 
 template <typename TDerived>
-void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
+void EventDispatcherBase<TDerived>::runToCompletion(bool changedConfiguration)
 {
     // We are in microstepping mode: follow all eventless transitions.
     while (1)
@@ -456,8 +467,7 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
         selectTransitions(true, event_type());
         if (!m_enabledTransitions)
             break;
-        followedTransition = true;
-        microstep(event_type());
+        changedConfiguration |= microstep(event_type());
         clearEnabledTransitionsSet();
     }
 
@@ -477,9 +487,9 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
         }
     }
 
-    // If we followed at least one transition, invoke the configuration
-    // change callback.
-    if (followedTransition)
+    // If we followed at least one transition, which was not target-less,
+    // invoke the configuration change callback.
+    if (changedConfiguration)
     {
         ++m_numConfigurationChanges;
         derived().invokeConfigurationChangeCallback();
@@ -636,11 +646,10 @@ private:
 
             this->clearTransientStateFlags();
             this->selectTransitions(false, event);
-            bool followedTransition = false;
+            bool changedConfiguration = false;
             if (this->m_enabledTransitions)
             {
-                followedTransition = true;
-                this->microstep(FSM11STD::move(event));
+                changedConfiguration = this->microstep(FSM11STD::move(event));
                 this->clearEnabledTransitionsSet();
             }
             else
@@ -648,7 +657,7 @@ private:
                 derived().invokeEventDiscardedCallback(FSM11STD::move(event));
             }
 
-            this->runToCompletion(followedTransition);
+            this->runToCompletion(changedConfiguration);
         }
     }
 };
@@ -844,11 +853,11 @@ private:
 
                 this->clearTransientStateFlags();
                 this->selectTransitions(false, event);
-                bool followedTransition = false;
+                bool changedConfiguration = false;
                 if (this->m_enabledTransitions)
                 {
-                    followedTransition = true;
-                    this->microstep(FSM11STD::move(event));
+                    changedConfiguration
+                            = this->microstep(FSM11STD::move(event));
                     this->clearEnabledTransitionsSet();
                 }
                 else
@@ -856,7 +865,7 @@ private:
                     derived().invokeEventDiscardedCallback(FSM11STD::move(event));
                 }
 
-                this->runToCompletion(followedTransition);
+                this->runToCompletion(changedConfiguration);
             }
         } while (false); // TODO: have an option to continue looping even after a stop request
     }
