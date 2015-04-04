@@ -449,6 +449,24 @@ void EventDispatcherBase<TDerived>::microstep(event_type event)
 template <typename TDerived>
 void EventDispatcherBase<TDerived>::runToCompletion(bool followedTransition)
 {
+    // TODO: Diese Aenderung sollte eingebaut werden
+#if 0
+    // If we followed at least one transition, invoke the configuration
+    // change callback.
+    if (followedTransition)
+    {
+        // Synchronize the visible state active flag with the internal
+        // state active flag.
+        for (auto iter = derived().begin(); iter != derived().end(); ++iter)
+            iter->m_visibleActive = (iter->m_flags & state_type::Active) != 0;
+
+        followedTransition = false;
+        ++m_numConfigurationChanges;
+        derived().invokeConfigurationChangeCallback();
+    }
+#endif
+    // TODO: Ende der Aenderung
+
     // We are in microstepping mode: follow all eventless transitions.
     while (1)
     {
@@ -540,7 +558,41 @@ public:
         auto lock = derived().getLock();
 
         derived().m_eventList.push_back(FSM11STD::move(event));
-        doDispatchEvents();
+        if (!m_running || m_dispatching)
+            return;
+
+        m_dispatching = true;
+        FSM11_SCOPE_EXIT { m_dispatching = false; };
+        FSM11_SCOPE_FAILURE {
+            this->clearEnabledTransitionsSet();
+            this->leaveConfiguration();
+            m_running = false;
+        };
+
+        while (!derived().m_eventList.empty())
+        {
+            auto event = derived().m_eventList.front();
+            derived().m_eventList.pop_front();
+
+            derived().invokeEventDispatchCallback(event);
+            derived().invokeCaptureStorageCallback();
+
+            this->clearTransientStateFlags();
+            this->selectTransitions(false, event);
+            bool followedTransition = false;
+            if (this->m_enabledTransitions)
+            {
+                followedTransition = true;
+                this->microstep(FSM11STD::move(event));
+                this->clearEnabledTransitionsSet();
+            }
+            else
+            {
+                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
+            }
+
+            this->runToCompletion(followedTransition);
+        }
     }
 
     bool running() const
@@ -563,7 +615,6 @@ public:
             this->enterInitialStates();
             this->runToCompletion(true);
             m_running = true;
-            doDispatchEvents();
         }
     }
 
@@ -611,45 +662,6 @@ private:
     const TDerived& derived() const
     {
         return *static_cast<const TDerived*>(this);
-    }
-
-    void doDispatchEvents()
-    {
-        if (!m_running || m_dispatching)
-            return;
-
-        m_dispatching = true;
-        FSM11_SCOPE_EXIT { m_dispatching = false; };
-        FSM11_SCOPE_FAILURE {
-            this->clearEnabledTransitionsSet();
-            this->leaveConfiguration();
-            m_running = false;
-        };
-
-        while (!derived().m_eventList.empty())
-        {
-            auto event = derived().m_eventList.front();
-            derived().m_eventList.pop_front();
-
-            derived().invokeEventDispatchCallback(event);
-            derived().invokeCaptureStorageCallback();
-
-            this->clearTransientStateFlags();
-            this->selectTransitions(false, event);
-            bool followedTransition = false;
-            if (this->m_enabledTransitions)
-            {
-                followedTransition = true;
-                this->microstep(FSM11STD::move(event));
-                this->clearEnabledTransitionsSet();
-            }
-            else
-            {
-                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
-            }
-
-            this->runToCompletion(followedTransition);
-        }
     }
 };
 

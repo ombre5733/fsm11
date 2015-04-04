@@ -12,6 +12,7 @@ INCLUDEPATH += ../src/
 SOURCES += main.cpp \
     tst_capturestorage.cpp \
     tst_compound.cpp \
+    tst_eventlist.cpp \
     tst_exceptions.cpp \
     tst_functionstate.cpp \
     tst_invoke.cpp \
