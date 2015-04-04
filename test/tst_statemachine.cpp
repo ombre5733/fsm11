@@ -29,23 +29,23 @@
 using namespace fsm11;
 
 
-namespace sync
+namespace syncSM
 {
 using StateMachine_t = StateMachine<>;
 using State_t = StateMachine_t::state_type;
-} // namespace sync
+} // namespace syncSM
 
-namespace async
+namespace asyncSM
 {
 using StateMachine_t = StateMachine<AsynchronousEventDispatching,
                                     ConfigurationChangeCallbacksEnable<true>>;
 using State_t = StateMachine_t::state_type;
-} // namespace async
+} // namespace asyncSM
 
 
 TEST_CASE("construct a synchronous statemachine", "[statemachine]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
     REQUIRE(!sm.running());
     REQUIRE(sm.numConfigurationChanges() == 0);
@@ -53,7 +53,7 @@ TEST_CASE("construct a synchronous statemachine", "[statemachine]")
 
 TEST_CASE("construct an asynchronous statemachine", "[statemachine]")
 {
-    using namespace async;
+    using namespace asyncSM;
     StateMachine_t sm;
     REQUIRE(!sm.running());
     REQUIRE(sm.numConfigurationChanges() == 0);
@@ -65,7 +65,7 @@ TEST_CASE("the eventloop of an asynchronous statemachine is left upon destructio
     std::future<void> result;
 
     {
-        using namespace async;
+        using namespace asyncSM;
         StateMachine_t sm;
         REQUIRE(!sm.running());
         REQUIRE(sm.numConfigurationChanges() == 0);
@@ -76,7 +76,7 @@ TEST_CASE("the eventloop of an asynchronous statemachine is left upon destructio
 
 TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
 {
-    using namespace sync;
+    using namespace syncSM;
     StateMachine_t sm;
     REQUIRE(!sm.running());
     REQUIRE(!sm.isActive());
@@ -95,7 +95,7 @@ TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
 
 TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
 {
-    using namespace async;
+    using namespace asyncSM;
 
     std::mutex mutex;
     bool configurationChanged = false;
@@ -135,7 +135,7 @@ TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
 TEST_CASE("an asynchronous statemachine is stopped upon destruction",
           "[statemachine]")
 {
-    using namespace async;
+    using namespace asyncSM;
     std::future<void> result;
 
     std::mutex mutex;
