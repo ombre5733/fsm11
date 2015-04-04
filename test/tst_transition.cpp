@@ -416,6 +416,51 @@ TEST_CASE("targetless transitions block an event", "[transition]")
     }
 }
 
+SCENARIO("blocking an event with a targetless transition", "[transition]")
+{
+    GIVEN ("a FSM")
+    {
+        using namespace syncSM;
+        StateMachine_t sm;
+
+        TrackingState<State_t> a("a", &sm);
+        TrackingState<State_t> b("b", &sm);
+
+        WHEN ("no targetless transition is present")
+        {
+            sm += a + event(1) > b;
+            sm.start();
+
+            sm.addEvent(1);
+            THEN ("a state change is performed")
+            {
+                REQUIRE(isActive(sm, {&sm, &b}));
+                REQUIRE(a.entered == 1);
+                REQUIRE(a.left == 1);
+                REQUIRE(b.entered == 1);
+                REQUIRE(b.left == 0);
+            }
+        }
+
+        WHEN ("a targetless transition is present")
+        {
+            sm += a + event(1) > noTarget;
+            sm += a + event(1) > b;
+            sm.start();
+
+            sm.addEvent(1);
+            THEN ("the event is blocked")
+            {
+                REQUIRE(isActive(sm, {&sm, &a}));
+                REQUIRE(a.entered == 1);
+                REQUIRE(a.left == 0);
+                REQUIRE(b.entered == 0);
+                REQUIRE(b.left == 0);
+            }
+        }
+    }
+}
+
 TEST_CASE("initial states are activated after start", "[transition]")
 {
     using namespace syncSM;
