@@ -79,8 +79,8 @@ TEST_CASE("set the state machine", "[state]")
     State_t s3("s3", &s2);
 
     REQUIRE(s1.stateMachine() == &sm1);
-    REQUIRE(s2.stateMachine() == 0);
-    REQUIRE(s3.stateMachine() == 0);
+    REQUIRE(s2.stateMachine() == nullptr);
+    REQUIRE(s3.stateMachine() == nullptr);
     s2.setParent(&s1);
     REQUIRE(s1.stateMachine() == &sm1);
     REQUIRE(s2.stateMachine() == &sm1);
@@ -179,6 +179,9 @@ TEST_CASE("find a descendant", "[state]")
     State_t c32("c32", &c3);
 
     State_t* found;
+
+    found = p.findDescendant({});
+    REQUIRE(found == &p);
 
     found = p.findDescendant({"c1"});
     REQUIRE(found == &c1);
