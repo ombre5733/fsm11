@@ -672,8 +672,8 @@ public:
                             TState, TEvent, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
-          m_nextInSourceState(0),
-          m_nextInEnabledSet(0),
+          m_nextInSourceState{nullptr},
+          m_nextInEnabledSet{nullptr},
           m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
           m_action{FSM11STD::forward<TAction>(rhs.m_action)},
           m_event{FSM11STD::forward<TEvent>(rhs.m_event)},
@@ -690,8 +690,8 @@ public:
                             TState, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
-          m_nextInSourceState(0),
-          m_nextInEnabledSet(0),
+          m_nextInSourceState{nullptr},
+          m_nextInEnabledSet{nullptr},
           m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
           m_action{FSM11STD::forward<TAction>(rhs.m_action)},
           m_event(),

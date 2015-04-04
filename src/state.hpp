@@ -389,7 +389,7 @@ public:
     //! \brief A pre-order const-iterator past the last state of the sub-tree.
     //!
     //! Returns a pre-order const-iterator past the last state of the sub-tree
-    //! rooted at this state..
+    //! rooted at this state.
     const_pre_order_iterator pre_order_cend() const noexcept
     {
         const_pre_order_iterator iter(this);
@@ -422,7 +422,7 @@ public:
     //! \brief A post-order iterator to the first state of the sub-tree.
     //!
     //! Returns a post-order iterator to the first state of the sub-tree
-    //! rooted at this state..
+    //! rooted at this state.
     post_order_iterator post_order_begin() noexcept
     {
         State* state = this;
@@ -434,7 +434,7 @@ public:
     //! \brief A post-order const-iterator to the first state of the sub-tree.
     //!
     //! Returns a post-order const-iterator to the first state of the sub-tree
-    //! rooted at this state..
+    //! rooted at this state.
     const_post_order_iterator post_order_begin() const noexcept
     {
         return post_order_cbegin();
@@ -556,7 +556,7 @@ public:
 
         //! Default constructs an end-iterator.
         PreOrderIterator() noexcept
-            : m_current(0),
+            : m_current{nullptr},
               m_skipChildren(false)
         {
         }
@@ -585,7 +585,7 @@ public:
                 // no sibling, go to the parent's sibling, the parent's
                 // parent's sibling... Note that the direct ancestors must
                 // be skipped because they have been visited already.
-                while (m_current->m_nextSibling == 0)
+                while (m_current->m_nextSibling == nullptr)
                 {
                     m_current = m_current->parent();
                     if (!m_current)
@@ -752,7 +752,7 @@ public:
 
         //! Default constructs an end-iterator.
         PostOrderIterator() noexcept
-            : m_current(0)
+            : m_current{nullptr}
         {
         }
 
@@ -872,7 +872,7 @@ public:
 
         //! Default constructs an end-iterator.
         SiblingIterator() noexcept
-            : m_current(0)
+            : m_current{nullptr}
         {
         }
 
@@ -998,7 +998,7 @@ public:
 
         //! Default constructs an end-iterator.
         TransitionIterator() noexcept
-            : m_current(0)
+            : m_current{nullptr}
         {
         }
 
@@ -1119,12 +1119,12 @@ private:
 template <typename TStateMachine>
 State<TStateMachine>::State(const char* name, State* parent) noexcept
     : m_name(name),
-      m_stateMachine(parent ? parent->m_stateMachine : 0),
+      m_stateMachine(parent ? parent->m_stateMachine : nullptr),
       m_parent(parent),
-      m_children(0),
-      m_nextSibling(0),
-      m_initialState(0),
-      m_transitions(0),
+      m_children(nullptr),
+      m_nextSibling(nullptr),
+      m_initialState(nullptr),
+      m_transitions(nullptr),
       m_flags(0),
       m_visibleActive(false)
 {
@@ -1193,7 +1193,7 @@ void State<TStateMachine>::setParent(State* parent) noexcept
         parent->addChild(this);
 
     // Propagate the state machine of the new parent to the new child states.
-    state_machine_type* fsm = parent ? parent->stateMachine() : 0;
+    state_machine_type* fsm = parent ? parent->stateMachine() : nullptr;
     for (auto& state : *this)
         state.m_stateMachine = fsm;
 
@@ -1207,7 +1207,7 @@ void State<TStateMachine>::setParent(State* parent) noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::addChild(State* child) noexcept
 {
-    FSM11_ASSERT(child->m_nextSibling == 0);
+    FSM11_ASSERT(child->m_nextSibling == nullptr);
 
     if (!m_children)
     {
@@ -1225,7 +1225,7 @@ void State<TStateMachine>::addChild(State* child) noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::removeChild(State* child) noexcept
 {
-    FSM11_ASSERT(m_children != 0);
+    FSM11_ASSERT(m_children != nullptr);
 
     if (child == m_children)
         m_children = child->m_nextSibling;
@@ -1234,7 +1234,7 @@ void State<TStateMachine>::removeChild(State* child) noexcept
         State* iter = m_children;
         while (1)
         {
-            FSM11_ASSERT(iter != 0);
+            FSM11_ASSERT(iter != nullptr);
 
             if (iter->m_nextSibling == child)
             {
@@ -1244,7 +1244,7 @@ void State<TStateMachine>::removeChild(State* child) noexcept
             iter = iter->m_nextSibling;
         }
     }
-    child->m_nextSibling = 0;
+    child->m_nextSibling = nullptr;
 }
 
 template <typename TStateMachine>
@@ -1291,13 +1291,13 @@ template <typename TStateMachine>
 State<TStateMachine>* findLeastCommonProperAncestor(
         State<TStateMachine>* state1, State<TStateMachine>* state2) noexcept
 {
-    while ((state1 = state1->parent()) != 0)
+    while ((state1 = state1->parent()) != nullptr)
     {
         if (isProperAncestor(state1, state2))
             return state1;
     }
 
-    return 0;
+    return nullptr;
 }
 
 //! \brief Checks if a state is an ancestor of another state.
@@ -1331,7 +1331,7 @@ bool isProperAncestor(const State<TStateMachine>* ancestor,
 {
     if (!ancestor->isAtomic())
     {
-        while ((descendant = descendant->parent()) != 0)
+        while ((descendant = descendant->parent()) != nullptr)
         {
             if (ancestor == descendant)
                 return true;
