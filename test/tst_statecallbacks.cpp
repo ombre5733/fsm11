@@ -26,42 +26,144 @@
 
 #include "../src/statemachine.hpp"
 
-using StateMachine_t = fsm11::StateMachine<fsm11::StateCallbacksEnable<true>>;
-using State_t = fsm11::State<StateMachine_t>;
+#include <algorithm>
+#include <initializer_list>
 
-TEST_CASE("create state machine with state callbacks", "[callbacks]")
+using namespace fsm11;
+
+
+namespace syncSM
 {
-    StateMachine_t sm;
+using StateMachine_t = StateMachine<>;
+using CallbackStateMachine_t = StateMachine<
+                                   StateCallbacksEnable<true>>;
+using CallbackState_t = State<CallbackStateMachine_t>;
+} // namespace syncSM
+
+namespace asyncSM
+{
+using StateMachine_t = StateMachine<AsynchronousEventDispatching>;
+using CallbackStateMachine_t = StateMachine<
+                                   AsynchronousEventDispatching,
+                                   StateCallbacksEnable<true>>;
+} // namespace asyncSM
+
+TEST_CASE("an FSM without state callbacks compiles only when no callback is set",
+          "[callback]")
+{
+    syncSM::StateMachine_t sync_sm;
+    // When one of the following lines is included, the test must not compile.
+    // sync_sm.setStateEntryCallback([](syncSM::StateMachine_t::state_type){});
+    // sync_sm.setStateExitCallback([](syncSM::StateMachine_t::state_type){});
+
+    asyncSM::StateMachine_t async_sm;
+    // When one of the following lines is included, the test must not compile.
+    // async_sm.setStateEntryCallback([](asyncSM::StateMachine_t::state_type){});
+    // async_sm.setStateExitCallback([](asyncSM::StateMachine_t::state_type){});
 }
 
-TEST_CASE("entry and exit callbacks are invoked", "[callbacks]")
+TEST_CASE("disabling state callbacks makes the FSM smaller", "[callback]")
 {
-    StateMachine_t sm;
-    State_t a("a", &sm);
-    State_t aa("aa", &a);
-    State_t b("b", &sm);
+    REQUIRE(sizeof(syncSM::StateMachine_t)
+            < sizeof(syncSM::CallbackStateMachine_t));
+    REQUIRE(sizeof(asyncSM::StateMachine_t)
+            < sizeof(asyncSM::CallbackStateMachine_t));
+}
 
-    std::set<State_t*> states;
-    SECTION("entry callback")
+SCENARIO("state callback execution", "[callback]")
+{
+    GIVEN ("a state machine")
     {
-        sm.setStateEntryCallback([&](State_t* s){ states.insert(s); });
-        sm.start();
-        REQUIRE(states.size() == 3);
-        sm.stop();
-        REQUIRE(states.size() == 3);
-    }
+        using namespace syncSM;
 
-    SECTION("exit callback")
-    {
-        sm.setStateExitCallback([&](State_t* s){ states.insert(s); });
-        sm.start();
-        REQUIRE(states.size() == 0);
-        sm.stop();
-        REQUIRE(states.size() == 3);
-    }
+        int numDispatchedEvents = 0;
+        int numDiscardedEvents = 0;
 
-    auto contains = [&](State_t* s){ return states.find(s) != states.end(); };
-    REQUIRE(contains(&sm));
-    REQUIRE(contains(&a));
-    REQUIRE(contains(&aa));
+        CallbackStateMachine_t sm;
+        CallbackState_t a("a", &sm);
+        CallbackState_t aa("aa", &a);
+        CallbackState_t b("b", &sm);
+
+        std::vector<CallbackState_t*> states;
+
+        WHEN ("no callback is set")
+        {
+            sm.start();
+            THEN ("nothing happens")
+            {
+                REQUIRE(states.empty());
+            }
+        }
+
+        WHEN ("a state entry callback is set")
+        {
+            sm.setStateEntryCallback(
+                        [&](CallbackState_t* s){ states.push_back(s); });
+            sm.start();
+            THEN ("it is executed once per state entered")
+            {
+                REQUIRE(states.size() == 3);
+                for (auto s : {(CallbackState_t*)&sm, &a, &aa})
+                    REQUIRE(std::find(states.begin(), states.end(), s) != states.end());
+            }
+
+            WHEN ("the state machine is restarted")
+            {
+                sm.stop();
+                sm.start();
+                THEN ("the callback is executed again")
+                {
+                    REQUIRE(states.size() == 6);
+                }
+            }
+
+            WHEN ("the callback is reset")
+            {
+                sm.setStateEntryCallback(nullptr);
+                sm.stop();
+                sm.start();
+                THEN ("it is not executed anymore")
+                {
+                    REQUIRE(states.size() == 3);
+                }
+            }
+        }
+
+        WHEN ("a state exit callback is set")
+        {
+            sm.setStateExitCallback(
+                        [&](CallbackState_t* s){ states.push_back(s); });
+            sm.start();
+            REQUIRE(states.size() == 0);
+            sm.stop();
+            THEN ("it is executed once per state left")
+            {
+                REQUIRE(states.size() == 3);
+                for (auto s : {(CallbackState_t*)&sm, &a, &aa})
+                    REQUIRE(std::find(states.begin(), states.end(), s) != states.end());
+            }
+
+            WHEN ("the state machine is restarted and stopped again")
+            {
+                sm.start();
+                REQUIRE(states.size() == 3);
+                sm.stop();
+                THEN ("the callback is executed again")
+                {
+                    REQUIRE(states.size() == 6);
+                }
+            }
+
+            WHEN ("the callback is reset")
+            {
+                sm.setStateExitCallback(nullptr);
+                sm.start();
+                sm.stop();
+                THEN ("it is not executed anymore")
+                {
+                    REQUIRE(states.size() == 3);
+                }
+            }
+        }
+    }
 }
