@@ -311,3 +311,24 @@ SCENARIO("state machine actions are executed", "[statemachine]")
         }
     }
 }
+
+TEST_CASE("find a descendant of a state machine", "[statemachine]")
+{
+    using namespace syncSM;
+
+    StateMachine_t sm;
+    State_t p("p", &sm);
+    State_t c1("c1", &p);
+    State_t c2("c2", &p);
+    State_t c3("c3", &p);
+    State_t c11("c11", &c1);
+    State_t c12("c12", &c1);
+    State_t c31("c31", &c3);
+    State_t c32("c32", &c3);
+
+    REQUIRE(sm.findDescendant({}) == &sm);
+    REQUIRE(sm.findDescendant({"p", "c1"}) == &c1);
+    REQUIRE(sm.findDescendant({"p", "c3", "c32"}) == &c32);
+    REQUIRE(sm.findDescendant({"p", "x"}) == nullptr);
+    REQUIRE(sm.findDescendant({"x"}) == nullptr);
+}
