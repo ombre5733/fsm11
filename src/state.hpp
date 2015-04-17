@@ -280,7 +280,9 @@ public:
     typedef SiblingIterator<true> const_sibling_iterator;
 
     template <bool TIsConst>
-    class SiblingView;
+    class AtomicIterator;
+    typedef AtomicIterator<false> atomic_iterator;
+    typedef AtomicIterator<true> const_atomic_iterator;
 
 
     //! \brief A pre-order iterator to the first state of the sub-tree.
@@ -533,6 +535,75 @@ public:
     const_sibling_iterator child_cend() const noexcept
     {
         return sibling_iterator();
+    }
+
+
+    //! \brief An iterator to the first atomic state of the sub-tree.
+    //!
+    //! Returns an iterator to the first atomic state of the sub-tree
+    //! rooted at this state.
+    atomic_iterator atomic_begin() noexcept
+    {
+        State* state = this;
+        while (state->m_children)
+            state = state->m_children;
+        return atomic_iterator(state);
+    }
+
+    //! \brief A const-iterator to the first atomic state of the sub-tree.
+    //!
+    //! Returns a const-iterator to the first atomic state of the sub-tree
+    //! rooted at this state.
+    const_atomic_iterator atomic_begin() const noexcept
+    {
+        return atomic_cbegin();
+    }
+
+    //! \brief A const-iterator to the first atomic state of the sub-tree.
+    //!
+    //! Returns a const-iterator to the first atomic state of the sub-tree
+    //! rooted at this state.
+    const_atomic_iterator atomic_cbegin() const noexcept
+    {
+        return const_cast<State*>(this)->atomic_begin();
+    }
+
+    //! \brief An iterator past the last atomic state of the sub-tree.
+    //!
+    //! Returns an iterator past the last atomic state of the sub-tree
+    //! rooted at this state.
+    atomic_iterator atomic_end() noexcept
+    {
+        State* state = this;
+        while (state && state->m_nextSibling == nullptr)
+        {
+            state = state->parent();
+        }
+        if (state)
+        {
+            state = state->m_nextSibling;
+            while (state->m_children)
+                state = state->m_children;
+        }
+        return atomic_iterator(state);
+    }
+
+    //! \brief A const-iterator past the last atomic state of the sub-tree.
+    //!
+    //! Returns a const-iterator past the last atomic state of the sub-tree
+    //! rooted at this state.
+    const_atomic_iterator atomic_end() const noexcept
+    {
+        return atomic_cend();
+    }
+
+    //! \brief A const-iterator past the last atomic state of the sub-tree.
+    //!
+    //! Returns a const-iterator past the last atomic state of the sub-tree
+    //! rooted at this state.
+    const_atomic_iterator atomic_cend() const noexcept
+    {
+        return const_cast<State*>(this)->atomic_end();
     }
 
 
@@ -937,6 +1008,102 @@ public:
         friend class State;
         // Befriend the non-const version with the const version.
         friend SiblingIterator<true>;
+    };
+
+    //! \brief An iterator over atomic states.
+    //!
+    //! The AtomicIterator is an iterator the atomic states.
+    //! If \p TIsConst is set, it implements a const-iterator, otherwise the
+    //! accessed state is mutable.
+    template <bool TIsConst>
+    class AtomicIterator
+    {
+    public:
+        typedef std::ptrdiff_t difference_type;
+        typedef State value_type;
+        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
+                    pointer;
+        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
+                    reference;
+        typedef std::forward_iterator_tag iterator_category;
+
+        //! Default constructs an end-iterator.
+        AtomicIterator() noexcept
+            : m_current{nullptr}
+        {
+        }
+
+        //! (Copy-)Constructs an iterator from a non-const iterator.
+        AtomicIterator(const AtomicIterator<false>& other) noexcept
+            : m_current(other.m_current)
+        {
+        }
+
+        //! Prefix increment.
+        AtomicIterator& operator++() noexcept
+        {
+            FSM11_ASSERT(m_current);
+
+            while (m_current->m_nextSibling == nullptr)
+            {
+                m_current = m_current->parent();
+                if (!m_current)
+                    return *this;
+            }
+            m_current = m_current->m_nextSibling;
+            while (m_current->m_children)
+                m_current = m_current->m_children;
+
+            return *this;
+        }
+
+        //! Postfix increment.
+        AtomicIterator operator++(int) noexcept
+        {
+            AtomicIterator temp(*this);
+            ++*this;
+            return temp;
+        }
+
+        //! Returns \p true, if this iterator is equal to the \p other iterator.
+        bool operator==(AtomicIterator other) const noexcept
+        {
+            return m_current == other.m_current;
+        }
+
+        //! Returns \p true, if this iterator is not equal to the \p other
+        //! iterator.
+        bool operator!=(AtomicIterator other) const noexcept
+        {
+            return m_current != other.m_current;
+        }
+
+        //! Returns a reference to the state.
+        reference operator*() const noexcept
+        {
+            return *m_current;
+        }
+
+        //! Returns a pointer to the state.
+        pointer operator->() const noexcept
+        {
+            return m_current;
+        }
+
+    private:
+        //! The current state.
+        pointer m_current;
+
+        //! Constructs an iterator pointing to the \p state.
+        AtomicIterator(pointer state) noexcept
+            : m_current(state)
+        {
+        }
+
+
+        friend class State;
+        // Befriend the non-const version with the const version.
+        friend AtomicIterator<true>;
     };
 
     // -------------------------------------------------------------------------

@@ -96,6 +96,24 @@ TEST_CASE("iterate over a single state", "[iteration]")
         REQUIRE(cs.child_begin() == cs.child_end());
         REQUIRE(cs.child_cbegin() == cs.child_cend());
     }
+
+    SECTION("atomic iterator")
+    {
+        REQUIRE(s.atomic_begin()   != s.atomic_end());
+        REQUIRE(s.atomic_cbegin()  != s.atomic_cend());
+        REQUIRE(cs.atomic_begin()  != cs.atomic_end());
+        REQUIRE(cs.atomic_cbegin() != cs.atomic_cend());
+
+        REQUIRE(++s.atomic_begin()   == s.atomic_end());
+        REQUIRE(++s.atomic_cbegin()  == s.atomic_cend());
+        REQUIRE(++cs.atomic_begin()  == cs.atomic_end());
+        REQUIRE(++cs.atomic_cbegin() == cs.atomic_cend());
+
+        REQUIRE(&s == &*s.atomic_begin());
+        REQUIRE(&s == &*s.atomic_cbegin());
+        REQUIRE(&s == &*cs.atomic_begin());
+        REQUIRE(&s == &*cs.atomic_cbegin());
+    }
 }
 
 TEST_CASE("iterate over state hierarchy", "[iteration]")
@@ -354,18 +372,18 @@ TEST_CASE("iterate over empty state machine", "[iteration]")
         REQUIRE(++csm.post_order_cbegin() == csm.post_order_cend());
     }
 
-//    SECTION("atomic iterator")
-//    {
-//        REQUIRE(sm.atomic_begin()   != sm.atomic_end());
-//        REQUIRE(sm.atomic_cbegin()  != sm.atomic_cend());
-//        REQUIRE(csm.atomic_begin()  != csm.atomic_end());
-//        REQUIRE(csm.atomic_cbegin() != csm.atomic_cend());
+    SECTION("atomic iterator")
+    {
+        REQUIRE(sm.atomic_begin()   != sm.atomic_end());
+        REQUIRE(sm.atomic_cbegin()  != sm.atomic_cend());
+        REQUIRE(csm.atomic_begin()  != csm.atomic_end());
+        REQUIRE(csm.atomic_cbegin() != csm.atomic_cend());
 
-//        REQUIRE(++sm.atomic_begin()   == sm.atomic_end());
-//        REQUIRE(++sm.atomic_cbegin()  == sm.atomic_cend());
-//        REQUIRE(++csm.atomic_begin()  == csm.atomic_end());
-//        REQUIRE(++csm.atomic_cbegin() == csm.atomic_cend());
-//    }
+        REQUIRE(++sm.atomic_begin()   == sm.atomic_end());
+        REQUIRE(++sm.atomic_cbegin()  == sm.atomic_cend());
+        REQUIRE(++csm.atomic_begin()  == csm.atomic_end());
+        REQUIRE(++csm.atomic_cbegin() == csm.atomic_cend());
+    }
 
     SECTION("child iterator")
     {
@@ -503,7 +521,6 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
         REQUIRE(visitOrder[&c3] > visitOrder[&c32]);
     }
 
-#if 0
     SECTION("atomic iterator")
     {
         SECTION("mutable iterator from begin()/end()")
@@ -541,7 +558,6 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
         REQUIRE(contains(visitOrder, &c31));
         REQUIRE(contains(visitOrder, &c32));
     }
-#endif
 
     SECTION("works with <algorithm>")
     {
@@ -564,13 +580,13 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
         REQUIRE(std::count_if(csm.post_order_cbegin(), csm.post_order_cend(),
                               predicate) == 9);
 
-//        REQUIRE(std::count_if(sm.atomic_begin(), sm.atomic_end(),
-//                              predicate) == 5);
-//        REQUIRE(std::count_if(csm.atomic_begin(), csm.atomic_end(),
-//                              predicate) == 5);
-//        REQUIRE(std::count_if(sm.atomic_cbegin(), sm.atomic_cend(),
-//                              predicate) == 5);
-//        REQUIRE(std::count_if(csm.atomic_cbegin(), csm.atomic_cend(),
-//                              predicate) == 5);
+        REQUIRE(std::count_if(sm.atomic_begin(), sm.atomic_end(),
+                              predicate) == 5);
+        REQUIRE(std::count_if(csm.atomic_begin(), csm.atomic_end(),
+                              predicate) == 5);
+        REQUIRE(std::count_if(sm.atomic_cbegin(), sm.atomic_cend(),
+                              predicate) == 5);
+        REQUIRE(std::count_if(csm.atomic_cbegin(), csm.atomic_cend(),
+                              predicate) == 5);
     }
 }
