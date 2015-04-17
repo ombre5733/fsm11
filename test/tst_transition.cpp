@@ -569,15 +569,11 @@ TEST_CASE("initial states during configuration change", "[transition]")
         sm.addEvent(1);
         REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
 
-        REQUIRE(a.entered == 1);
-        REQUIRE(a.left == 1);
-        REQUIRE(b.entered == 1);
-        REQUIRE(b.left == 0);
-        REQUIRE(ba.entered == 1);
-        REQUIRE(ba.left == 0);
-        REQUIRE(baa.entered == 1);
-        REQUIRE(baa.left == 0);
-        REQUIRE(bb.entered == 0);
+        REQUIRE(a == std::make_tuple(1, 1));
+        REQUIRE(b == std::make_tuple(1, 0));
+        REQUIRE(ba == std::make_tuple(1, 0));
+        REQUIRE(baa == std::make_tuple(1, 0));
+        REQUIRE(bb == std::make_tuple(0, 0));
     }
 
     SECTION("with initial state")
@@ -590,13 +586,11 @@ TEST_CASE("initial states during configuration change", "[transition]")
         sm.addEvent(1);
         REQUIRE(isActive(sm, {&sm, &b, &bb}));
 
-        REQUIRE(a.entered == 1);
-        REQUIRE(a.left == 1);
-        REQUIRE(b.entered == 1);
-        REQUIRE(b.left == 0);
-        REQUIRE(ba.entered == 0);
-        REQUIRE(bb.entered == 1);
-        REQUIRE(bb.left == 0);
+        REQUIRE(a == std::make_tuple(1, 1));
+        REQUIRE(b == std::make_tuple(1, 0));
+        REQUIRE(ba == std::make_tuple(0, 0));
+        REQUIRE(baa == std::make_tuple(0, 0));
+        REQUIRE(bb == std::make_tuple(1, 0));
     }
 
     SECTION("initial state is ignored if the target is a sibling")
@@ -609,15 +603,11 @@ TEST_CASE("initial states during configuration change", "[transition]")
         sm.addEvent(1);
         REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
 
-        REQUIRE(a.entered == 1);
-        REQUIRE(a.left == 1);
-        REQUIRE(b.entered == 1);
-        REQUIRE(b.left == 0);
-        REQUIRE(ba.entered == 1);
-        REQUIRE(ba.left == 0);
-        REQUIRE(baa.entered == 1);
-        REQUIRE(baa.left == 0);
-        REQUIRE(bb.entered == 0);
+        REQUIRE(a == std::make_tuple(1, 1));
+        REQUIRE(b == std::make_tuple(1, 0));
+        REQUIRE(ba == std::make_tuple(1, 0));
+        REQUIRE(baa == std::make_tuple(1, 0));
+        REQUIRE(bb == std::make_tuple(0, 0));
     }
 
     SECTION("initial state is ignored if the target is a descendant")
@@ -630,15 +620,11 @@ TEST_CASE("initial states during configuration change", "[transition]")
         sm.addEvent(1);
         REQUIRE(isActive(sm, {&sm, &b, &ba, &baa}));
 
-        REQUIRE(a.entered == 1);
-        REQUIRE(a.left == 1);
-        REQUIRE(b.entered == 1);
-        REQUIRE(b.left == 0);
-        REQUIRE(ba.entered == 1);
-        REQUIRE(ba.left == 0);
-        REQUIRE(baa.entered == 1);
-        REQUIRE(baa.left == 0);
-        REQUIRE(bb.entered == 0);
+        REQUIRE(a == std::make_tuple(1, 1));
+        REQUIRE(b == std::make_tuple(1, 0));
+        REQUIRE(ba == std::make_tuple(1, 0));
+        REQUIRE(baa == std::make_tuple(1, 0));
+        REQUIRE(bb == std::make_tuple(0, 0));
     }
 }
 
