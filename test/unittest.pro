@@ -18,6 +18,7 @@ SOURCES += main.cpp \
     tst_eventlist.cpp \
     tst_exceptions.cpp \
     tst_functionstate.cpp \
+    tst_hierarchy.cpp \
     tst_invoke.cpp \
     tst_iteration.cpp \
     tst_state.cpp \
