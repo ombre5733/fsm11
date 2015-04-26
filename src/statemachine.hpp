@@ -365,6 +365,7 @@ class StateMachineImpl :
         public get_state_callbacks<TOptions>::type,
         public get_state_exception_callbacks<TOptions>::type,
         public get_storage<TOptions>::type,
+        public get_transition_conflict_callbacks<TOptions>::type,
         public State<StateMachineImpl<TOptions>>
 {
 public:

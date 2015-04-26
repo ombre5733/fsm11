@@ -116,6 +116,7 @@ private:
     FSM11STD::function<void(event_type)> m_eventDispatchCallback;
     FSM11STD::function<void(event_type)> m_eventDiscardedCallback;
 };
+
 template <bool TEnabled, typename TOptions>
 struct get_event_callbacks_helper
 {
@@ -318,6 +319,57 @@ struct get_state_exception_callbacks
                      TOptions::state_exception_callbacks_enable,
                      WithStateExceptionCallbacks<StateMachineImpl<TOptions>>,
                      WithoutStateExceptionCallbacks>::type;
+};
+
+// ----=====================================================================----
+//     Transition conflict callback
+// ----=====================================================================----
+
+class WithoutTransitionConflictCallback
+{
+public:
+    template <typename TType>
+    void setTransitionConflictCallback(TType&&)
+    {
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "Transition conflict callbacks are disabled");
+    }
+
+protected:
+    inline
+    void invokeTransitionConflictCallback()
+    {
+    }
+};
+
+class WithTransitionConflictCallback
+{
+public:
+    template <typename TType>
+    void setTransitionConflictCallback(TType&& callback)
+    {
+        m_transitionConflictCallback = FSM11STD::forward<TType>(callback);
+    }
+
+protected:
+    inline
+    void invokeTransitionConflictCallback()
+    {
+        if (m_transitionConflictCallback)
+            m_transitionConflictCallback();
+    }
+
+private:
+    FSM11STD::function<void()> m_transitionConflictCallback;
+};
+
+template <typename TOptions>
+struct get_transition_conflict_callbacks
+{
+    using type = typename FSM11STD::conditional<
+                     TOptions::transition_conflict_callbacks_enable,
+                     WithTransitionConflictCallback,
+                     WithoutTransitionConflictCallback>::type;
 };
 
 } // namespace fsm11_detail

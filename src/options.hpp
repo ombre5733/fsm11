@@ -44,7 +44,7 @@ struct default_options
     using capture_storage = type_list<>;
     using transition_allocator_type = std::allocator<Transition<void>>;
 
-    // Multithreading
+    // Behaviour
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
 
@@ -52,6 +52,7 @@ struct default_options
     static constexpr bool event_callbacks_enable = false;
     static constexpr bool configuration_change_callbacks_enable = false;
     static constexpr bool state_callbacks_enable = false;
+    static constexpr bool transition_conflict_callbacks_enable = false;
 
     // Callbacks for exeptions
     static constexpr bool state_exception_callbacks_enable = false;
@@ -113,7 +114,7 @@ struct TransitionAllocator
 };
 
 // ----=====================================================================----
-//     Multithreading
+//     Behaviour
 // ----=====================================================================----
 
 struct SynchronousEventDispatching
@@ -149,10 +150,6 @@ struct MultithreadingEnable
     };
     //! \endcond
 };
-
-// ----=====================================================================----
-//
-// ----=====================================================================----
 
 template <bool TEnable>
 struct StopTransitionSelectionAfterMatch
@@ -200,6 +197,18 @@ struct StateCallbacksEnable
     struct pack : TBase
     {
         static constexpr bool state_callbacks_enable = TEnable;
+    };
+    //! \endcond
+};
+
+template <bool TEnable>
+struct TransitionConflictCallbacksEnable
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool transition_conflict_callbacks_enable = TEnable;
     };
     //! \endcond
 };
