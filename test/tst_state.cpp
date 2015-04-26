@@ -25,7 +25,9 @@
 #include "catch.hpp"
 
 #include "../src/statemachine.hpp"
+
 #include <cstring>
+#include <initializer_list>
 
 using namespace fsm11;
 
@@ -200,4 +202,47 @@ TEST_CASE("find a descendant", "[state]")
 
     found = c1.findDescendant({""});
     REQUIRE(found == nullptr);
+}
+
+SCENARIO("a state hierarchy can be constructed in parts", "[state]")
+{
+    GIVEN ("two distinct state trees")
+    {
+        StateMachine_t sm;
+        State_t a("a", &sm);
+        State_t a1("a1", &a);
+        State_t a2("a2", &a);
+        State_t a3("a3", &a1);
+        State_t a4("a4", &a1);
+
+        State_t b("b");
+        State_t b1("b1", &b);
+        State_t b2("b2", &b);
+        State_t b3("b3", &b1);
+        State_t b4("b4", &b1);
+
+        REQUIRE(b.parent() == nullptr);
+
+        WHEN ("a tree is added to an FSM")
+        {
+            b.setParent(&sm);
+            REQUIRE(b.parent() == &sm);
+            THEN ("the state machine of the sub-tree changes")
+            {
+                for (State_t* state : {&b, &b1, &b2, &b3, &b4})
+                    REQUIRE(state->stateMachine() == &sm);
+            }
+        }
+
+        WHEN ("a tree is added as sub-tree")
+        {
+            b.setParent(&a);
+            REQUIRE(b.parent() == &a);
+            THEN ("the state machine of the sub-tree changes")
+            {
+                for (State_t* state : {&b, &b1, &b2, &b3, &b4})
+                    REQUIRE(state->stateMachine() == &sm);
+            }
+        }
+    }
 }
