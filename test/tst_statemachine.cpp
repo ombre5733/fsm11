@@ -25,6 +25,7 @@
 #include "catch.hpp"
 
 #include "../src/statemachine.hpp"
+#include <functional>
 
 using namespace fsm11;
 
@@ -331,4 +332,62 @@ TEST_CASE("find a descendant of a state machine", "[statemachine]")
     REQUIRE(sm.findDescendant({"p", "c3", "c32"}) == &c32);
     REQUIRE(sm.findDescendant({"p", "x"}) == nullptr);
     REQUIRE(sm.findDescendant({"x"}) == nullptr);
+}
+
+struct BaseStateMachine : public StateMachine<>
+{
+    BaseStateMachine()
+        : a("a", this),
+          b("b", this)
+    {
+        *this += a + event(1)
+                   [ std::bind(&BaseStateMachine::guard, this,
+                               std::placeholders::_1) ]
+                   / std::bind(&BaseStateMachine::action, this,
+                               std::placeholders::_1)
+                > b;
+    }
+
+    virtual ~BaseStateMachine()
+    {
+    }
+
+    virtual bool guard(int) = 0;
+    virtual void action(int) = 0;
+
+    State<StateMachine<>> a;
+    State<StateMachine<>> b;
+};
+
+struct DerivedStateMachine : public BaseStateMachine
+{
+    DerivedStateMachine()
+        : enabled(false),
+          numActions(0)
+    {
+    }
+
+    virtual bool guard(int) override
+    {
+        return enabled;
+    }
+
+    virtual void action(int) override
+    {
+        ++numActions;
+    }
+
+    bool enabled;
+    int numActions;
+};
+
+TEST_CASE("subclassing a state machine", "[statemachine]")
+{
+    DerivedStateMachine d;
+    d.start();
+    d.addEvent(1);
+    REQUIRE(d.numActions == 0);
+    d.enabled = true;
+    d.addEvent(1);
+    REQUIRE(d.numActions == 1);
 }
