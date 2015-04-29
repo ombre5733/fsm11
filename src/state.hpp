@@ -78,7 +78,7 @@ public:
     //! Constructs a state with given \p name which will be a child of the
     //! \p parent state. The \p parent may be a null-pointer. In this case
     //! the state is at the root of its hierarchy.
-    explicit State(const char* name, State* parent = 0) noexcept;
+    explicit State(const char* name, State* parent = nullptr) noexcept;
 
     //! \brief Destroys the state.
     virtual ~State() {}
@@ -137,7 +137,7 @@ public:
     //! have children.
     bool isAtomic() const noexcept
     {
-        return m_children == 0;
+        return m_children == nullptr;
     }
 
     //! \brief Checks for a compound state.
@@ -1237,6 +1237,7 @@ private:
         SkipTransitionSelection = 0x10,
         InEnterSet              = 0x20,
         InExitSet               = 0x40,
+        PartOfConflict          = 0x80,
         Transient               = 0xF0,
 
         ChildModeFlag           = 0x01,

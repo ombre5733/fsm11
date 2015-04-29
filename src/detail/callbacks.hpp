@@ -325,9 +325,12 @@ struct get_state_exception_callbacks
 //     Transition conflict callback
 // ----=====================================================================----
 
+template <typename TDerived>
 class WithoutTransitionConflictCallback
 {
 public:
+    using transition_type = Transition<TDerived>;
+
     template <typename TType>
     void setTransitionConflictCallback(TType&&)
     {
@@ -337,14 +340,23 @@ public:
 
 protected:
     inline
-    void invokeTransitionConflictCallback()
+    void invokeTransitionConflictCallback(transition_type*, transition_type*)
     {
+    }
+
+    inline
+    bool hasTransitionConflictCallback() const
+    {
+        return false;
     }
 };
 
+template <typename TDerived>
 class WithTransitionConflictCallback
 {
 public:
+    using transition_type = Transition<TDerived>;
+
     template <typename TType>
     void setTransitionConflictCallback(TType&& callback)
     {
@@ -353,14 +365,23 @@ public:
 
 protected:
     inline
-    void invokeTransitionConflictCallback()
+    void invokeTransitionConflictCallback(
+            transition_type* transition, transition_type* ignoredTransition)
     {
         if (m_transitionConflictCallback)
-            m_transitionConflictCallback();
+            m_transitionConflictCallback(transition, ignoredTransition);
+    }
+
+    inline
+    bool hasTransitionConflictCallback() const
+    {
+        return m_transitionConflictCallback != nullptr;
     }
 
 private:
-    FSM11STD::function<void()> m_transitionConflictCallback;
+    FSM11STD::function<void(transition_type* transition,
+                            transition_type* ignoredTransition)>
+        m_transitionConflictCallback;
 };
 
 template <typename TOptions>
@@ -368,8 +389,8 @@ struct get_transition_conflict_callbacks
 {
     using type = typename FSM11STD::conditional<
                      TOptions::transition_conflict_callbacks_enable,
-                     WithTransitionConflictCallback,
-                     WithoutTransitionConflictCallback>::type;
+                     WithTransitionConflictCallback<StateMachineImpl<TOptions>>,
+                     WithoutTransitionConflictCallback<StateMachineImpl<TOptions>>>::type;
 };
 
 } // namespace fsm11_detail

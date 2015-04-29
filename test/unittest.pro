@@ -26,6 +26,8 @@ SOURCES += main.cpp \
     tst_statemachine.cpp \
     tst_threadedstate.cpp \
     tst_transition.cpp
+    tst_transitionconflict.cpp \
+    tst_transitionconflictcallback.cpp
 
 HEADERS += \
     ../src/exitrequest.hpp \

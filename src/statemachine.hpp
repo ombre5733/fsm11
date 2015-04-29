@@ -430,33 +430,33 @@ public:
     //! \p t.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
-    void add(TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t);
+    transition_type* add(TypeSourceEventGuardActionTarget<
+                             TState, TEvent, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
     //!
     //! Adds a transition, which will be created from a transition specification
     //! \p t.
     template <typename TState, typename TGuard, typename TAction>
-    void add(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t);
+    transition_type* add(TypeSourceNoEventGuardActionTarget<
+                             TState, TGuard, TAction>&& t);
 
     //! \brief Adds a transition.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
     inline
-    StateMachineImpl& operator+=(
+    transition_type* operator+=(
             TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
-        add(FSM11STD::move(t));
-        return *this;
+        return add(FSM11STD::move(t));
     }
 
     //! \brief Adds a transition.
     template <typename TState, typename TGuard, typename TAction>
     inline
-    StateMachineImpl& operator+=(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    transition_type* operator+=(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
-        add(FSM11STD::move(t));
-        return *this;
+        return add(FSM11STD::move(t));
     }
 
 private:
@@ -472,24 +472,28 @@ private:
 template <typename TOptions>
 template <typename TState, typename TEvent, typename TGuard,
           typename TAction>
-void StateMachineImpl<TOptions>::add(
+auto StateMachineImpl<TOptions>::add(
         TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
+    -> transition_type*
 {
     // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
+    return transition;
 }
 
 template <typename TOptions>
 template <typename TState, typename TGuard, typename TAction>
-void StateMachineImpl<TOptions>::add(
+auto StateMachineImpl<TOptions>::add(
         TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    -> transition_type*
 {
     // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
+    return transition;
 }
 
 
@@ -510,10 +514,10 @@ void StateMachine::apply(Visitor<TDerived>& visitor)
         else
         {
             visitor.doLeave(iterator);
-            while (iterator->m_nextSibling == 0)
+            while (iterator->m_nextSibling == nullptr)
             {
                 iterator = iterator->m_parent;
-                if (iterator == 0)
+                if (iterator == nullptr)
                     return;
                 visitor.doLeave(iterator);
             }

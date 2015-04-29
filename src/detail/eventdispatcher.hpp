@@ -136,6 +136,9 @@ protected:
     //! configuration.
     void runToCompletion(bool changedConfiguration);
 
+    //! Finds a transition conflict.
+    void findTransitionConflict(transition_type* ignoredTransition);
+
     //! Enters the initial states and thus brings up the state machine.
     void enterInitialStates();
 
@@ -414,7 +417,7 @@ bool EventDispatcherBase<TDerived>::microstep(event_type event)
             // keep the old ones.
             if (conflict)
             {
-                derived().invokeTransitionConflictCallback();
+                findTransitionConflict(transition);
                 prev->m_nextInEnabledSet = transition->m_nextInEnabledSet;
                 transition->m_nextInEnabledSet = 0;
                 transition = prev;
@@ -427,7 +430,7 @@ bool EventDispatcherBase<TDerived>::microstep(event_type event)
         for (auto iter = ++domain->pre_order_begin();
              iter != domain->pre_order_end(); ++iter)
         {
-            if ((iter->m_flags & state_type::Active))
+            if (iter->m_flags & state_type::Active)
                 iter->m_flags |= state_type::InExitSet;
         }
 
@@ -499,6 +502,43 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool changedConfiguration)
     {
         ++m_numConfigurationChanges;
         derived().invokeConfigurationChangeCallback();
+    }
+}
+
+template <typename TDerived>
+void EventDispatcherBase<TDerived>::findTransitionConflict(
+        transition_type* ignoredTransition)
+{
+    if (!derived().hasTransitionConflictCallback())
+        return;
+
+    state_type* ignoredDomain = transitionDomain(ignoredTransition);
+    for (auto iter = ++ignoredDomain->pre_order_begin();
+         iter != ignoredDomain->pre_order_end(); ++iter)
+    {
+        if (iter->m_flags & state_type::Active)
+            iter->m_flags |= state_type::PartOfConflict;
+    }
+
+    for (transition_type* transition = m_enabledTransitions;
+         transition != nullptr;
+         transition = transition->m_nextInEnabledSet)
+    {
+        if (!transition->target())
+            continue;
+
+        state_type* domain = transitionDomain(transition);
+        for (auto iter = ++domain->pre_order_begin();
+             iter != domain->pre_order_end(); ++iter)
+        {
+            if (   (iter->m_flags & state_type::Active)
+                && (iter->m_flags & state_type::PartOfConflict))
+            {
+                derived().invokeTransitionConflictCallback(
+                            transition, ignoredTransition);
+                return;
+            }
+        }
     }
 }
 

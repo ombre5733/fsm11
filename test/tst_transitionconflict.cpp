@@ -29,17 +29,28 @@
 
 using namespace fsm11;
 
+
+#include <iostream>
+using namespace std;
+
 SCENARIO("transition conflicts", "[conflicts]")
 {
     GIVEN ("that the transition selection stops after the first match")
     {
-        using StateMachine_t = StateMachine<>;
+        using StateMachine_t = StateMachine<
+                                   TransitionConflictCallbacksEnable<true>>;
         using State_t = State<StateMachine_t>;
+        using Transition_t = Transition<StateMachine_t>;
 
         StateMachine_t sm;
         State_t a("a", &sm);
         State_t b("b", &sm);
         State_t c("c", &sm);
+
+        int conflicts = 0;
+        sm.setTransitionConflictCallback([&](Transition_t*, Transition_t*) {
+                                             ++conflicts;
+                                         });
 
         sm += a + event(1) > b;
         sm += a + event(1) > c;
@@ -47,25 +58,34 @@ SCENARIO("transition conflicts", "[conflicts]")
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a}));
 
-        WHEN ("a")
+        WHEN ("a matching event is added")
         {
             sm.addEvent(1);
-            THEN ("b")
+            THEN ("the transitions do not conflict")
             {
                 REQUIRE(isActive(sm, {&sm, &b}));
+                REQUIRE(conflicts == 0);
             }
         }
     }
 
     GIVEN ("that all transitions of a state are scanned")
     {
-        using StateMachine_t = StateMachine<TransitionSelectionStopsAfterFirstMatch<false>>;
+        using StateMachine_t = StateMachine<
+                                   TransitionConflictCallbacksEnable<true>,
+                                   TransitionSelectionStopsAfterFirstMatch<false>>;
         using State_t = State<StateMachine_t>;
+        using Transition_t = Transition<StateMachine_t>;
 
         StateMachine_t sm;
         State_t a("a", &sm);
         State_t b("b", &sm);
         State_t c("c", &sm);
+
+        int conflicts = 0;
+        sm.setTransitionConflictCallback([&](Transition_t*, Transition_t*) {
+                                             ++conflicts;
+                                         });
 
         sm += a + event(1) > b;
         sm += a + event(1) > c;
@@ -73,12 +93,13 @@ SCENARIO("transition conflicts", "[conflicts]")
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a}));
 
-        WHEN ("a")
+        WHEN ("a matching event is added")
         {
             sm.addEvent(1);
-            THEN ("b")
+            THEN ("the conflict is reported")
             {
                 REQUIRE(isActive(sm, {&sm, &b}));
+                REQUIRE(conflicts == 1);
             }
         }
     }
