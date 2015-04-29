@@ -47,6 +47,7 @@ struct default_options
     // Behaviour
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
+    static constexpr bool transition_selection_stops_after_first_match = true;
 
     // Callbacks
     static constexpr bool event_callbacks_enable = false;
@@ -152,13 +153,16 @@ struct MultithreadingEnable
 };
 
 template <bool TEnable>
-struct StopTransitionSelectionAfterMatch
-        // ContinueTransitionSelectionAfterMatch
-        // MatchingTransitionStopsSelection
-        // ConsiderAllTransitionsInSelection
-        // TransitionSelectionStopsAfterMatch
+struct TransitionSelectionStopsAfterFirstMatch
 {
-
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool transition_selection_stops_after_first_match
+                              = TEnable;
+    };
+    //! \endcond
 };
 
 // ----=====================================================================----

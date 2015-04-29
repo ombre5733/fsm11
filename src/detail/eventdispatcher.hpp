@@ -200,7 +200,12 @@ void EventDispatcherBase<TDerived>::selectTransitions(bool onlyEventless,
                 *outputIter = &*transitionIter;
                 outputIter = &transitionIter->m_nextInEnabledSet;
                 foundTransition = true;
-                break;
+
+                // When the transition selection shall stop after the first
+                // match, we must break out of the loop now. Otherwise, the
+                // remaining transitions of this state have to be scanned.
+                if (options::transition_selection_stops_after_first_match)
+                    break;
             }
         }
 
@@ -409,6 +414,7 @@ bool EventDispatcherBase<TDerived>::microstep(event_type event)
             // keep the old ones.
             if (conflict)
             {
+                derived().invokeTransitionConflictCallback();
                 prev->m_nextInEnabledSet = transition->m_nextInEnabledSet;
                 transition->m_nextInEnabledSet = 0;
                 transition = prev;
