@@ -21,11 +21,12 @@ SOURCES += main.cpp \
     tst_hierarchy.cpp \
     tst_invoke.cpp \
     tst_iteration.cpp \
+    tst_multithreading.cpp \
     tst_state.cpp \
     tst_statecallbacks.cpp \
     tst_statemachine.cpp \
     tst_threadedstate.cpp \
-    tst_transition.cpp
+    tst_transition.cpp \
     tst_transitionconflict.cpp \
     tst_transitionconflictcallback.cpp
 
