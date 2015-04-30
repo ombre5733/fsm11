@@ -518,7 +518,7 @@ public:
     //! Returns an iterator past the last child.
     sibling_iterator child_end() noexcept
     {
-        return sibling_iterator();
+        return sibling_iterator(nullptr);
     }
 
     //! \brief A const-iterator past the last child.
@@ -526,7 +526,7 @@ public:
     //! Returns a const-iterator past the last child.
     const_sibling_iterator child_end() const noexcept
     {
-        return sibling_iterator();
+        return sibling_iterator(nullptr);
     }
 
     //! \brief A const-iterator past the last child.
@@ -534,7 +534,7 @@ public:
     //! Returns a const-iterator past the last child.
     const_sibling_iterator child_cend() const noexcept
     {
-        return sibling_iterator();
+        return sibling_iterator(nullptr);
     }
 
 
@@ -739,7 +739,7 @@ public:
         //! Returns an iterator past the last child.
         sibling_iterator child_end() noexcept
         {
-            return sibling_iterator();
+            return sibling_iterator(nullptr);
         }
 
         //! \brief Returns a const-iterator past the last child.
@@ -747,7 +747,7 @@ public:
         //! Returns a const-iterator past the last child.
         const_sibling_iterator child_end() const noexcept
         {
-            return const_sibling_iterator();
+            return const_sibling_iterator(nullptr);
         }
 
         //! \brief Returns a const-iterator past the last child.
@@ -755,7 +755,7 @@ public:
         //! Returns a const-iterator past the last child.
         const_sibling_iterator child_cend() const noexcept
         {
-            return const_sibling_iterator();
+            return const_sibling_iterator(nullptr);
         }
 
     private:
@@ -1136,17 +1136,17 @@ public:
 
     transition_iterator endTransitions() noexcept
     {
-        return transition_iterator();
+        return transition_iterator(nullptr);
     }
 
     const_transition_iterator endTransitions() const noexcept
     {
-        return const_transition_iterator();
+        return const_transition_iterator(nullptr);
     }
 
     const_transition_iterator cendTransitions() const noexcept
     {
-        return const_transition_iterator();
+        return const_transition_iterator(nullptr);
     }
 
 
