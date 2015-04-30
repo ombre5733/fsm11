@@ -258,31 +258,33 @@ public:
     // State iterators
     // -------------------------------------------------------------------------
 
-    template <bool TIsConst>
+    template <typename TState>
     class PreOrderIterator;
-    typedef PreOrderIterator<false> pre_order_iterator;
-    typedef PreOrderIterator<true>  const_pre_order_iterator;
+    typedef PreOrderIterator<State> pre_order_iterator;
+    typedef PreOrderIterator<const State>  const_pre_order_iterator;
+    typedef pre_order_iterator iterator;
+    typedef const_pre_order_iterator const_iterator;
 
-    template <bool TIsConst>
+    template <typename TState>
     class PreOrderSubtree;
 
-    template <bool TIsConst>
+    template <typename TState>
     class PostOrderIterator;
-    typedef PostOrderIterator<false> post_order_iterator;
-    typedef PostOrderIterator<true>  const_post_order_iterator;
+    typedef PostOrderIterator<State> post_order_iterator;
+    typedef PostOrderIterator<const State>  const_post_order_iterator;
 
-    template <bool TIsConst>
+    template <typename TState>
     class PostOrderSubtree;
 
-    template <bool TIsConst>
+    template <typename TState>
     class SiblingIterator;
-    typedef SiblingIterator<false> sibling_iterator;
-    typedef SiblingIterator<true> const_sibling_iterator;
+    typedef SiblingIterator<State> sibling_iterator;
+    typedef SiblingIterator<const State> const_sibling_iterator;
 
-    template <bool TIsConst>
+    template <typename TState>
     class AtomicIterator;
-    typedef AtomicIterator<false> atomic_iterator;
-    typedef AtomicIterator<true> const_atomic_iterator;
+    typedef AtomicIterator<State> atomic_iterator;
+    typedef AtomicIterator<const State> const_atomic_iterator;
 
 
     //! \brief A pre-order iterator to the first state of the sub-tree.
@@ -410,14 +412,14 @@ public:
     //!     // state accesses all descendants of root in pre-order.
     //! }
     //! \endcode
-    PreOrderSubtree<false> pre_order_subtree() noexcept
+    PreOrderSubtree<State> pre_order_subtree() noexcept
     {
-        return PreOrderSubtree<false>(this);
+        return PreOrderSubtree<State>(this);
     }
 
-    PreOrderSubtree<true> pre_order_subtree() const noexcept
+    PreOrderSubtree<const State> pre_order_subtree() const noexcept
     {
-        return PreOrderSubtree<true>(this);
+        return PreOrderSubtree<const State>(this);
     }
 
 
@@ -478,14 +480,14 @@ public:
         return ++const_post_order_iterator(this);
     }
 
-    PostOrderSubtree<false> post_order_subtree() noexcept
+    PostOrderSubtree<State> post_order_subtree() noexcept
     {
-        return PostOrderSubtree<false>(this);
+        return PostOrderSubtree<State>(this);
     }
 
-    PostOrderSubtree<true> post_order_subtree() const noexcept
+    PostOrderSubtree<const State> post_order_subtree() const noexcept
     {
-        return PostOrderSubtree<true>(this);
+        return PostOrderSubtree<const State>(this);
     }
 
 
@@ -606,38 +608,90 @@ public:
         return const_cast<State*>(this)->atomic_end();
     }
 
+private:
+    template <typename T, typename TDerived>
+    struct IteratorBase
+    {
+        using difference_type = std::ptrdiff_t;
+        using value_type = T;
+        using pointer = typename FSM11STD::add_pointer<T>::type;
+        using reference = typename FSM11STD::add_lvalue_reference<T>::type;
+        using iterator_category = std::forward_iterator_tag;
 
+
+        //! Returns \p true, if this iterator is equal to the \p other iterator.
+        bool operator==(TDerived other) const noexcept
+        {
+            return derived().m_current == other.m_current;
+        }
+
+        //! Returns \p true, if this iterator is not equal to the \p other
+        //! iterator.
+        bool operator!=(TDerived other) const noexcept
+        {
+            return derived().m_current != other.m_current;
+        }
+
+        //! Postfix increment.
+        TDerived operator++(int) noexcept
+        {
+            TDerived temp(derived());
+            ++derived();
+            return temp;
+        }
+
+        //! Returns a pointer to the accessed element.
+        pointer operator->() const noexcept
+        {
+            return derived().m_current;
+        }
+
+        //! Returns a reference to the accessed element.
+        reference operator*() const noexcept
+        {
+            return *derived().m_current;
+        }
+
+    private:
+        TDerived& derived()
+        {
+            return *static_cast<TDerived*>(this);
+        }
+
+        const TDerived& derived() const
+        {
+            return *static_cast<const TDerived*>(this);
+        }
+    };
+
+public:
     //! \brief A pre-order iterator.
     //!
     //! The PreOrderIterator is a pre-order depth-first iterator over a
-    //! hierarchy of states. If \p TIsConst is set, it implements
-    //! a const-iterator, otherwise the accessed state is mutable.
-    template <bool TIsConst>
-    class PreOrderIterator
+    //! hierarchy of states of type \p TState.
+    template <typename TState>
+    class PreOrderIterator : public IteratorBase<TState,
+                                                 PreOrderIterator<TState>>
     {
+        using base_type = IteratorBase<TState, PreOrderIterator<TState>>;
+
     public:
-        typedef std::ptrdiff_t difference_type;
-        typedef State value_type;
-        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
-                    pointer;
-        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
-                    reference;
-        typedef std::forward_iterator_tag iterator_category;
+        PreOrderIterator() noexcept = default;
+        PreOrderIterator(const PreOrderIterator&) noexcept = default;
+        PreOrderIterator& operator=(const PreOrderIterator&) noexcept = default;
 
-
-        //! Default constructs an end-iterator.
-        PreOrderIterator() noexcept
-            : m_current{nullptr},
-              m_skipChildren(false)
-        {
-        }
-
-        //! (Copy-)Constructs an iterator from a non-const iterator.
-        PreOrderIterator(const PreOrderIterator<false>& other) noexcept
+        //! Constructs a const-iterator from a non-const iterator.
+        template <bool B = FSM11STD::is_const<TState>::value,
+                  typename = typename FSM11STD::enable_if<B>::type>
+        PreOrderIterator(
+                const PreOrderIterator<
+                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
             : m_current(other.m_current),
               m_skipChildren(false)
         {
         }
+
+        using base_type::operator++;
 
         //! Prefix increment.
         PreOrderIterator& operator++() noexcept
@@ -665,39 +719,6 @@ public:
                 m_current = m_current->m_nextSibling;
             }
             return *this;
-        }
-
-        //! Postfix increment.
-        PreOrderIterator operator++(int) noexcept
-        {
-            PreOrderIterator temp(*this);
-            ++*this;
-            return temp;
-        }
-
-        //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator==(PreOrderIterator other) const noexcept
-        {
-            return m_current == other.m_current;
-        }
-
-        //! Returns \p true, if this iterator is not equal to the \p other
-        //! iterator.
-        bool operator!=(PreOrderIterator other) const noexcept
-        {
-            return m_current != other.m_current;
-        }
-
-        //! Returns a reference to the state.
-        reference operator*() const noexcept
-        {
-            return *m_current;
-        }
-
-        //! Returns a pointer to the state.
-        pointer operator->() const noexcept
-        {
-            return m_current;
         }
 
         //! \brief Skip child iteration.
@@ -760,12 +781,12 @@ public:
 
     private:
         //! The current state.
-        pointer m_current;
+        typename base_type::pointer m_current;
         //! The flag is set, when the children of a state have to be skipped.
         bool m_skipChildren;
 
         //! Constructs an iterator pointing to the \p state.
-        PreOrderIterator(pointer state) noexcept
+        PreOrderIterator(typename base_type::pointer state) noexcept
             : m_current(state),
               m_skipChildren(false)
         {
@@ -774,15 +795,15 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend PreOrderIterator<true>;
+        friend PreOrderIterator<typename FSM11STD::add_const<TState>::type>;
     };
 
     //! \brief A view for pre-order iteration.
-    template <bool TIsConst>
+    template <typename TState>
     class PreOrderSubtree
     {
     public:
-        using iterator = PreOrderIterator<TIsConst>;
+        using iterator = PreOrderIterator<TState>;
 
         explicit PreOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
@@ -806,33 +827,29 @@ public:
     //! \brief A post-order iterator.
     //!
     //! The PostOrderIterator is a post-order depth-first iterator over a
-    //! hierarchy of states. If \p TIsConst is set, it implements
-    //! a const-iterator, otherwise the accessed state is mutable.
-    template <bool TIsConst>
-    class PostOrderIterator
+    //! hierarchy of states of type \p TState.
+    template <typename TState>
+    class PostOrderIterator : public IteratorBase<TState,
+                                                  PostOrderIterator<TState>>
     {
+        using base_type = IteratorBase<TState, PostOrderIterator<TState>>;
+
     public:
-        typedef std::ptrdiff_t difference_type;
-        typedef State value_type;
-        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
-                    pointer;
-        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
-                    reference;
-        typedef std::forward_iterator_tag iterator_category;
+        PostOrderIterator() noexcept = default;
+        PostOrderIterator(const PostOrderIterator&) noexcept = default;
+        PostOrderIterator& operator=(const PostOrderIterator&) noexcept = default;
 
-
-        //! Default constructs an end-iterator.
-        PostOrderIterator() noexcept
-            : m_current{nullptr}
-        {
-        }
-
-        //! A copy-constructor with implicit conversion from a non-const
-        //! iterator.
-        PostOrderIterator(const PostOrderIterator<false>& other) noexcept
+        //! Constructs a const-iterator from a non-const iterator.
+        template <bool B = FSM11STD::is_const<TState>::value,
+                  typename = typename FSM11STD::enable_if<B>::type>
+        PostOrderIterator(
+                const PostOrderIterator<
+                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
             : m_current(other.m_current)
         {
         }
+
+        using base_type::operator++;
 
         //! Prefix increment.
         PostOrderIterator& operator++() noexcept
@@ -852,45 +869,12 @@ public:
             return *this;
         }
 
-        //! Postfix increment.
-        PostOrderIterator operator++(int) noexcept
-        {
-            PostOrderIterator temp(*this);
-            ++*this;
-            return temp;
-        }
-
-        //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator==(PostOrderIterator other) const noexcept
-        {
-            return m_current == other.m_current;
-        }
-
-        //! Returns \p true, if this iterator is not equal to the \p other
-        //! iterator.
-        bool operator!=(PostOrderIterator other) const noexcept
-        {
-            return m_current != other.m_current;
-        }
-
-        //! Returns a reference to the state.
-        reference operator*() const noexcept
-        {
-            return *m_current;
-        }
-
-        //! Returns a pointer to the state.
-        pointer operator->() const noexcept
-        {
-            return m_current;
-        }
-
     private:
         //! The current state.
-        pointer m_current;
+        typename base_type::pointer m_current;
 
         //! Constructs an iterator pointing to the \p state.
-        PostOrderIterator(pointer state) noexcept
+        PostOrderIterator(typename base_type::pointer state) noexcept
             : m_current(state)
         {
         }
@@ -898,15 +882,15 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend PostOrderIterator<true>;
+        friend PostOrderIterator<typename FSM11STD::add_const<TState>::type>;
     };
 
     //! \brief A view for post-order iteration.
-    template <bool TIsConst>
+    template <typename TState>
     class PostOrderSubtree
     {
     public:
-        using iterator = PostOrderIterator<TIsConst>;
+        using iterator = PostOrderIterator<TState>;
 
         explicit PostOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
@@ -928,31 +912,28 @@ public:
     };
 
     //! \brief An iterator over state siblings.
-    template <bool TIsConst>
-    class SiblingIterator
+    template <typename TState>
+    class SiblingIterator : public IteratorBase<TState,
+                                                SiblingIterator<TState>>
     {
+        using base_type = IteratorBase<TState, SiblingIterator<TState>>;
+
     public:
-        typedef std::ptrdiff_t difference_type;
-        typedef State value_type;
-        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
-                    pointer;
-        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
-                    reference;
-        typedef std::forward_iterator_tag iterator_category;
+        SiblingIterator() noexcept = default;
+        SiblingIterator(const SiblingIterator&) noexcept = default;
+        SiblingIterator& operator=(const SiblingIterator&) noexcept = default;
 
-
-        //! Default constructs an end-iterator.
-        SiblingIterator() noexcept
-            : m_current{nullptr}
-        {
-        }
-
-        //! A copy-constructor with implicit conversion from a non-const
-        //! iterator.
-        SiblingIterator(const SiblingIterator<false>& other) noexcept
+        //! Constructs a const-iterator from a non-const one.
+        template <bool B = FSM11STD::is_const<TState>::value,
+                  typename = typename FSM11STD::enable_if<B>::type>
+        SiblingIterator(
+                const SiblingIterator<
+                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
             : m_current(other.m_current)
         {
         }
+
+        using base_type::operator++;
 
         //! Prefix increment.
         SiblingIterator& operator++() noexcept
@@ -961,45 +942,12 @@ public:
             return *this;
         }
 
-        //! Postfix increment.
-        SiblingIterator operator++(int) noexcept
-        {
-            SiblingIterator temp(*this);
-            ++*this;
-            return temp;
-        }
-
-        //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator==(SiblingIterator other) const noexcept
-        {
-            return m_current == other.m_current;
-        }
-
-        //! Returns \p true, if this iterator is not equal to the \p other
-        //! iterator.
-        bool operator!=(SiblingIterator other) const noexcept
-        {
-            return m_current != other.m_current;
-        }
-
-        //! Returns a reference to the state.
-        reference operator*() const noexcept
-        {
-            return *m_current;
-        }
-
-        //! Returns a pointer to the state.
-        pointer operator->() const noexcept
-        {
-            return m_current;
-        }
-
     private:
         //! The current child state.
-        pointer m_current;
+        typename base_type::pointer m_current;
 
         //! Constructs an iterator pointing to the \p state.
-        SiblingIterator(pointer state) noexcept
+        SiblingIterator(typename base_type::pointer state) noexcept
             : m_current(state)
         {
         }
@@ -1007,37 +955,33 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend SiblingIterator<true>;
+        friend SiblingIterator<typename FSM11STD::add_const<TState>::type>;
     };
 
     //! \brief An iterator over atomic states.
     //!
-    //! The AtomicIterator is an iterator the atomic states.
-    //! If \p TIsConst is set, it implements a const-iterator, otherwise the
-    //! accessed state is mutable.
-    template <bool TIsConst>
-    class AtomicIterator
+    //! The AtomicIterator is an iterator the atomic states of type \p TState.
+    template <typename TState>
+    class AtomicIterator : public IteratorBase<TState,
+                                               AtomicIterator<TState>>
     {
+        using base_type = IteratorBase<TState, AtomicIterator<TState>>;
     public:
-        typedef std::ptrdiff_t difference_type;
-        typedef State value_type;
-        typedef typename FSM11STD::conditional<TIsConst, const State*, State*>::type
-                    pointer;
-        typedef typename FSM11STD::conditional<TIsConst, const State&, State&>::type
-                    reference;
-        typedef std::forward_iterator_tag iterator_category;
+        AtomicIterator() noexcept = default;
+        AtomicIterator(const AtomicIterator& other) noexcept = default;
+        AtomicIterator& operator=(const AtomicIterator&) noexcept = default;
 
-        //! Default constructs an end-iterator.
-        AtomicIterator() noexcept
-            : m_current{nullptr}
-        {
-        }
-
-        //! (Copy-)Constructs an iterator from a non-const iterator.
-        AtomicIterator(const AtomicIterator<false>& other) noexcept
+        //! Constructs a const-iterator from a non-const iterator.
+        template <bool B = FSM11STD::is_const<TState>::value,
+                  typename = typename FSM11STD::enable_if<B>::type>
+        AtomicIterator(
+                const AtomicIterator<
+                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
             : m_current(other.m_current)
         {
         }
+
+        using base_type::operator++;
 
         //! Prefix increment.
         AtomicIterator& operator++() noexcept
@@ -1057,45 +1001,12 @@ public:
             return *this;
         }
 
-        //! Postfix increment.
-        AtomicIterator operator++(int) noexcept
-        {
-            AtomicIterator temp(*this);
-            ++*this;
-            return temp;
-        }
-
-        //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator==(AtomicIterator other) const noexcept
-        {
-            return m_current == other.m_current;
-        }
-
-        //! Returns \p true, if this iterator is not equal to the \p other
-        //! iterator.
-        bool operator!=(AtomicIterator other) const noexcept
-        {
-            return m_current != other.m_current;
-        }
-
-        //! Returns a reference to the state.
-        reference operator*() const noexcept
-        {
-            return *m_current;
-        }
-
-        //! Returns a pointer to the state.
-        pointer operator->() const noexcept
-        {
-            return m_current;
-        }
-
     private:
         //! The current state.
-        pointer m_current;
+        typename base_type::pointer m_current;
 
         //! Constructs an iterator pointing to the \p state.
-        AtomicIterator(pointer state) noexcept
+        AtomicIterator(typename base_type::pointer state) noexcept
             : m_current(state)
         {
         }
@@ -1103,7 +1014,7 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend AtomicIterator<true>;
+        friend AtomicIterator<typename FSM11STD::add_const<TState>::type>;
     };
 
     // -------------------------------------------------------------------------
@@ -1152,29 +1063,31 @@ public:
 
     //! \brief An iterator over a state's transitions.
     template <bool TIsConst>
-    class TransitionIterator
+    class TransitionIterator : public IteratorBase<
+                                        typename FSM11STD::conditional<TIsConst,
+                                        const transition_type,
+                                        transition_type>::type,
+                                        TransitionIterator<TIsConst>>
     {
+        using base_type = IteratorBase<typename FSM11STD::conditional<TIsConst,
+                                       const transition_type,
+                                       transition_type>::type,
+                                       TransitionIterator<TIsConst>>;
+
     public:
-        typedef std::ptrdiff_t difference_type;
-        typedef transition_type value_type;
-        typedef typename FSM11STD::conditional<TIsConst, const transition_type*,
-                                          transition_type*>::type pointer;
-        typedef typename FSM11STD::conditional<TIsConst, const transition_type&,
-                                          transition_type&>::type reference;
-        typedef std::forward_iterator_tag iterator_category;
+        TransitionIterator() noexcept = delete;
+        TransitionIterator(const TransitionIterator&) noexcept = default;
+        TransitionIterator& operator=(const TransitionIterator&) noexcept = default;
 
-        //! Default constructs an end-iterator.
-        TransitionIterator() noexcept
-            : m_current{nullptr}
-        {
-        }
-
-        //! A copy-constructor with implicit conversion from a non-const
-        //! iterator.
+        //! Constructs a const-iterator from a non-const one.
+        template <bool B = TIsConst,
+                  typename = typename FSM11STD::enable_if<B>::type>
         TransitionIterator(const TransitionIterator<false>& other) noexcept
             : m_current(other.m_current)
         {
         }
+
+        using base_type::operator++;
 
         //! Prefix increment.
         TransitionIterator& operator++() noexcept
@@ -1183,45 +1096,12 @@ public:
             return *this;
         }
 
-        //! Postfix increment.
-        TransitionIterator operator++ (int) noexcept
-        {
-            TransitionIterator temp(m_current);
-            m_current = m_current->m_next;
-            return temp;
-        }
-
-        //! Returns \p true, if this iterator is equal to the \p other iterator.
-        bool operator== (TransitionIterator other) const noexcept
-        {
-            return m_current == other.m_current;
-        }
-
-        //! Returns \p true, if this iterator is not equal to the \p other
-        //! iterator.
-        bool operator!= (TransitionIterator other) const noexcept
-        {
-            return m_current != other.m_current;
-        }
-
-        //! Returns a reference to the transition.
-        reference operator* () const noexcept
-        {
-            return *m_current;
-        }
-
-        //! Returns a pointer to the transition.
-        pointer operator-> () const noexcept
-        {
-            return m_current;
-        }
-
     private:
         //! The current transition.
-        pointer m_current;
+        typename base_type::pointer m_current;
 
         //! Constructs an iterator pointing to the \p transition.
-        TransitionIterator(pointer transition)
+        TransitionIterator(typename base_type::pointer transition)
             : m_current(transition)
         {
         }

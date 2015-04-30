@@ -101,7 +101,7 @@ TEST_CASE("iterator requirements", "[iteration]")
         iterator iter2;
         iter1 = sm.begin();
         iter2 = sm.begin();
-        SECTION("dereferencable")
+        SECTION("dereference")
         {
             *iter1;
         }
