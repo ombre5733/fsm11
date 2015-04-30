@@ -43,6 +43,90 @@ bool contains(const std::map<const State_t*, int>& set, State_t* state)
 
 } // anonymous namespace
 
+// Copied over from Bothe.
+#define CREATE_TYPE_CHECKER(t)                                                 \
+    template <typename T, typename U = int>                                    \
+    struct has_ ## t : std::false_type {};                                     \
+    template <typename T>                                                      \
+    struct has_ ## t <T, decltype((void)std::declval<typename T::t>(),0)> : std::true_type {};
+
+CREATE_TYPE_CHECKER(difference_type)
+CREATE_TYPE_CHECKER(value_type)
+CREATE_TYPE_CHECKER(pointer)
+CREATE_TYPE_CHECKER(reference)
+CREATE_TYPE_CHECKER(iterator_category)
+
+CREATE_TYPE_CHECKER(iterator)
+CREATE_TYPE_CHECKER(const_iterator)
+
+TEST_CASE("iterator requirements", "[iteration]")
+{
+    // Every C++ container must have an 'iterator' and a 'const_iterator' type.
+    REQUIRE(has_iterator<StateMachine_t>::value);
+    REQUIRE(has_const_iterator<StateMachine_t>::value);
+
+    using iterator = StateMachine_t::iterator;
+    using const_iterator = StateMachine_t::const_iterator;
+
+    // Make sure that the required types are present in the iterators.
+    // Note: The types are implemented in the common base class and it
+    // suffices to check one iterator type here.
+    REQUIRE(has_difference_type<iterator>::value);
+    REQUIRE(has_value_type<iterator>::value);
+    REQUIRE(has_pointer<iterator>::value);
+    REQUIRE(has_reference<iterator>::value);
+    REQUIRE(has_iterator_category<iterator>::value);
+
+    REQUIRE(has_difference_type<const_iterator>::value);
+    REQUIRE(has_value_type<const_iterator>::value);
+    REQUIRE(has_pointer<const_iterator>::value);
+    REQUIRE(has_reference<const_iterator>::value);
+    REQUIRE(has_iterator_category<const_iterator>::value);
+
+    // Would have to check CopyConstructible, CopyAssignable, Destructible...
+    // Podness should do for now.
+    REQUIRE(std::is_pod<iterator>::value);
+
+    // TODO: Check C++14-requirement of singularness!
+
+    StateMachine_t sm;
+    SECTION("default constructible")
+    {
+        iterator iter1;
+        iterator iter2;
+    }
+    SECTION("operators")
+    {
+        iterator iter1;
+        iterator iter2;
+        iter1 = sm.begin();
+        iter2 = sm.begin();
+        SECTION("dereferencable")
+        {
+            *iter1;
+        }
+        SECTION("equality")
+        {
+            REQUIRE(iter1 == iter2);
+            iter2 = sm.end();
+            REQUIRE(iter1 != iter2);
+        }
+        SECTION("prefix increment")
+        {
+            iter2 = ++iter1;
+            REQUIRE(iter1 == iter2);
+            REQUIRE(iter1 == sm.end());
+        }
+        SECTION("postfix increment")
+        {
+            iter2 = iter1++;
+            REQUIRE(iter1 != iter2);
+            REQUIRE(iter2 == sm.begin());
+            REQUIRE(iter1 == sm.end());
+        }
+    }
+}
+
 TEST_CASE("iterate over a single state", "[iteration]")
 {
     State_t s("s");
@@ -136,29 +220,26 @@ TEST_CASE("iterate over state hierarchy", "[iteration]")
     {
         SECTION("mutable iterator from pre_order_begin()/pre_order_end()")
         {
-            for (auto iter = p.pre_order_begin(); iter != p.pre_order_end();
-                 ++iter)
-            {
+            for (auto iter = p.pre_order_begin(); iter != p.pre_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
+        }
+
+        SECTION("mutable iterator from pre_order_begin()/pre_order_end() postfix")
+        {
+            for (auto iter = p.pre_order_begin(); iter != p.pre_order_end(); iter++)
+                visited.push_back(&*iter);
         }
 
         SECTION("const-iterator from pre_order_begin()/pre_order_end()")
         {
-            for (auto iter = cp.pre_order_begin(); iter != cp.pre_order_end();
-                 ++iter)
-            {
+            for (auto iter = cp.pre_order_begin(); iter != cp.pre_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from pre_order_cbegin()/pre_order_cend()")
         {
-            for (auto iter = p.pre_order_cbegin(); iter != p.pre_order_cend();
-                 ++iter)
-            {
+            for (auto iter = p.pre_order_cbegin(); iter != p.pre_order_cend(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("iteration via mutable pre-order-view")
@@ -187,29 +268,20 @@ TEST_CASE("iterate over state hierarchy", "[iteration]")
     {
         SECTION("mutable iterator from pre_order_begin()/pre_order_end()")
         {
-            for (auto iter = c1.pre_order_begin(); iter != c1.pre_order_end();
-                 ++iter)
-            {
+            for (auto iter = c1.pre_order_begin(); iter != c1.pre_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from pre_order_begin()/pre_order_end()")
         {
-            for (auto iter = cc1.pre_order_begin(); iter != cc1.pre_order_end();
-                 ++iter)
-            {
+            for (auto iter = cc1.pre_order_begin(); iter != cc1.pre_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from pre_order_cbegin()/pre_order_cend()")
         {
-            for (auto iter = c1.pre_order_cbegin(); iter != c1.pre_order_cend();
-                 ++iter)
-            {
+            for (auto iter = c1.pre_order_cbegin(); iter != c1.pre_order_cend(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("iteration via mutable pre-order-view")
@@ -238,29 +310,26 @@ TEST_CASE("iterate over state hierarchy", "[iteration]")
     {
         SECTION("mutable iterator from post_order_begin()/post_order_end()")
         {
-            for (auto iter = p.post_order_begin(); iter != p.post_order_end();
-                 ++iter)
-            {
+            for (auto iter = p.post_order_begin(); iter != p.post_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
+        }
+
+        SECTION("mutable iterator from post_order_begin()/post_order_end() postfix")
+        {
+            for (auto iter = p.post_order_begin(); iter != p.post_order_end(); iter++)
+                visited.push_back(&*iter);
         }
 
         SECTION("const-iterator from post_order_begin()/post_order_end()")
         {
-            for (auto iter = cp.post_order_begin(); iter != cp.post_order_end();
-                 ++iter)
-            {
+            for (auto iter = cp.post_order_begin(); iter != cp.post_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from post_order_cbegin()/post_order_cend()")
         {
-            for (auto iter = p.post_order_cbegin(); iter != p.post_order_cend();
-                 ++iter)
-            {
+            for (auto iter = p.post_order_cbegin(); iter != p.post_order_cend(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("iteration via mutable post-order-view")
@@ -289,29 +358,20 @@ TEST_CASE("iterate over state hierarchy", "[iteration]")
     {
         SECTION("mutable iterator from post_order_begin()/post_order_end()")
         {
-            for (auto iter = c1.post_order_begin(); iter != c1.post_order_end();
-                 ++iter)
-            {
+            for (auto iter = c1.post_order_begin(); iter != c1.post_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from post_order_begin()/post_order_end()")
         {
-            for (auto iter = cc1.post_order_begin(); iter != cc1.post_order_end();
-                 ++iter)
-            {
+            for (auto iter = cc1.post_order_begin(); iter != cc1.post_order_end(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("const-iterator from post_order_cbegin()/post_order_cend()")
         {
-            for (auto iter = c1.post_order_cbegin(); iter != c1.post_order_cend();
-                 ++iter)
-            {
+            for (auto iter = c1.post_order_cbegin(); iter != c1.post_order_cend(); ++iter)
                 visited.push_back(&*iter);
-            }
         }
 
         SECTION("iteration via mutable post-order-view")
@@ -357,6 +417,11 @@ TEST_CASE("iterate over empty state machine", "[iteration]")
         REQUIRE(++sm.cbegin()  == sm.cend());
         REQUIRE(++csm.begin()  == csm.end());
         REQUIRE(++csm.cbegin() == csm.cend());
+
+        REQUIRE(sm.begin()++   == sm.begin());
+        REQUIRE(sm.cbegin()++  == sm.cbegin());
+        REQUIRE(csm.begin()++  == csm.begin());
+        REQUIRE(csm.cbegin()++ == csm.cbegin());
     }
 
     SECTION("post-order iterator")
@@ -370,6 +435,11 @@ TEST_CASE("iterate over empty state machine", "[iteration]")
         REQUIRE(++sm.post_order_cbegin()  == sm.post_order_cend());
         REQUIRE(++csm.post_order_begin()  == csm.post_order_end());
         REQUIRE(++csm.post_order_cbegin() == csm.post_order_cend());
+
+        REQUIRE(sm.post_order_begin()++   == sm.post_order_begin());
+        REQUIRE(sm.post_order_cbegin()++  == sm.post_order_cbegin());
+        REQUIRE(csm.post_order_begin()++  == csm.post_order_begin());
+        REQUIRE(csm.post_order_cbegin()++ == csm.post_order_cbegin());
     }
 
     SECTION("atomic iterator")
@@ -383,6 +453,11 @@ TEST_CASE("iterate over empty state machine", "[iteration]")
         REQUIRE(++sm.atomic_cbegin()  == sm.atomic_cend());
         REQUIRE(++csm.atomic_begin()  == csm.atomic_end());
         REQUIRE(++csm.atomic_cbegin() == csm.atomic_cend());
+
+        REQUIRE(sm.atomic_begin()++   == sm.atomic_begin());
+        REQUIRE(sm.atomic_cbegin()++  == sm.atomic_cbegin());
+        REQUIRE(csm.atomic_begin()++  == csm.atomic_begin());
+        REQUIRE(csm.atomic_cbegin()++ == csm.atomic_cbegin());
     }
 
     SECTION("child iterator")
@@ -589,4 +664,15 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
         REQUIRE(std::count_if(csm.atomic_cbegin(), csm.atomic_cend(),
                               predicate) == 5);
     }
+
+    SECTION("pre-order, post-order and atomic iterators are equal for leaf "
+            "states", "[iteration]")
+    {
+        // TODO
+    }
+}
+
+TEST_CASE("child iterators from pre-order iterator", "[iteration]")
+{
+    // TODO
 }
