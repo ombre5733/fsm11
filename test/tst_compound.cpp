@@ -87,7 +87,7 @@ TEST_CASE("start fsm with compound top-level state", "[compound]")
 TEST_CASE("start fsm with parallel root state", "[parallel]")
 {
     StateMachine_t sm;
-    sm.setChildMode(StateMachine_t::Parallel);
+    sm.setChildMode(ChildMode::Parallel);
 
     State_t a("a", &sm);
     State_t b("b", &sm);
@@ -117,7 +117,7 @@ TEST_CASE("start fsm with parallel top-level state", "[parallel]")
     StateMachine_t sm;
 
     State_t a("a", &sm);
-    a.setChildMode(State_t::Parallel);
+    a.setChildMode(ChildMode::Parallel);
     State_t b("b", &sm);
     State_t c("c", &a);
     State_t d("d", &a);

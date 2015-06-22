@@ -863,7 +863,7 @@ TEST_CASE("internal and external transitions from parallel state", "[transition]
     StateMachine_t sm;
 
     TrackingState<State_t> a("a", &sm);
-    a.setChildMode(State_t::Parallel);
+    a.setChildMode(ChildMode::Parallel);
     TrackingState<State_t> aa("aa", &a);
     TrackingState<State_t> ab("ab", &a);
 

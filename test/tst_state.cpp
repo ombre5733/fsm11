@@ -38,7 +38,7 @@ TEST_CASE("construct a state", "[state]")
 {
     State_t s("name");
 
-    REQUIRE(s.childMode() == State_t::Exclusive);
+    REQUIRE(s.childMode() == ChildMode::Exclusive);
     REQUIRE(!std::strcmp(s.name(), "name"));
     REQUIRE(s.parent() == 0);
     REQUIRE(s.isAtomic());
@@ -109,17 +109,17 @@ TEST_CASE("change the child mode", "[state]")
     State_t s("s");
     State_t c("c", &s);
 
-    REQUIRE(State_t::Exclusive == s.childMode());
+    REQUIRE(s.childMode() == ChildMode::Exclusive);
     REQUIRE(s.isCompound());
     REQUIRE(!s.isParallel());
 
-    s.setChildMode(State_t::Parallel);
-    REQUIRE(State_t::Parallel == s.childMode());
+    s.setChildMode(ChildMode::Parallel);
+    REQUIRE(s.childMode() == ChildMode::Parallel);
     REQUIRE(!s.isCompound());
     REQUIRE(s.isParallel());
 
-    s.setChildMode(State_t::Exclusive);
-    REQUIRE(State_t::Exclusive == s.childMode());
+    s.setChildMode(ChildMode::Exclusive);
+    REQUIRE(s.childMode() == ChildMode::Exclusive);
     REQUIRE(s.isCompound());
     REQUIRE(!s.isParallel());
 }

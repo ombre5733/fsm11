@@ -45,6 +45,19 @@
 namespace fsm11
 {
 
+//! \brief The possible child modes.
+//!
+//! This enum lists the possible child modes of a state.
+//! - Exclusive: The children are active exclusively (i.e. one and only
+//!   one child will be active).
+//! - Parallel: The children are active parallely (i.e. all children
+//!   will be active simultanously).
+enum class ChildMode
+{
+    Exclusive,
+    Parallel
+};
+
 //! \brief A state in a state machine.
 //!
 //! The State defines a state in a finite state machine.
@@ -58,19 +71,6 @@ public:
     using state_machine_type = TStateMachine;
     using transition_type = Transition<TStateMachine>;
     using type = State<TStateMachine>;
-
-    //! \brief The possible child modes.
-    //!
-    //! This enum lists the possible child modes.
-    //! - Exclusive: The children are active exclusively (i.e. one and only
-    //!   one child will be active).
-    //! - Parallel: The children are active parallely (i.e. all children
-    //!   will be active simultanously).
-    enum ChildMode
-    {
-        Exclusive,
-        Parallel
-    };
 
 
     //! \brief Constructs a state.
@@ -147,7 +147,8 @@ public:
     //! One and only one child of an active compound state will be active.
     bool isCompound() const noexcept
     {
-        return !isAtomic() && ChildMode(m_flags & ChildModeFlag) == Exclusive;
+        return !isAtomic()
+               && ChildMode(m_flags & ChildModeFlag) == ChildMode::Exclusive;
     }
 
     //! \brief Checks for a parallel state.
@@ -157,7 +158,8 @@ public:
     //! All children of an active parallel state will be active.
     bool isParallel() const noexcept
     {
-        return !isAtomic() && ChildMode(m_flags & ChildModeFlag) == Parallel;
+        return !isAtomic()
+               && ChildMode(m_flags & ChildModeFlag) == ChildMode::Parallel;
     }
 
     //! \brief The name.
@@ -221,7 +223,7 @@ public:
     void setChildMode(ChildMode mode) noexcept
     {
         m_flags &= ~ChildModeFlag;
-        m_flags |= mode;
+        m_flags |= static_cast<int>(mode);
     }
 
     //! \brief Sets the initial state.

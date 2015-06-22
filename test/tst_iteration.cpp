@@ -482,7 +482,7 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
     State_t c12("c12", &c1);
     State_t c31("c31", &c3);
     State_t c32("c32", &c3);
-    c3.setChildMode(State_t::ChildMode::Parallel);
+    c3.setChildMode(ChildMode::Parallel);
 
     std::map<const State_t*, int> visitOrder;
     int counter = 0;
