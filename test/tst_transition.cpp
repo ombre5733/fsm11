@@ -34,6 +34,7 @@ namespace syncSM
 {
 using StateMachine_t = fsm11::StateMachine<>;
 using State_t = StateMachine_t::state_type;
+using Transition_t = StateMachine_t::transition_type;
 } // namespace syncSM
 
 namespace asyncSM
@@ -42,6 +43,175 @@ using StateMachine_t = StateMachine<AsynchronousEventDispatching,
                                     ConfigurationChangeCallbacksEnable<true>>;
 using State_t = StateMachine_t::state_type;
 } // namespace asyncSM
+
+TEST_CASE("create a transition", "[transition]")
+{
+    using namespace syncSM;
+
+    StateMachine_t sm;
+    State_t a("a", &sm);
+    State_t b("b", &sm);
+
+    SECTION("plain transition")
+    {
+        Transition_t* t = sm += a + event(1) > b;
+        REQUIRE(t->source() == &a);
+        REQUIRE(t->target() == &b);
+        REQUIRE(t->event() == 1);
+        REQUIRE(t->eventless() == false);
+        REQUIRE(t->guard() == nullptr);
+        REQUIRE(t->action() == nullptr);
+        REQUIRE(t->isExternal() == true);
+        REQUIRE(t->isInternal() == false);
+    }
+
+    SECTION("event-less transition")
+    {
+        Transition_t* t = sm += a + noEvent > b;
+        REQUIRE(t->source() == &a);
+        REQUIRE(t->target() == &b);
+        REQUIRE(t->eventless() == true);
+        REQUIRE(t->guard() == nullptr);
+        REQUIRE(t->action() == nullptr);
+        REQUIRE(t->isExternal() == true);
+        REQUIRE(t->isInternal() == false);
+    }
+
+    SECTION("target-less transition")
+    {
+        Transition_t* t = sm += a + event(1) > noTarget;
+        REQUIRE(t->source() == &a);
+        REQUIRE(t->target() == nullptr);
+        REQUIRE(t->event() == 1);
+        REQUIRE(t->eventless() == false);
+        REQUIRE(t->guard() == nullptr);
+        REQUIRE(t->action() == nullptr);
+        REQUIRE(t->isExternal() == true);
+        REQUIRE(t->isInternal() == false);
+    }
+
+    SECTION("transition with guard and action turned off explicitly")
+    {
+        Transition_t* t1 = sm += a + event(1) (nullptr) / nullptr > b;
+        REQUIRE(t1->source() == &a);
+        REQUIRE(t1->target() == &b);
+        REQUIRE(t1->event() == 1);
+        REQUIRE(t1->eventless() == false);
+        REQUIRE(t1->guard() == nullptr);
+        REQUIRE(t1->action() == nullptr);
+        REQUIRE(t1->isExternal() == true);
+        REQUIRE(t1->isInternal() == false);
+
+        Transition_t* t2 = sm += a + event(1) [nullptr] / nullptr > b;
+        REQUIRE(t2->source() == &a);
+        REQUIRE(t2->target() == &b);
+        REQUIRE(t2->event() == 1);
+        REQUIRE(t2->eventless() == false);
+        REQUIRE(t2->guard() == nullptr);
+        REQUIRE(t2->action() == nullptr);
+        REQUIRE(t2->isExternal() == true);
+        REQUIRE(t2->isInternal() == false);
+    }
+
+    SECTION("transition with guard")
+    {
+        auto guard = [](int){ return true; };
+        Transition_t* t1 = sm += a + noEvent [guard] > noTarget;
+        REQUIRE(t1->source() == &a);
+        REQUIRE(t1->target() == nullptr);
+        REQUIRE(t1->eventless() == true);
+        REQUIRE(t1->guard() != nullptr);
+        REQUIRE(t1->action() == nullptr);
+        REQUIRE(t1->isExternal() == true);
+        REQUIRE(t1->isInternal() == false);
+
+        Transition_t* t2 = sm += a + noEvent (guard) > noTarget;
+        REQUIRE(t2->source() == &a);
+        REQUIRE(t2->target() == nullptr);
+        REQUIRE(t2->eventless() == true);
+        REQUIRE(t2->guard() != nullptr);
+        REQUIRE(t2->action() == nullptr);
+        REQUIRE(t2->isExternal() == true);
+        REQUIRE(t2->isInternal() == false);
+    }
+
+    SECTION("transition with action")
+    {
+        auto action = [](int){};
+        Transition_t* t = sm += a + noEvent / action > noTarget;
+        REQUIRE(t->source() == &a);
+        REQUIRE(t->target() == nullptr);
+        REQUIRE(t->eventless() == true);
+        REQUIRE(t->guard() == nullptr);
+        REQUIRE(t->action() != nullptr);
+        REQUIRE(t->isExternal() == true);
+        REQUIRE(t->isInternal() == false);
+    }
+
+    SECTION("transition with guard and action")
+    {
+        auto guard = [](int){ return true; };
+        auto action = [](int){};
+        Transition_t* t1 = sm += a + noEvent [guard] / action > noTarget;
+        REQUIRE(t1->source() == &a);
+        REQUIRE(t1->target() == nullptr);
+        REQUIRE(t1->eventless() == true);
+        REQUIRE(t1->guard() != nullptr);
+        REQUIRE(t1->action() != nullptr);
+        REQUIRE(t1->isExternal() == true);
+        REQUIRE(t1->isInternal() == false);
+
+        Transition_t* t2 = sm += a + noEvent (guard) / action > noTarget;
+        REQUIRE(t2->source() == &a);
+        REQUIRE(t2->target() == nullptr);
+        REQUIRE(t2->eventless() == true);
+        REQUIRE(t2->guard() != nullptr);
+        REQUIRE(t2->action() != nullptr);
+        REQUIRE(t2->isExternal() == true);
+        REQUIRE(t2->isInternal() == false);
+    }
+
+    SECTION("external and internal transition")
+    {
+        Transition_t* t1 = sm += external> a + noEvent > b;
+        REQUIRE(t1->source() == &a);
+        REQUIRE(t1->target() == &b);
+        REQUIRE(t1->eventless() == true);
+        REQUIRE(t1->guard() == nullptr);
+        REQUIRE(t1->action() == nullptr);
+        REQUIRE(t1->isExternal() == true);
+        REQUIRE(t1->isInternal() == false);
+
+        Transition_t* t2 = sm += internal> a + noEvent > b;
+        REQUIRE(t2->source() == &a);
+        REQUIRE(t2->target() == &b);
+        REQUIRE(t2->eventless() == true);
+        REQUIRE(t2->guard() == nullptr);
+        REQUIRE(t2->action() == nullptr);
+        REQUIRE(t2->isExternal() == false);
+        REQUIRE(t2->isInternal() == true);
+
+        Transition_t* t3 = sm += external> a + event(1) > b;
+        REQUIRE(t3->source() == &a);
+        REQUIRE(t3->target() == &b);
+        REQUIRE(t3->event() == 1);
+        REQUIRE(t3->eventless() == false);
+        REQUIRE(t3->guard() == nullptr);
+        REQUIRE(t3->action() == nullptr);
+        REQUIRE(t3->isExternal() == true);
+        REQUIRE(t3->isInternal() == false);
+
+        Transition_t* t4 = sm += internal> a + event(1) > b;
+        REQUIRE(t4->source() == &a);
+        REQUIRE(t4->target() == &b);
+        REQUIRE(t4->event() == 1);
+        REQUIRE(t4->eventless() == false);
+        REQUIRE(t4->guard() == nullptr);
+        REQUIRE(t4->action() == nullptr);
+        REQUIRE(t4->isExternal() == false);
+        REQUIRE(t4->isInternal() == true);
+    }
+}
 
 TEST_CASE("simple configuration changes in synchronous statemachine",
           "[transition]")

@@ -512,7 +512,6 @@ public:
                     FSM11STD::forward<TAction>(m_action));
     }
 
-private:
     TState* m_source;
     TGuard m_guard;
     TAction m_action;
