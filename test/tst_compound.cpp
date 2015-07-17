@@ -25,119 +25,202 @@
 #include "catch.hpp"
 
 #include "../src/statemachine.hpp"
+#include "testutils.hpp"
 
 using namespace fsm11;
 
 using StateMachine_t = StateMachine<>;
 using State_t = StateMachine_t::state_type;
 
-TEST_CASE("start fsm with compound root state", "[compound]")
+SCENARIO("different child modes of the root state", "[behavior]")
 {
     StateMachine_t sm;
-
     State_t a("a", &sm);
     State_t b("b", &sm);
     State_t c("c", &sm);
 
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(sm.isCompound());
+    GIVEN ("an FSM with plain compound root state")
+    {
+        REQUIRE(sm.isCompound());
 
-    sm.start();
-    REQUIRE(sm.running());
-    REQUIRE(sm.isActive());
-    REQUIRE(a.isActive());
-    REQUIRE(!b.isActive());
-    REQUIRE(!c.isActive());
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
 
-    sm.stop();
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(!a.isActive());
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("exactly one child is active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a}));
+            }
+
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
+
+    GIVEN ("an FSM with parallel root state")
+    {
+        sm.setChildMode(ChildMode::Parallel);
+        REQUIRE(sm.isParallel());
+
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("all children are active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a, &b, &c}));
+            }
+
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
 }
 
-TEST_CASE("start fsm with compound top-level state", "[compound]")
+SCENARIO("different child modes of an intermediary state", "[behavior]")
 {
     StateMachine_t sm;
-
     State_t a("a", &sm);
-    State_t b("b", &sm);
+    State_t b("b", &a);
     State_t c("c", &a);
-    State_t d("d", &a);
+    State_t d("d", &sm);
+    State_t e("e", &d);
+    State_t f("f", &d);
 
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(a.isCompound());
+    GIVEN ("a plain compound intermediary state")
+    {
+        REQUIRE(a.isCompound());
 
-    sm.start();
-    REQUIRE(sm.running());
-    REQUIRE(sm.isActive());
-    REQUIRE(a.isActive());
-    REQUIRE(!b.isActive());
-    REQUIRE(c.isActive());
-    REQUIRE(!d.isActive());
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
 
-    sm.stop();
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(!a.isActive());
-    REQUIRE(!c.isActive());
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("exactly one child is active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a, &b}));
+            }
+
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
+
+    GIVEN ("a parallel intermediary state")
+    {
+        a.setChildMode(ChildMode::Parallel);
+        REQUIRE(a.isParallel());
+
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("all children are active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a, &b, &c}));
+            }
+
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
 }
 
-TEST_CASE("start fsm with parallel root state", "[parallel]")
+SCENARIO("different child modes of a leaf state", "[behavior]")
 {
     StateMachine_t sm;
-    sm.setChildMode(ChildMode::Parallel);
-
     State_t a("a", &sm);
     State_t b("b", &sm);
-    State_t c("c", &sm);
 
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(sm.isParallel());
+    GIVEN ("a plain compound leaf state")
+    {
+        REQUIRE(a.childMode() == ChildMode::Exclusive);
+        REQUIRE(a.isAtomic());
 
-    sm.start();
-    REQUIRE(sm.running());
-    REQUIRE(sm.isActive());
-    REQUIRE(a.isActive());
-    REQUIRE(b.isActive());
-    REQUIRE(c.isActive());
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
 
-    sm.stop();
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(!a.isActive());
-    REQUIRE(!b.isActive());
-    REQUIRE(!c.isActive());
-}
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("the leaf is active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a}));
+            }
 
-TEST_CASE("start fsm with parallel top-level state", "[parallel]")
-{
-    StateMachine_t sm;
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
 
-    State_t a("a", &sm);
-    a.setChildMode(ChildMode::Parallel);
-    State_t b("b", &sm);
-    State_t c("c", &a);
-    State_t d("d", &a);
+    GIVEN ("a parallel leaf state")
+    {
+        a.setChildMode(ChildMode::Parallel);
+        REQUIRE(a.childMode() == ChildMode::Parallel);
+        REQUIRE(a.isAtomic());
 
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(a.isParallel());
+        WHEN ("the FSM is started")
+        {
+            sm.start();
+            THEN ("the leaf is active")
+            {
+                REQUIRE(sm.running());
+                REQUIRE(isActive(sm, {&sm, &a}));
+            }
 
-    sm.start();
-    REQUIRE(sm.running());
-    REQUIRE(sm.isActive());
-    REQUIRE(a.isActive());
-    REQUIRE(!b.isActive());
-    REQUIRE(c.isActive());
-    REQUIRE(d.isActive());
-
-    sm.stop();
-    REQUIRE(!sm.running());
-    REQUIRE(!sm.isActive());
-    REQUIRE(!a.isActive());
-    REQUIRE(!c.isActive());
-    REQUIRE(!d.isActive());
+            WHEN ("the FSM is stopped")
+            {
+                sm.stop();
+                THEN ("no state is active")
+                {
+                    REQUIRE(!sm.running());
+                    REQUIRE(isActive(sm, {}));
+                }
+            }
+        }
+    }
 }
