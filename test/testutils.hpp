@@ -28,6 +28,7 @@
 #include "catch.hpp"
 #include <array>
 #include <atomic>
+#include <map>
 #include <set>
 #include <tuple>
 
@@ -46,19 +47,62 @@ bool isActive(const T& sm,
     return true;
 }
 
+struct DontCareTag
+{
+};
+constexpr static DontCareTag X;
+
+struct Pattern
+{
+    constexpr Pattern(int id)
+        : m_id(id)
+    {
+    }
+
+    bool operator<(Pattern other) const
+    {
+        return m_id < other.m_id;
+    }
+
+    int m_id;
+};
+constexpr static Pattern Y(1), Z(2);
+
 template <typename TBase>
 class TrackingState : public TBase
 {
+    typedef std::map<Pattern, int> PatternMap;
+
+    static bool compare(PatternMap&, int a, int b)
+    {
+        return a == b;
+    }
+
+    static bool compare(PatternMap&, DontCareTag, int)
+    {
+        return true;
+    }
+
+    static bool compare(PatternMap& m, Pattern t, int v)
+    {
+        auto it = m.find(t);
+        if (it != m.end())
+            return it->second == v;
+
+        m[t] = v;
+        return true;
+    }
+
     // TODO: Can I has an index_sequence<>, please?
     template <std::size_t I, std::size_t N, typename T>
-    bool all(const T& t, std::true_type) const
+    bool all(PatternMap& m, const T& t, std::true_type) const
     {
-        return std::get<I>(t) == counters.at(I)
-               && all<I+1, N>(t, std::integral_constant<bool, (I + 1 < N)>());
+        return compare(m, std::get<I>(t), counters.at(I))
+               && all<I+1, N>(m, t, std::integral_constant<bool, (I + 1 < N)>());
     }
 
     template <std::size_t I, std::size_t N, typename T>
-    bool all(const T&, std::false_type) const
+    bool all(PatternMap&, const T&, std::false_type) const
     {
         return true;
     }
@@ -81,8 +125,9 @@ public:
     template <typename... TArgs>
     bool operator==(const std::tuple<TArgs...>& t) const
     {
+        PatternMap map;
         return all<0, sizeof...(TArgs)>(
-                   t, std::integral_constant<bool, sizeof...(TArgs)>());
+                   map, t, std::integral_constant<bool, sizeof...(TArgs)>());
     }
 
     virtual void onEntry(event_type event) override
