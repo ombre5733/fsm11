@@ -10,8 +10,8 @@ QMAKE_LFLAGS += -pthread -Wl,--no-as-needed
 INCLUDEPATH += ../src/
 
 SOURCES += main.cpp \
+    tst_behavior.cpp \
     tst_capturestorage.cpp \
-    tst_compound.cpp \
     tst_configurationchangecallback.cpp \
     tst_event.cpp \
     tst_eventcallback.cpp \
@@ -19,7 +19,6 @@ SOURCES += main.cpp \
     tst_exceptions.cpp \
     tst_functionstate.cpp \
     tst_hierarchy.cpp \
-    tst_invoke.cpp \
     tst_iteration.cpp \
     tst_multithreading.cpp \
     tst_state.cpp \
