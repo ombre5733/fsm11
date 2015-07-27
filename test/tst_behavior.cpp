@@ -687,3 +687,51 @@ SCENARIO("no invoke in case of an eventless transition", "[behavior]")
         REQUIRE(c == make_tuple(Y, Y, Z, Z));
     }
 }
+
+SCENARIO("history state", "[behavior]")
+{
+    GIVEN ("an FSM with a history state")
+    {
+        using namespace syncSM;
+        using HistoryState_t = State_t; // TODO: correct this
+
+        StateMachine_t sm;
+        TrackingState<HistoryState_t> s1("s1", &sm);
+        TrackingState<State_t> s11("s11", &s1);
+        TrackingState<State_t> s111("s111", &s11);
+        TrackingState<State_t> s112("s112", &s11);
+        TrackingState<State_t> s12("s12", &s1);
+        TrackingState<State_t> s121("s121", &s12);
+        TrackingState<State_t> s122("s122", &s12);
+        TrackingState<State_t> s13("s13", &s1);
+        TrackingState<State_t> s131("s131", &s13);
+        TrackingState<State_t> s132("s132", &s13);
+        TrackingState<State_t> s2("s2", &sm);
+
+        WHEN ("the history state is re-entered")
+        {
+            sm += s11 + event(1) > s12;
+            sm += s12 + event(2) > s2;
+            sm += s2 + event(3) > s1;
+
+            sm.start();
+            REQUIRE(isActive(sm, {&sm, &s1, &s11, &s111}));
+
+            sm.addEvent(1);
+            REQUIRE(isActive(sm, {&sm, &s1, &s12, &s121}));
+
+            sm.addEvent(2);
+            REQUIRE(isActive(sm, {&sm, &s2}));
+
+            sm.addEvent(3);
+            THEN ("the latest active state is activated")
+            {
+                REQUIRE(isActive(sm, {&sm, &s1, &s12, &s121}));
+            }
+        }
+
+        // TODO:
+        // - initial state in history state only followed after startup
+        // - if transition targets a more specific state, history has no effect
+    }
+}
