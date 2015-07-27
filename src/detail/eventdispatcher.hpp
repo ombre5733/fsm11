@@ -346,6 +346,10 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
         if (iter->m_flags & state_type::InExitSet)
         {
             derived().invokeStateExitCallback(&*iter);
+
+            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke
+                               | state_type::InExitSet);
+
             if (iter->m_flags & state_type::Invoked)
             {
                 iter->m_flags &= ~state_type::Invoked;
@@ -354,13 +358,12 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                 {
                     if (options::state_exception_callbacks_enable)
                         derived().invokeStateExceptionCallback(
-                                    FSM11STD::current_exception());
+                                    FSM11STD::move(exc));
                     else
                         FSM11STD::rethrow_exception(exc);
                 }
             }
-            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke
-                               | state_type::InExitSet);
+
             try
             {
                 iter->onExit(event);
