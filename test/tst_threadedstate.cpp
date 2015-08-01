@@ -31,8 +31,20 @@
 #include <mutex>
 #include <thread>
 
-using StateMachine_t = fsm11::StateMachine<>;
-using State_t = fsm11::ThreadedState<StateMachine_t>;
+using namespace fsm11;
+
+namespace syncSM
+{
+using StateMachine_t = StateMachine<>;
+using State_t = ThreadedState<StateMachine_t>;
+} // namespace syncSM
+
+namespace asyncSM
+{
+using StateMachine_t = StateMachine<AsynchronousEventDispatching,
+                                    ConfigurationChangeCallbacksEnable<true>>;
+using State_t = ThreadedState<StateMachine_t>;
+} // namespace asyncSM
 
 std::mutex g_mutex;
 std::thread::id g_id;
@@ -40,10 +52,11 @@ std::condition_variable g_cv;
 bool g_notify;
 int g_invokeState;
 
-class TestState : public State_t
+template <typename TBaseState>
+class TestState : public TBaseState
 {
 public:
-    using State_t::State_t;
+    using TBaseState::TBaseState;
 
     virtual void invoke(fsm11::ExitRequest&) override
     {
@@ -52,11 +65,11 @@ public:
     }
 };
 
-template <unsigned TFn>
-class WaitingState : public State_t
+template <typename TBaseState, unsigned TFn>
+class WaitingState : public TBaseState
 {
 public:
-    using State_t::State_t;
+    using TBaseState::TBaseState;
 
     virtual void invoke(fsm11::ExitRequest& request) override
     {
@@ -83,15 +96,19 @@ public:
 
 TEST_CASE("construct threaded state", "[threadedstate]")
 {
-    TestState s1("s1");
-    TestState s2("s2", &s1);
+    using namespace syncSM;
+
+    TestState<State_t> s1("s1");
+    TestState<State_t> s2("s2", &s1);
     REQUIRE(s2.parent() == &s1);
 }
 
 TEST_CASE("start invoke action in threaded state", "[threadedstate]")
 {
+    using namespace syncSM;
+
     StateMachine_t sm;
-    TestState s1("s1", &sm);
+    TestState<State_t> s1("s1", &sm);
 
     g_mutex.lock();
     g_id = std::this_thread::get_id();
@@ -104,8 +121,10 @@ TEST_CASE("start invoke action in threaded state", "[threadedstate]")
 
 TEST_CASE("waitForExitRequest blocks an invoked action", "[threadedstate]")
 {
+    using namespace syncSM;
+
     StateMachine_t sm;
-    WaitingState<0> s1("s1", &sm);
+    WaitingState<State_t, 0> s1("s1", &sm);
 
     g_notify = false;
     g_invokeState = 0;
@@ -136,8 +155,10 @@ TEST_CASE("waitForExitRequest blocks an invoked action", "[threadedstate]")
 
 TEST_CASE("waitForExitRequestFor blocks an invoked action", "[threadedstate]")
 {
+    using namespace syncSM;
+
     StateMachine_t sm;
-    WaitingState<1> s1("s1", &sm);
+    WaitingState<State_t, 1> s1("s1", &sm);
 
     g_notify = false;
     g_invokeState = 0;
@@ -176,15 +197,17 @@ TEST_CASE("waitForExitRequestFor blocks an invoked action", "[threadedstate]")
 TEST_CASE("invoked action is left when state machine is destructed",
           "[threadedstate]")
 {
+    using namespace syncSM;
+
     g_notify = false;
     g_invokeState = 0;
     std::unique_lock<std::mutex> lock(g_mutex, std::defer_lock);
-    std::unique_ptr<WaitingState<0>> s1;
+    std::unique_ptr<WaitingState<State_t, 0>> s1;
 
     {
         StateMachine_t sm;
         // The state must be destructed after sm's destructor has been called.
-        s1.reset(new WaitingState<0>("s1", &sm));
+        s1.reset(new WaitingState<State_t, 0>("s1", &sm));
 
         sm.start();
 
@@ -199,4 +222,67 @@ TEST_CASE("invoked action is left when state machine is destructed",
     g_cv.wait(lock, [&] { return g_notify; });
     REQUIRE(g_invokeState == 2);
     lock.unlock();
+}
+
+struct ThreadedInvokeException
+{
+};
+
+#include <iostream>
+using namespace std;
+
+template <typename TBaseState>
+struct ThrowingState : public TBaseState
+{
+public:
+    using TBaseState::TBaseState;
+
+    virtual void invoke(fsm11::ExitRequest&) override
+    {
+        if (stdException)
+        {
+            throw std::bad_alloc();
+        }
+        else
+        {
+#ifdef FSM11_USE_WEOS
+            throw WEOS_EXCEPTION(ThreadedInvokeException());
+#else
+            throw ThreadedInvokeException();
+#endif
+        }
+    }
+
+    bool stdException{false};
+};
+
+SCENARIO("throwing an exception in a threaded state", "[threadedstate]")
+{
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+        std::unique_ptr<ThrowingState<State_t>> s;
+        StateMachine_t sm;
+        s.reset(new ThrowingState<State_t>("s", &sm));
+
+        WHEN ("a standard exception is thrown in the invoked action")
+        {
+            s->stdException = true;
+            sm.start();
+            THEN ("it arrives at the caller")
+            {
+                REQUIRE_THROWS_AS(sm.stop(), std::bad_alloc);
+            }
+        }
+
+        WHEN ("a custom exception is thrown in the invoked action")
+        {
+            s->stdException = false;
+            sm.start();
+            THEN ("it arrives at the caller")
+            {
+                REQUIRE_THROWS_AS(sm.stop(), ThreadedInvokeException);
+            }
+        }
+    }
 }
