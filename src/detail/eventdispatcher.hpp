@@ -269,6 +269,20 @@ void EventDispatcherBase<TDerived>::markDescendantsForEntry()
             continue;
         }
 
+        if (state->m_flags
+            & (state_type::ShallowHistory | state_type::DeepHistory))
+        {
+            using history_state_type = HistoryState<TDerived>;
+            history_state_type* historyState
+                    = static_cast<history_state_type*>(&*state);
+
+            if (historyState->m_latestActiveChild)
+            {
+                historyState->m_latestActiveChild->m_flags |= state_type::InEnterSet;
+                continue;
+            }
+        }
+
         if (state->isCompound())
         {
             // Exactly one state of a compound state has to be marked for entry.

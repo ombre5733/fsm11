@@ -26,6 +26,7 @@
 #define FSM11_STATEMACHINE_HPP
 
 #include "statemachine_fwd.hpp"
+#include "historystate.hpp"
 #include "options.hpp"
 #include "state.hpp"
 #include "transition.hpp"

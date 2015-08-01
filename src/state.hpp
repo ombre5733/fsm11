@@ -1116,16 +1116,18 @@ public:
 private:
     enum Flags
     {
-        SkipTransitionSelection = 0x10,
-        InEnterSet              = 0x20,
-        InExitSet               = 0x40,
-        PartOfConflict          = 0x80,
-        Transient               = 0xF0,
+        SkipTransitionSelection = 0x100,
+        InEnterSet              = 0x200,
+        InExitSet               = 0x400,
+        PartOfConflict          = 0x800,
+        Transient               = 0xF00,
 
-        ChildModeFlag           = 0x01,
-        StartInvoke             = 0x02,
-        Active                  = 0x04,
-        Invoked                 = 0x08,
+        ChildModeFlag           = 0x001,
+        ShallowHistory          = 0x002,
+        DeepHistory             = 0x004,
+        StartInvoke             = 0x010,
+        Active                  = 0x020,
+        Invoked                 = 0x040,
     };
 
     //! The state's name.
@@ -1164,6 +1166,9 @@ private:
 
     template <typename TDerived>
     friend class fsm11_detail::EventDispatcherBase;
+
+    template <typename T>
+    friend class HistoryState;
 };
 
 template <typename TStateMachine>

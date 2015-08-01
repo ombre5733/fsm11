@@ -60,6 +60,9 @@ namespace fsm11
 {
 
 template <typename TStateMachine>
+class HistoryState;
+
+template <typename TStateMachine>
 class State;
 
 template <typename TStateMachine>
