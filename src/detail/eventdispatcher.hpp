@@ -58,7 +58,7 @@ class EventDispatcherBase
 {
 public:
     EventDispatcherBase() noexcept
-        : m_enabledTransitions(0),
+        : m_enabledTransitions(nullptr),
           m_numConfigurationChanges(0)
     {
     }
@@ -91,6 +91,9 @@ protected:
         return *static_cast<const TDerived*>(this);
     }
 
+
+    //! Resets the history states.
+    void resetHistoryStates() noexcept;
 
     //! Clears the set of enabled transitions.
     void clearEnabledTransitionsSet() noexcept;
@@ -148,14 +151,31 @@ protected:
 };
 
 template <typename TDerived>
+void EventDispatcherBase<TDerived>::resetHistoryStates() noexcept
+{
+    for (auto iter = derived().pre_order_begin();
+         iter != derived().pre_order_end(); ++iter)
+    {
+        if (iter->m_flags
+            & (state_type::ShallowHistory | state_type::DeepHistory))
+        {
+            using history_state_type = HistoryState<TDerived>;
+            history_state_type* historyState
+                    = static_cast<history_state_type*>(&*iter);
+            historyState->m_latestActiveChild = nullptr;
+        }
+    }
+}
+
+template <typename TDerived>
 void EventDispatcherBase<TDerived>::clearEnabledTransitionsSet() noexcept
 {
     auto transition = m_enabledTransitions;
-    m_enabledTransitions = 0;
-    while (transition != 0)
+    m_enabledTransitions = nullptr;
+    while (transition != nullptr)
     {
         auto next = transition->m_nextInEnabledSet;
-        transition->m_nextInEnabledSet = 0;
+        transition->m_nextInEnabledSet = nullptr;
         transition = next;
     }
 }
@@ -269,20 +289,6 @@ void EventDispatcherBase<TDerived>::markDescendantsForEntry()
             continue;
         }
 
-        if (state->m_flags
-            & (state_type::ShallowHistory | state_type::DeepHistory))
-        {
-            using history_state_type = HistoryState<TDerived>;
-            history_state_type* historyState
-                    = static_cast<history_state_type*>(&*state);
-
-            if (historyState->m_latestActiveChild)
-            {
-                historyState->m_latestActiveChild->m_flags |= state_type::InEnterSet;
-                continue;
-            }
-        }
-
         if (state->isCompound())
         {
             // Exactly one state of a compound state has to be marked for entry.
@@ -299,6 +305,20 @@ void EventDispatcherBase<TDerived>::markDescendantsForEntry()
 
             if (!childMarked)
             {
+                if (state->m_flags
+                    & (state_type::ShallowHistory | state_type::DeepHistory))
+                {
+                    using history_state_type = HistoryState<TDerived>;
+                    history_state_type* historyState
+                            = static_cast<history_state_type*>(&*state);
+
+                    if (historyState->m_latestActiveChild)
+                    {
+                        historyState->m_latestActiveChild->m_flags |= state_type::InEnterSet;
+                        continue;
+                    }
+                }
+
                 if (state_type* initialState = state->initialState())
                 {
                     do
@@ -354,6 +374,29 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
 template <typename TDerived>
 void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
 {
+    for (auto atomicState = derived().atomic_begin();
+         atomicState != derived().atomic_end(); ++atomicState)
+    {
+        if (!(atomicState->m_flags & state_type::InExitSet))
+            continue;
+
+        state_type* state = &*atomicState;
+        state_type* parent = state->parent();
+        while (parent && (parent->m_flags & state_type::InExitSet))
+        {
+            if (parent->m_flags
+                & (state_type::ShallowHistory | state_type::DeepHistory))
+            {
+                using history_state_type = HistoryState<TDerived>;
+                history_state_type* historyState
+                        = static_cast<history_state_type*>(parent);
+                historyState->m_latestActiveChild = state;
+            }
+            state = parent;
+            parent = state->parent();
+        }
+    }
+
     for (auto iter = derived().post_order_begin();
          iter != derived().post_order_end(); ++iter)
     {
@@ -436,7 +479,7 @@ bool EventDispatcherBase<TDerived>::microstep(event_type event)
             {
                 findTransitionConflict(transition);
                 prev->m_nextInEnabledSet = transition->m_nextInEnabledSet;
-                transition->m_nextInEnabledSet = 0;
+                transition->m_nextInEnabledSet = nullptr;
                 transition = prev;
                 continue;
             }
@@ -633,6 +676,7 @@ public:
             };
 
             derived().invokeCaptureStorageCallback();
+            this->resetHistoryStates();
             this->enterInitialStates();
             this->runToCompletion(true);
             m_running = true;
@@ -872,6 +916,7 @@ private:
                 };
 
                 derived().invokeCaptureStorageCallback();
+                this->resetHistoryStates();
                 this->enterInitialStates();
                 this->runToCompletion(true);
                 m_running = true;

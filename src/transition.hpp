@@ -140,7 +140,7 @@ public:
             noTarget_t) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
-                    m_source, 0,
+                    m_source, nullptr,
                     FSM11STD::forward<TEvent>(m_event),
                     FSM11STD::forward<TGuard>(m_guard),
                     FSM11STD::forward<TAction>(m_action),
@@ -197,7 +197,7 @@ public:
             noTarget_t) const noexcept
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
-                    m_source, 0,
+                    m_source, nullptr,
                     FSM11STD::forward<TEvent>(m_event),
                     FSM11STD::forward<TGuard>(m_guard),
                     FSM11STD::forward<TAction>(m_action));
