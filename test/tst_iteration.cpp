@@ -665,10 +665,24 @@ TEST_CASE("iterate over non-empty state machine", "[iteration]")
                               predicate) == 5);
     }
 
-    SECTION("pre-order, post-order and atomic iterators are equal for leaf "
-            "states", "[iteration]")
+    SECTION("pre-order, post-order and atomic iterators are equal for leaf states")
     {
-        // TODO
+        auto pre = sm.pre_order_begin();
+        auto post = sm.post_order_begin();
+        for (auto atomic = sm.atomic_begin(); atomic != sm.atomic_end();
+             ++atomic, ++pre, ++post)
+        {
+            while (!pre->isAtomic() && pre != sm.pre_order_end())
+                ++pre;
+            while (!post->isAtomic() && post != sm.post_order_end())
+                ++post;
+
+            REQUIRE(pre != sm.pre_order_end());
+            REQUIRE(post != sm.post_order_end());
+
+            REQUIRE(&*atomic == &*pre);
+            REQUIRE(&*atomic == &*post);
+        }
     }
 }
 
