@@ -22,8 +22,8 @@
   SOFTWARE.
 *******************************************************************************/
 
-#ifndef SCOPEGUARD_HPP
-#define SCOPEGUARD_HPP
+#ifndef FSM11_DETAIL_SCOPEGUARD_HPP
+#define FSM11_DETAIL_SCOPEGUARD_HPP
 
 #include "../statemachine_fwd.hpp"
 
@@ -196,4 +196,4 @@ ExceptionScopeGuard<typename std::decay<TCallable>::type, false> operator+(
 
 #endif // FSM11_USE_WEOS
 
-#endif // SCOPEGUARD_HPP
+#endif // FSM11_DETAIL_SCOPEGUARD_HPP
