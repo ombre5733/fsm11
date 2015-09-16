@@ -53,14 +53,14 @@ public:
     //! \brief Creates a state with a threaded invoke action.
     explicit ThreadedState(const char* name,
                            const weos::thread::attributes& attrs,
-                           base_type* parent = 0)
+                           base_type* parent = nullptr)
         : base_type(name, parent),
           m_invokeThreadAttributes(attrs)
     {
     }
 #else
     //! \brief Creates a state with a threaded invoke action.
-    explicit ThreadedState(const char* name, base_type* parent = 0)
+    explicit ThreadedState(const char* name, base_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -81,7 +81,7 @@ public:
     virtual void invoke(ExitRequest& exitRequest) = 0;
 
     //! Enteres the invoked thread.
-    virtual void enterInvoke() override
+    virtual void enterInvoke() override final
     {
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = false;
@@ -98,7 +98,7 @@ public:
     //! Leaves the invoked thread.
     //!
     //! Joins with the thread in which the invoked action is running.
-    virtual FSM11STD::exception_ptr exitInvoke() override
+    virtual FSM11STD::exception_ptr exitInvoke() override final
     {
         FSM11_ASSERT(m_invokeThread.joinable());
 
