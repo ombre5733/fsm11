@@ -88,21 +88,13 @@ protected:
     }
 };
 
-template <bool TEnabled>
-struct get_multithreading_helper
-{
-    typedef WithoutMultithreading type;
-};
-
-template <>
-struct get_multithreading_helper<true>
-{
-    typedef WithMultithreading type;
-};
-
 template <typename TOptions>
-struct get_multithreading : public get_multithreading_helper<TOptions::multithreading_enable>
+struct get_multithreading
 {
+    using type = typename FSM11STD::conditional<
+                     TOptions::multithreading_enable,
+                     WithMultithreading,
+                     WithoutMultithreading>::type;
 };
 
 } // namespace fsm11_detail

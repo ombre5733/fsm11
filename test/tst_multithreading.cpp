@@ -44,3 +44,41 @@ TEST_CASE("an FSM without multithreading support is smaller",
                                   MultithreadingEnable<true>>;
     REQUIRE(sizeof(asm_t) < sizeof(asm_mt_t));
 }
+
+TEST_CASE("mutual exclusion during configuration change", "[multithreading]")
+{
+    using StateMachine_t = StateMachine<SynchronousEventDispatching,
+                                        MultithreadingEnable<true>>;
+    using State_t = StateMachine_t::state_type;
+
+    StateMachine_t sm;
+    State_t a("a", &sm);
+    State_t b("b", &sm);
+
+    sm += a + event(1) > b;
+    sm += b + event(2) > a;
+
+    std::atomic_int counter{0};
+    sm += b + noEvent ([&](int) { std::this_thread::yield(); return ++counter % 10000 != 0; }) > b;
+
+    std::atomic_bool terminate{false};
+    auto observer = std::async(std::launch::async, [&]{
+        while (!terminate)
+        {
+            std::lock_guard<StateMachine_t> lock(sm);
+            if (counter % 10000)
+                return false;
+        }
+        return true;
+    });
+
+    sm.start();
+    for (int tries = 0; tries < 10; ++tries)
+    {
+        sm.addEvent(1);
+        sm.addEvent(2);
+    }
+
+    terminate = true;
+    REQUIRE(observer.get());
+}
