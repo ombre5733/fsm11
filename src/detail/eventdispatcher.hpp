@@ -896,19 +896,19 @@ private:
 
         do
         {
+            // Wait until a start or stop request has been sent.
+            FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+            m_continueEventLoop.wait(eventLoopLock,
+                                     [this]{ return m_startRequest || m_stopRequest; });
+            m_startRequest = false;
+            if (m_stopRequest)
             {
-                // Wait until a start or stop request has been sent.
-                FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
-                m_continueEventLoop.wait(eventLoopLock,
-                                         [this]{ return m_startRequest || m_stopRequest; });
-                m_startRequest = false;
-                if (m_stopRequest)
-                {
-                    m_stopRequest = false;
-                    return;
-                }
-                eventLoopLock.unlock();
+                m_stopRequest = false;
+                return;
+            }
+            eventLoopLock.unlock();
 
+            {
                 auto lock = derived().getLock();
                 FSM11_SCOPE_FAILURE {
                     this->clearEnabledTransitionsSet();
@@ -928,7 +928,7 @@ private:
 
                 // Wait until either an event is added to the list or
                 // an FSM stop has been requested.
-                FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+                eventLoopLock.lock();
                 m_continueEventLoop.wait(
                             eventLoopLock,
                             [this]{ return !derived().m_eventList.empty() || m_stopRequest; });
