@@ -410,14 +410,17 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
             if (iter->m_flags & state_type::Invoked)
             {
                 iter->m_flags &= ~state_type::Invoked;
-                FSM11STD::exception_ptr exc = iter->exitInvoke();
-                if (exc)
+                try
+                {
+                    iter->exitInvoke();
+                }
+                catch (...)
                 {
                     if (options::state_exception_callbacks_enable)
                         derived().invokeStateExceptionCallback(
-                                    FSM11STD::move(exc));
+                                    FSM11STD::current_exception());
                     else
-                        FSM11STD::rethrow_exception(exc);
+                        throw;
                 }
             }
 

@@ -30,11 +30,10 @@
 #include "state.hpp"
 
 #ifdef FSM11_USE_WEOS
-#include <weos/exception.hpp>
+#include <weos/future.hpp>
 #include <weos/thread.hpp>
 #else
-#include <exception>
-#include <thread>
+#include <future>
 #endif // FSM11_USE_WEOS
 
 namespace fsm11
@@ -66,49 +65,41 @@ public:
     }
 #endif // FSM11_USE_WEOS
 
-    virtual ~ThreadedState()
-    {
-        // If the invoked thread is joinable, exitInvoke() has not been
-        // called. This is the case if the state is destructed before the
-        // state machine is stopped.
-        FSM11_ASSERT(!m_invokeThread.joinable());
-    }
-
     //! \brief The actual invoke action.
     //!
     //! This method is called in a new thread. Derived classes have to
     //! provide an implementation.
     virtual void invoke(ExitRequest& exitRequest) = 0;
 
-    //! Enteres the invoked thread.
+    //! Enters the invoked thread.
     virtual void enterInvoke() override final
     {
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = false;
         m_exitRequest.m_mutex.unlock();
 
-        m_exceptionPointer = nullptr;
-        m_invokeThread = FSM11STD::thread(
 #ifdef FSM11_USE_WEOS
-                             m_invokeThreadAttributes,
+        m_result = weos::async(m_invokeThreadAttributes,
+                               &ThreadedState::invoke, this,
+                               weos::ref(m_exitRequest));
+#else
+        m_result = std::async(std::launch::async,
+                              &ThreadedState::invoke, this,
+                              std::ref(m_exitRequest));
 #endif // FSM11_USE_WEOS
-                             &ThreadedState::invokeWrapper, this);
     }
 
     //! Leaves the invoked thread.
     //!
     //! Joins with the thread in which the invoked action is running.
-    virtual FSM11STD::exception_ptr exitInvoke() override final
+    virtual void exitInvoke() override final
     {
-        FSM11_ASSERT(m_invokeThread.joinable());
-
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = true;
         m_exitRequest.m_mutex.unlock();
         m_exitRequest.m_cv.notify_one();
 
-        m_invokeThread.join();
-        return m_exceptionPointer;
+        m_result.get();
     }
 
 private:
@@ -116,22 +107,8 @@ private:
     weos::thread::attributes m_invokeThreadAttributes;
 #endif // FSM11_USE_WEOS
 
-    FSM11STD::thread m_invokeThread;
-    FSM11STD::exception_ptr m_exceptionPointer;
-
+    FSM11STD::future<void> m_result;
     ExitRequest m_exitRequest;
-
-    void invokeWrapper()
-    {
-        try
-        {
-            invoke(m_exitRequest);
-        }
-        catch (...)
-        {
-            m_exceptionPointer = FSM11STD::current_exception();
-        }
-    }
 };
 
 } // namespace fsm11

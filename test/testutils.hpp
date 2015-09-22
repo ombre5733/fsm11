@@ -149,11 +149,11 @@ public:
         TBase::enterInvoke();
     }
 
-    virtual std::exception_ptr exitInvoke() override
+    virtual void exitInvoke() override
     {
         REQUIRE(isInvoked.exchange(false) == true);
         ++leftInvoke;
-        return TBase::exitInvoke();
+        TBase::exitInvoke();
     }
 
     std::atomic_bool isInvoked{false};

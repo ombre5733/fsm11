@@ -195,10 +195,9 @@ public:
         // The default implementation does nothing.
     }
 
-    virtual FSM11STD::exception_ptr exitInvoke()
+    virtual void exitInvoke()
     {
         // The default implementation does nothing.
-        return FSM11STD::exception_ptr();
     }
 
     //! \brief The parent.
