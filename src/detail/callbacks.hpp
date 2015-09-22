@@ -284,9 +284,9 @@ public:
 
 protected:
     inline
-    void invokeStateExceptionCallback(FSM11STD::exception_ptr&&)
+    void invokeStateExceptionCallbackOrThrow()
     {
-        FSM11_ASSERT(false);
+        throw;
     }
 };
 
@@ -302,10 +302,10 @@ public:
 
 protected:
     inline
-    void invokeStateExceptionCallback(FSM11STD::exception_ptr&& eptr)
+    void invokeStateExceptionCallbackOrThrow()
     {
         if (m_stateExceptionCallback)
-            m_stateExceptionCallback(FSM11STD::move(eptr));
+            m_stateExceptionCallback(FSM11STD::current_exception());
     }
 
 private:

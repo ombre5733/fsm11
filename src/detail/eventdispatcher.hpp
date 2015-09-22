@@ -360,11 +360,7 @@ void EventDispatcherBase<TDerived>::enterStatesInEnterSet(event_type event)
             }
             catch (...)
             {
-                if (options::state_exception_callbacks_enable)
-                    derived().invokeStateExceptionCallback(
-                                FSM11STD::current_exception());
-                else
-                    throw;
+                derived().invokeStateExceptionCallbackOrThrow();
             }
             iter->m_flags |= (state_type::Active | state_type::StartInvoke);
         }
@@ -416,11 +412,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                 }
                 catch (...)
                 {
-                    if (options::state_exception_callbacks_enable)
-                        derived().invokeStateExceptionCallback(
-                                    FSM11STD::current_exception());
-                    else
-                        throw;
+                    derived().invokeStateExceptionCallbackOrThrow();
                 }
             }
 
@@ -430,11 +422,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
             }
             catch (...)
             {
-                if (options::state_exception_callbacks_enable)
-                    derived().invokeStateExceptionCallback(
-                                FSM11STD::current_exception());
-                else
-                    throw;
+                derived().invokeStateExceptionCallbackOrThrow();
             }
         }
     }
