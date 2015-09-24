@@ -30,9 +30,11 @@
 #ifdef FSM11_USE_WEOS
 #include <weos/functional.hpp>
 #include <weos/type_traits.hpp>
+#include <weos/utility.hpp>
 #else
 #include <functional>
 #include <type_traits>
+#include <utility>
 #endif // FSM11_USE_WEOS
 
 namespace fsm11
