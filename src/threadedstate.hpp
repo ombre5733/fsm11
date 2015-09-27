@@ -28,6 +28,7 @@
 #include "statemachine_fwd.hpp"
 #include "exitrequest.hpp"
 #include "state.hpp"
+#include "detail/threadedstatebase.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/future.hpp>
@@ -41,7 +42,8 @@ namespace fsm11
 
 //! \brief A state with a threaded invoke action.
 template <typename TStateMachine>
-class ThreadedState : public State<TStateMachine>
+class ThreadedState : public State<TStateMachine>,
+                      public fsm11_detail::ThreadedStateBase
 {
     using base_type = State<TStateMachine>;
 
@@ -108,7 +110,6 @@ private:
 #endif // FSM11_USE_WEOS
 
     FSM11STD::future<void> m_result;
-    ExitRequest m_exitRequest;
 };
 
 } // namespace fsm11

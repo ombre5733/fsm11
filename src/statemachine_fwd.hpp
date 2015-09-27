@@ -83,6 +83,8 @@ class EventDispatcherBase;
 template <typename TOptions>
 class StateMachineImpl;
 
+class ThreadPool;
+
 
 template <typename TType>
 struct get_options;

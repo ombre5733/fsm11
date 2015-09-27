@@ -9,7 +9,9 @@ QMAKE_LFLAGS += -pthread -Wl,--no-as-needed
 
 INCLUDEPATH += ../src/
 
-SOURCES += main.cpp \
+SOURCES += \
+    ../src/error.cpp \
+    main.cpp \
     tst_behavior.cpp \
     tst_capturestorage.cpp \
     tst_configurationchangecallback.cpp \
@@ -30,8 +32,10 @@ SOURCES += main.cpp \
     tst_transitionconflictcallback.cpp
 
 HEADERS += \
+    ../src/error.hpp \
     ../src/exitrequest.hpp \
     ../src/functionstate.hpp \
+    ../src/historystate.hpp \
     ../src/options.hpp \
     ../src/state.hpp \
     ../src/statemachine.hpp \
