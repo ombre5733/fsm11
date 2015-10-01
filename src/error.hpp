@@ -65,18 +65,10 @@ namespace fsm11
 class FsmError : public FSM11STD::system_error
 {
 public:
-    FsmError(FsmErrorCode ec)
+    FsmError(FSM11STD::error_code ec)
         : FSM11STD::system_error(ec)
     {
     }
-
-    const FSM11STD::error_code& code() const noexcept
-    {
-        return m_errorCode;
-    }
-
-private:
-    FSM11STD::error_code m_errorCode;
 };
 
 } // namespace fsm11

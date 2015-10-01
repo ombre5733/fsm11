@@ -51,10 +51,14 @@
 
 #ifdef FSM11_USE_WEOS
     #define FSM11STD   weos
+    #define FSM11_EXCEPTION(x)   WEOS_EXCEPTION(x)
 #else
     #define FSM11STD   std
+    #define FSM11_EXCEPTION(x)   x
 #endif // FSM11_USE_WEOS
 
+
+#include <cstddef>
 
 namespace fsm11
 {
@@ -71,6 +75,9 @@ class ThreadedState;
 template <typename TStateMachine>
 class ThreadedFunctionState;
 
+template <std::size_t TSize>
+class ThreadPool;
+
 template <typename TStateMachine>
 class Transition;
 
@@ -82,8 +89,6 @@ class EventDispatcherBase;
 
 template <typename TOptions>
 class StateMachineImpl;
-
-class ThreadPool;
 
 
 template <typename TType>

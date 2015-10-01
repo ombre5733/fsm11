@@ -24,10 +24,12 @@
 
 #include "error.hpp"
 
+using namespace FSM11STD;
+
 namespace fsm11
 {
 
-class fsm11_category_impl : public FSM11STD::error_category
+class fsm11_category_impl : public error_category
 {
 public:
     virtual const char* name() const noexcept override
@@ -36,7 +38,7 @@ public:
     }
 
     virtual auto message(int err_val) const
-        -> decltype(FSM11STD::declval<FSM11STD::error_category>().message(0))
+        -> decltype(declval<error_category>().message(0))
         override
     {
         switch (static_cast<FsmErrorCode>(err_val))
@@ -51,7 +53,7 @@ public:
     }
 };
 
-const FSM11STD::error_category& fsm11_category() noexcept
+const error_category& fsm11_category() noexcept
 {
     static fsm11_category_impl categoryInstance;
     return categoryInstance;

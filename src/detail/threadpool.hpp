@@ -22,34 +22,49 @@
   SOFTWARE.
 *******************************************************************************/
 
-#ifndef FSM11_DETAIL_THREADEDSTATEBASE_HPP
-#define FSM11_DETAIL_THREADEDSTATEBASE_HPP
+#ifndef FSM11_DETAIL_THREADPOOL_HPP
+#define FSM11_DETAIL_THREADPOOL_HPP
 
 #include "../statemachine_fwd.hpp"
-#include "../exitrequest.hpp"
+
+#include "threadedstatebase.hpp"
+#include "../threadpool.hpp"
 
 namespace fsm11
 {
 namespace fsm11_detail
 {
 
-class ThreadedStateBase
+class WithoutThreadPool
+{
+protected:
+    struct NoThreadPool
+    {
+    };
+
+    using internal_thread_pool_type = NoThreadPool;
+};
+
+template <typename TOptions>
+class WithThreadPool
 {
 public:
-    virtual ~ThreadedStateBase() {}
-
-    virtual void invoke(ExitRequest& exitRequest) = 0;
+    using thread_pool_type = ThreadPool<TOptions::thread_pool_size>;
 
 protected:
-    ExitRequest m_exitRequest;
+    using internal_thread_pool_type = thread_pool_type;
+};
 
-    template <std::size_t TSize>
-    friend class fsm11::ThreadPool;
-
-    friend class WithoutThreadPool;
+template <typename TOptions>
+struct get_threadpool
+{
+    using type = typename FSM11STD::conditional<
+                     TOptions::threadpool_enable,
+                     WithThreadPool<TOptions>,
+                     WithoutThreadPool>::type;
 };
 
 } // namespace fsm11_detail
 } // namespace fsm11
 
-#endif // FSM11_DETAIL_THREADEDSTATEBASE_HPP
+#endif // FSM11_DETAIL_THREADPOOL_HPP

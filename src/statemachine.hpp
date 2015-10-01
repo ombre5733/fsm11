@@ -26,7 +26,6 @@
 #define FSM11_STATEMACHINE_HPP
 
 #include "statemachine_fwd.hpp"
-#include "historystate.hpp"
 #include "options.hpp"
 #include "state.hpp"
 #include "transition.hpp"
@@ -35,6 +34,7 @@
 #include "detail/capturestorage.hpp"
 #include "detail/eventdispatcher.hpp"
 #include "detail/multithreading.hpp"
+#include "detail/threadpool.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/mutex.hpp>
@@ -366,6 +366,7 @@ class StateMachineImpl :
         public get_state_callbacks<TOptions>::type,
         public get_state_exception_callbacks<TOptions>::type,
         public get_storage<TOptions>::type,
+        public get_threadpool<TOptions>::type,
         public get_transition_conflict_callbacks<TOptions>::type,
         public State<StateMachineImpl<TOptions>>
 {
@@ -383,6 +384,8 @@ private:
     using rebound_transition_allocator_t
         = typename transition_allocator_type::
           template rebind<transition_type>::other;
+    using internal_thread_pool_type
+        = typename get_threadpool<TOptions>::type::internal_thread_pool_type;
 
     friend dispatcher_type;
     friend storage_type;
@@ -390,6 +393,16 @@ private:
 public:
     StateMachineImpl()
         : state_type("(StateMachine)")
+    {
+        state_type::m_stateMachine = this;
+    }
+
+    template <typename T = void,
+              typename = typename FSM11STD::enable_if<
+                             TOptions::threadpool_enable, T>::type>
+    explicit StateMachineImpl(internal_thread_pool_type&& pool)
+        : state_type("(StateMachine)"),
+          m_threadPool(FSM11STD::move(pool))
     {
         state_type::m_stateMachine = this;
     }
@@ -466,8 +479,22 @@ private:
     //! The allocator for transitions.
     rebound_transition_allocator_t m_transitionAllocator;
 
+    internal_thread_pool_type m_threadPool; // TODO: merge if empty
+
+
+    internal_thread_pool_type& threadPool()
+    {
+        return m_threadPool;
+    }
+
 
     friend class EventDispatcherBase<StateMachineImpl>;
+
+    template <typename T>
+    friend class ThreadedState;
+
+    template <typename T>
+    friend class WithThreadPool;
 };
 
 template <typename TOptions>

@@ -27,6 +27,7 @@ SOURCES += \
     tst_statecallbacks.cpp \
     tst_statemachine.cpp \
     tst_threadedstate.cpp \
+    tst_threadpool.cpp \
     tst_transition.cpp \
     tst_transitionconflict.cpp \
     tst_transitionconflictcallback.cpp
@@ -42,6 +43,7 @@ HEADERS += \
     ../src/statemachine_fwd.hpp \
     ../src/threadedstate.hpp \
     ../src/threadedfunctionstate.hpp \
+    ../src/threadpool.hpp \
     ../src/transition.hpp \
     ../src/detail/callbacks.hpp \
     ../src/detail/capturestorage.hpp \

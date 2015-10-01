@@ -24,7 +24,9 @@
 
 #include "catch.hpp"
 
+#include "../src/historystate.hpp"
 #include "../src/statemachine.hpp"
+
 #include "testutils.hpp"
 
 using namespace fsm11;

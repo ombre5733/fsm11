@@ -48,6 +48,7 @@ struct default_options
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
     static constexpr bool transition_selection_stops_after_first_match = true;
+    static constexpr bool threadpool_enable = false;
 
     // Callbacks
     static constexpr bool event_callbacks_enable = false;
@@ -161,6 +162,36 @@ struct TransitionSelectionStopsAfterFirstMatch
     {
         static constexpr bool transition_selection_stops_after_first_match
                               = TEnable;
+    };
+    //! \endcond
+};
+
+template <bool TEnable, std::size_t... TNumPools>
+struct ThreadPoolEnable;
+
+template <>
+struct ThreadPoolEnable<false>
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool threadpool_enable = false;
+    };
+    //! \endcond
+};
+
+template <std::size_t TNumPools>
+struct ThreadPoolEnable<true, TNumPools>
+{
+    static_assert(TNumPools > 0, "The pool size must be non-zero.");
+
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr bool threadpool_enable = true;
+        static constexpr std::size_t thread_pool_size = TNumPools;
     };
     //! \endcond
 };
