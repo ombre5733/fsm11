@@ -221,6 +221,8 @@ SCENARIO("a state hierarchy can be constructed in parts", "[state]")
         State_t b3("b3", &b1);
         State_t b4("b4", &b1);
 
+        for (State_t* state : {&a, &a1, &a2, &a3, &a4})
+            REQUIRE(state->stateMachine() == &sm);
         REQUIRE(b.parent() == nullptr);
 
         WHEN ("a tree is added to an FSM")
