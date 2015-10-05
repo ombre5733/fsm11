@@ -43,6 +43,7 @@ SOURCES += \
     tst_behavior.cpp \
     tst_capturestorage.cpp \
     tst_configurationchangecallback.cpp \
+    tst_error.cpp \
     tst_event.cpp \
     tst_eventcallback.cpp \
     tst_eventlist.cpp \
