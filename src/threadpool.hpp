@@ -149,7 +149,7 @@ private:
     int m_idleWorkers{TSize};
     Handle* m_handles{nullptr};
 #ifdef FSM11_USE_WEOS
-    boost::static_vector<Task, TSize> m_tasks;
+    boost::container::static_vector<Task, TSize> m_tasks;
 #else
     FSM11STD::vector<Task> m_tasks;
 #endif
@@ -309,7 +309,7 @@ ThreadPool<TSize>::enqueue(fsm11_detail::ThreadedStateBase& state)
                 FsmErrorCode::ThreadPoolUnderflow)));
     --m_idleWorkers;
 
-    m_tasks.push_back(Task(state));
+    m_tasks.emplace_back(state);
     m_workerCv.notify_one();
     return m_tasks.back().promise.get_future();
 }

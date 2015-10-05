@@ -167,7 +167,6 @@ TEST_CASE("invoked actions are executed in a thread pool", "[threadpool]")
 }
 #endif
 
-#include <iostream>
 TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
 {
     GIVEN ("a synchronous FSM whose pool is too small")
@@ -209,9 +208,9 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
         bool configurationChanged = false;
         std::condition_variable cv;
 
-        auto waitForConfigurationChange = [&] {
+        auto waitForConfigurationChange = [&] (std::chrono::milliseconds ms) {
             std::unique_lock<std::mutex> lock(mutex);
-            cv.wait(lock, [&] { return configurationChanged; });
+            cv.wait_for(lock, ms, [&] { return configurationChanged; });
             configurationChanged = false;
         };
 
@@ -233,19 +232,18 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
             cv.notify_all();
         });
 
-        sm.start();
-        auto result = sm.startAsyncEventLoop();
-        waitForConfigurationChange();
-        sm.stop();
-        result.get();
-
-#if 0
         WHEN ("the FSM is started")
         {
+            sm.start();
+            auto result = sm.startAsyncEventLoop();
+            waitForConfigurationChange(std::chrono::milliseconds(10));
+            sm.stop();
+
             THEN ("an underflow exception is thrown")
             {
                 try
                 {
+                    result.get();
                     REQUIRE(false);
                 }
                 catch (FsmError& error)
@@ -258,6 +256,5 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
                 }
             }
         }
-#endif
     }
 }

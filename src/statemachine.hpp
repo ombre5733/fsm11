@@ -495,7 +495,7 @@ private:
     friend class EventDispatcherBase<StateMachineImpl>;
 
     template <typename T>
-    friend class ThreadedState;
+    friend class fsm11::ThreadedState;
 
     template <typename T>
     friend class WithThreadPool;

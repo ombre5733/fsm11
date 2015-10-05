@@ -121,7 +121,7 @@ private:
     struct None {};
 
     using maybe_thread_attributes_t
-        = typename FSM11STD::conditional<has_thread_pool,
+        = typename FSM11STD::conditional<!has_thread_pool,
                                          FSM11STD::thread::attributes,
                                          None>::type;
 
