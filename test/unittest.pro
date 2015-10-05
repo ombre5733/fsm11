@@ -67,19 +67,20 @@ HEADERS += \
     ../src/historystate.hpp \
     ../src/options.hpp \
     ../src/state.hpp \
-    ../src/statemachine.hpp \
     ../src/statemachine_fwd.hpp \
-    ../src/threadedstate.hpp \
+    ../src/statemachine.hpp \
     ../src/threadedfunctionstate.hpp \
+    ../src/threadedstate.hpp \
     ../src/threadpool.hpp \
     ../src/transition.hpp \
     ../src/detail/callbacks.hpp \
     ../src/detail/capturestorage.hpp \
     ../src/detail/eventdispatcher.hpp \
     ../src/detail/multithreading.hpp \
-    ../src/detail/notifications.hpp \
     ../src/detail/options.hpp \
-    ../src/detail/scopeguard.hpp
+    ../src/detail/scopeguard.hpp \
+    ../src/detail/threadedstatebase.hpp \
+    ../src/detail/threadpool.hpp
 
 HEADERS += catch.hpp \
            fsm11_user_config.hpp \
