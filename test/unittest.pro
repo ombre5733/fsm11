@@ -38,7 +38,7 @@ QMAKE_LFLAGS += -pthread -Wl,--no-as-needed
 INCLUDEPATH += ../src/
 
 SOURCES += \
-    ../src/error.cpp \
+    ../src/fsm11.cpp \
     main.cpp \
     tst_behavior.cpp \
     tst_capturestorage.cpp \
