@@ -30,9 +30,12 @@
 #define FSM11_TESTUTILS_HPP
 
 #include "catch.hpp"
+
 #include <array>
 #include <atomic>
+#include <condition_variable>
 #include <map>
+#include <mutex>
 #include <set>
 #include <tuple>
 
@@ -168,6 +171,37 @@ public:
     std::atomic_int& left;
     std::atomic_int& enteredInvoke;
     std::atomic_int& leftInvoke;
+};
+
+template <typename T>
+struct ConfigurationChangeTracker
+{
+    explicit ConfigurationChangeTracker(T& sm)
+        : m_sm(sm)
+    {
+        sm.setConfigurationChangeCallback([this] {
+            std::unique_lock<std::mutex> lock(m_mutex);
+            m_configurationChanged = true;
+            m_cv.notify_all();
+        });
+    }
+
+    ~ConfigurationChangeTracker()
+    {
+        m_sm.setConfigurationChangeCallback(nullptr);
+    }
+
+    void wait()
+    {
+        std::unique_lock<std::mutex> lock(m_mutex);
+        m_cv.wait(lock, [this] { return m_configurationChanged; });
+        m_configurationChanged = false;
+    }
+
+    T& m_sm;
+    std::mutex m_mutex;
+    bool m_configurationChanged{false};
+    std::condition_variable m_cv;
 };
 
 #endif // FSM11_TESTUTILS_HPP
