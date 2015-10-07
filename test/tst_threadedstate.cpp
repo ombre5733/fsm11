@@ -32,6 +32,7 @@
 #include "../src/statemachine.hpp"
 
 #include <condition_variable>
+#include <memory>
 #include <mutex>
 #include <thread>
 
@@ -231,9 +232,6 @@ TEST_CASE("invoked action is left when state machine is destructed",
 struct ThreadedInvokeException
 {
 };
-
-#include <iostream>
-using namespace std;
 
 template <typename TBaseState>
 struct ThrowingState : public TBaseState
