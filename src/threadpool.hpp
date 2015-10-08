@@ -278,7 +278,7 @@ auto ThreadPool<TSize>::operator=(ThreadPool&& other) -> ThreadPool&
         return *this;
 
     // It is important to use a dead-lock avoiding algorithm for the
-    // two pool mutexes here.
+    // two pool mutexes here or we dead-lock the application.
     lock(m_poolMutex, other.m_poolMutex);
     lock_guard<mutex> thisPoolLock(m_poolMutex, adopt_lock);
     lock_guard<mutex> otherPoolLock(other.m_poolMutex, adopt_lock);
@@ -351,6 +351,8 @@ void ThreadPool<TSize>::work(ThreadPool* pool, int id)
             {
                 task.promise.set_exception(current_exception());
             }
+            lock.lock();
+            ++pool->m_idleWorkers;
         }
         else if (handle.hasChanged(pool))
         {

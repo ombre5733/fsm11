@@ -50,6 +50,7 @@ public:
 
         lock_guard<mutex> lock(m_mutex);
         m_id = this_thread::get_id();
+        m_idSet.insert(m_id);
         this_thread::sleep_for(chrono::milliseconds(10));
     }
 
@@ -59,29 +60,48 @@ public:
         return m_id;
     }
 
+    static void resetNumThreads()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_idSet.clear();
+    }
+
+    static std::size_t numThreads()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_idSet.size();
+    }
+
 private:
-    mutable std::mutex m_mutex;
+    static std::mutex m_mutex;
     std::thread::id m_id;
+    static std::set<std::thread::id> m_idSet;
 };
 
-#if 0
+template <typename T>
+std::mutex TestState<T>::m_mutex;
+
+template <typename T>
+std::set<std::thread::id> TestState<T>::m_idSet;
+
+
 TEST_CASE("thread pool construction and moving", "[threadpool]")
 {
     SECTION("construction")
     {
-        ThreadPool<10> pool;
+        ThreadPool<32> pool;
     }
 
     SECTION("move construction")
     {
-        ThreadPool<10> pool1;
-        ThreadPool<10> pool2(std::move(pool1));
+        ThreadPool<32> pool1;
+        ThreadPool<32> pool2(std::move(pool1));
     }
 
     SECTION("move assignment")
     {
-        ThreadPool<10> pool1;
-        ThreadPool<10> pool2;
+        ThreadPool<32> pool1;
+        ThreadPool<32> pool2;
         pool2 = std::move(pool1);
     }
 }
@@ -96,38 +116,37 @@ TEST_CASE("invoked actions are executed in a thread pool", "[threadpool]")
 
         ThreadPool_t pool;
         StateMachine_t sm(std::move(pool));
-        TestState<State_t> a("a", &sm);
-        TestState<State_t> b("b", &a);
-        TestState<State_t> c("c", &b);
+        TestState<State_t> a1("a1", &sm);
+        TestState<State_t> a2("a2", &a1);
+        TestState<State_t> a3("a3", &a2);
+        TestState<State_t> b1("b1", &sm);
+        TestState<State_t> b2("b2", &b1);
+        TestState<State_t> b3("b3", &b2);
+
+        sm += a1 + event(1) > b1;
+
+        a1.resetNumThreads();
 
         WHEN ("the FSM is started")
         {
             sm.start();
+            sm.addEvent(1);
             sm.stop();
 
             THEN ("the invoked actions are started in the pool's threads")
             {
-                for (auto state : {&a, &b, &c})
+                for (auto state : {&a1, &a2, &a3, &b1, &b2, &b3})
                 {
                     REQUIRE(state->threadId() != std::thread::id());
                     REQUIRE(state->threadId() != std::this_thread::get_id());
                 }
+                REQUIRE(a1.numThreads() == 3);
             }
         }
     }
 
     GIVEN ("an asynchronous FSM with a thread pool")
     {
-        std::mutex mutex;
-        bool configurationChanged = false;
-        std::condition_variable cv;
-
-        auto waitForConfigurationChange = [&] {
-            std::unique_lock<std::mutex> lock(mutex);
-            cv.wait(lock, [&] { return configurationChanged; });
-            configurationChanged = false;
-        };
-
         using StateMachine_t = StateMachine<AsynchronousEventDispatching,
                                             ThreadPoolEnable<true, 3>,
                                             ConfigurationChangeCallbacksEnable<true>>;
@@ -136,36 +155,42 @@ TEST_CASE("invoked actions are executed in a thread pool", "[threadpool]")
 
         ThreadPool_t pool;
         StateMachine_t sm(std::move(pool));
-        TestState<State_t> a("a", &sm);
-        TestState<State_t> b("b", &a);
-        TestState<State_t> c("c", &b);
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
 
-        sm.setConfigurationChangeCallback([&] {
-            std::unique_lock<std::mutex> lock(mutex);
-            configurationChanged = true;
-            cv.notify_all();
-        });
+        TestState<State_t> a1("a1", &sm);
+        TestState<State_t> a2("a2", &a1);
+        TestState<State_t> a3("a3", &a2);
+        TestState<State_t> b1("b1", &sm);
+        TestState<State_t> b2("b2", &b1);
+        TestState<State_t> b3("b3", &b2);
+
+        sm += a1 + event(1) > b1;
+
+        a1.resetNumThreads();
 
         WHEN ("the FSM is started")
         {
-            sm.start();
             auto result = sm.startAsyncEventLoop();
-            waitForConfigurationChange();
+            sm.start();
+            cct.wait();
+            sm.addEvent(1);
+            cct.wait();
             sm.stop();
+            cct.wait();
             result.get();
 
             THEN ("the invoked actions are started in the pool's threads")
             {
-                for (auto state : {&a, &b, &c})
+                for (auto state : {&a1, &a1, &a3, &b1, &b2, &b3})
                 {
                     REQUIRE(state->threadId() != std::thread::id());
                     REQUIRE(state->threadId() != std::this_thread::get_id());
                 }
+                REQUIRE(a1.numThreads() == 3);
             }
         }
     }
 }
-#endif
 
 TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
 {
