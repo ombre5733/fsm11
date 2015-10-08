@@ -83,12 +83,12 @@ public:
     }
 
 protected:
-    mutable FSM11STD::recursive_mutex m_mutex;
+    mutable FSM11STD::mutex m_mutex; // Non-recursive!!!
 
     inline
-    FSM11STD::unique_lock<FSM11STD::recursive_mutex> getLock() const
+    FSM11STD::unique_lock<FSM11STD::mutex> getLock() const
     {
-        return FSM11STD::unique_lock<FSM11STD::recursive_mutex>(m_mutex);
+        return FSM11STD::unique_lock<FSM11STD::mutex>(m_mutex);
     }
 };
 
