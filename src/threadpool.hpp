@@ -142,7 +142,7 @@ public:
 private:
     FSM11STD::mutex m_poolMutex;
 
-    FSM11STD::mutex m_workerMutex;
+    FSM11STD::mutex m_workerMutex; // TODO: rethink the locking policy
     FSM11STD::condition_variable m_workerCv;
     FSM11STD::condition_variable m_assignmentCv;
     unsigned m_assignedWorkers{0};
@@ -305,8 +305,7 @@ ThreadPool<TSize>::enqueue(fsm11_detail::ThreadedStateBase& state)
 
     lock_guard<mutex> lock(m_workerMutex);
     if (m_idleWorkers == 0)
-        throw FSM11_EXCEPTION(FsmError(make_error_code(
-                FsmErrorCode::ThreadPoolUnderflow)));
+        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::ThreadPoolUnderflow));
     --m_idleWorkers;
 
     m_tasks.emplace_back(state);

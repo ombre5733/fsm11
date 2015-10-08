@@ -30,6 +30,7 @@
 #define FSM11_STATE_HPP
 
 #include "statemachine_fwd.hpp"
+#include "error.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/atomic.hpp>
@@ -1233,8 +1234,8 @@ bool State<TStateMachine>::isActive() const noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::setInitialState(State* descendant)
 {
-    //if (!isProperAncestor(this, descendant))
-    //    throw ;
+    if (!isProperAncestor(this, descendant))
+        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::InvalidInitialState));
 
     m_initialState = descendant;
 }
@@ -1381,7 +1382,7 @@ bool isAncestor(const State<TStateMachine>* ancestor,
 //! \brief Checks if a state is a proper ancestor of another state.
 //!
 //! Returns \p true, if \p ancestor is an ancestor of \p descendant
-//! and \p ancestor and \p descendant are not the same.
+//! and \p ancestor and \p descendant are not equal.
 //! In contrast to isAncestor(), isProperAncestor(s, s) is always false.
 template <typename TStateMachine>
 bool isProperAncestor(const State<TStateMachine>* ancestor,
