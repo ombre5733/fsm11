@@ -30,9 +30,12 @@
 
 #include "../src/functionstate.hpp"
 #include "../src/statemachine.hpp"
+
 #include "testutils.hpp"
 
 #include <deque>
+#include <future>
+#include <tuple>
 
 using namespace fsm11;
 
@@ -81,272 +84,569 @@ private:
     std::deque<int> m_events;
 };
 
+namespace syncSM
+{
 using StateMachine_t = StateMachine<EventListType<ThrowingList>>;
 using State_t = StateMachine_t::state_type;
 using FunctionState_t = FunctionState<StateMachine_t>;
+} // namespace syncSM
 
-TEST_CASE("throw in addEvent", "[exception]")
+namespace asyncSM
 {
-    StateMachine_t sm;
+using StateMachine_t = StateMachine<AsynchronousEventDispatching,
+                                    EventListType<ThrowingList>,
+                                    ConfigurationChangeCallbacksEnable<true>>;
+using State_t = StateMachine_t::state_type;
+using FunctionState_t = FunctionState<StateMachine_t>;
+} // namespace asyncSM
 
-    State_t a("a", &sm);
-    State_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    sm += aa + event(0) > ba;
-
-    REQUIRE(isActive(sm, {}));
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-
-    SECTION("throw")
+SCENARIO("throw an exception from the event list", "[exception]")
+{
+    GIVEN ("a synchronous FSM")
     {
-        REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+        using namespace syncSM;
+        StateMachine_t sm;
+
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        sm += aa + event(0) > ba;
+
+        REQUIRE(isActive(sm, {}));
+        sm.start();
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("an exception is thrown from the event list")
+        {
+            REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+            THEN ("the state machine does not change its configuration")
+            {
+                REQUIRE(isActive(sm, {&sm, &a, &aa}));
+            }
+        }
+
+        WHEN ("an exception is thrown after a transition")
+        {
+            sm.addEvent(0);
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+            THEN ("the state machine does not change its configuration")
+            {
+                REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            }
+        }
+
+        // The state machine must still be running.
+        REQUIRE(sm.running());
     }
 
-    SECTION("transit then throw")
+    GIVEN ("an asynchronous FSM")
     {
+        using namespace asyncSM;
+
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        sm += aa + event(0) > ba;
+
+        result = sm.startAsyncEventLoop();
+        REQUIRE(isActive(sm, {}));
+        sm.start();
+        cct.wait();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("an exception is thrown from the event list")
+        {
+            REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+            THEN ("the state machine does not change its configuration")
+            {
+                REQUIRE(isActive(sm, {&sm, &a, &aa}));
+            }
+        }
+
+        WHEN ("an exception is thrown after a transition")
+        {
+            sm.addEvent(0);
+            cct.wait();
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+            THEN ("the state machine does not change its configuration")
+            {
+                REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            }
+        }
+
+        // The state machine must still be running.
+        REQUIRE(sm.running());
+    }
+}
+
+SCENARIO("throw an exception in a transition guard", "[exception]")
+{
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+        StateMachine_t sm;
+
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        auto guard = [](int event) {
+            if (event == 3)
+                throw GuardException();
+            return event % 2 == 0;
+        };
+
+        int actionEvent = -1;
+        auto action = [&](int event) {
+            actionEvent = event;
+        };
+
+        sm += aa + event(0) [guard] / action > ba;
+        sm += aa + event(3) [guard] / action > ba;
+        sm += ba + event(3) [guard] / action > bb;
+
+        REQUIRE(isActive(sm, {}));
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("the guard throws an exception")
+        {
+            REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+            THEN ("the action is not called")
+            {
+                REQUIRE(actionEvent == -1);
+            }
+        }
+
+        WHEN ("the guard throws after a transition")
+        {
+            sm.addEvent(0);
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+            THEN ("the guard is not called")
+            {
+                REQUIRE(actionEvent == 0);
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+
+        // Restart the state machine.
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
         sm.addEvent(0);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-        REQUIRE_THROWS_AS(sm.addEvent(1), ListException);
+        sm.stop();
+
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
+
+    GIVEN ("an asynchronous FSM")
+    {
+        using namespace asyncSM;
+
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        auto guard = [](int event) {
+            if (event == 3)
+                throw GuardException();
+            return event % 2 == 0;
+        };
+
+        int actionEvent = -1;
+        auto action = [&](int event) {
+            actionEvent = event;
+        };
+
+        sm += aa + event(0) [guard] / action > ba;
+        sm += aa + event(3) [guard] / action > ba;
+        sm += ba + event(3) [guard] / action > bb;
+
+        result = sm.startAsyncEventLoop();
+        REQUIRE(isActive(sm, {}));
+        sm.start();
+        cct.wait();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("the guard throws an exception")
+        {
+            sm.addEvent(3);
+            cct.wait();
+            REQUIRE_THROWS_AS(result.get(), GuardException);
+            THEN ("the action is not called")
+            {
+                REQUIRE(actionEvent == -1);
+            }
+        }
+
+        WHEN ("the guard throws after a transition")
+        {
+            sm.addEvent(0);
+            cct.wait();
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            sm.addEvent(3);
+            cct.wait();
+            REQUIRE_THROWS_AS(result.get(), GuardException);
+            THEN ("the action is not called")
+            {
+                REQUIRE(actionEvent == 0);
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+
+        // Restart the state machine.
+        result = sm.startAsyncEventLoop();
+        sm.start();
+        cct.wait();
+
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+        sm.addEvent(0);
+        cct.wait();
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
+        sm.stop();
+        cct.wait();
+
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
     }
 }
 
-TEST_CASE("throw in transition guard", "[exception]")
+SCENARIO("throw an exception in a transition action", "[exception]")
 {
-    StateMachine_t sm;
-
-    State_t a("a", &sm);
-    State_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    auto guard = [](int event) {
-        if (event == 3)
-            throw GuardException();
-        return event % 2 == 0;
-    };
-
-    sm += aa + event(0) [guard] > ba;
-    sm += aa + event(3) [guard] > ba;
-    sm += ba + event(3) [guard] > bb;
-
-    REQUIRE(isActive(sm, {}));
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-
-    SECTION("throw")
+    GIVEN ("a synchronous FSM")
     {
-        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
-    }
+        using namespace syncSM;
+        StateMachine_t sm;
 
-    SECTION("transit then throw")
-    {
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        auto action = [](int event) {
+            if (event == 3)
+                throw ActionException();
+        };
+
+        sm += aa + event(0) / action > ba;
+        sm += aa + event(3) / action > ba;
+        sm += ba + event(3) / action > bb;
+
+        REQUIRE(isActive(sm, {}));
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("an event is added")
+        {
+            THEN ("the transition action throws")
+            {
+                REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
+            }
+        }
+
+        WHEN ("an event is added after a transition")
+        {
+            sm.addEvent(0);
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            THEN ("the transition action throws")
+            {
+                REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+
+        // Restart the state machine.
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
         sm.addEvent(0);
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+        sm.stop();
+
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
     }
 
-    // The state machine must have been stopped.
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
-
-    // Restart the state machine.
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-    sm.addEvent(0);
-    REQUIRE(isActive(sm, {&sm, &b, &ba}));
-    sm.stop();
-
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
-}
-
-TEST_CASE("throw in transition action", "[exception]")
-{
-    StateMachine_t sm;
-
-    State_t a("a", &sm);
-    State_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    auto action = [](int event) {
-        if (event == 3)
-            throw ActionException();
-    };
-
-    sm += aa + event(0) / action > ba;
-    sm += aa + event(3) / action > ba;
-    sm += ba + event(3) / action > bb;
-
-    REQUIRE(isActive(sm, {}));
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-
-    SECTION("throw")
+    GIVEN ("an asynchronous FSM")
     {
-        REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
-    }
+        using namespace asyncSM;
 
-    SECTION("transit then throw")
-    {
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        State_t a("a", &sm);
+        State_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        auto action = [](int event) {
+            if (event == 3)
+                throw ActionException();
+        };
+
+        sm += aa + event(0) / action > ba;
+        sm += aa + event(3) / action > ba;
+        sm += ba + event(3) / action > bb;
+
+        result = sm.startAsyncEventLoop();
+        REQUIRE(isActive(sm, {}));
+        sm.start();
+        cct.wait();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
+
+        WHEN ("an event is added")
+        {
+            sm.addEvent(3);
+            cct.wait();
+            THEN ("the transition action throws")
+            {
+                REQUIRE_THROWS_AS(result.get(), ActionException);
+            }
+        }
+
+        WHEN ("an event is added after a transition")
+        {
+            sm.addEvent(0);
+            cct.wait();
+            REQUIRE(isActive(sm, {&sm, &b, &ba}));
+            sm.addEvent(3);
+            cct.wait();
+            THEN ("the transition action throws")
+            {
+                REQUIRE_THROWS_AS(result.get(), ActionException);
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+
+        // Restart the state machine.
+        result = sm.startAsyncEventLoop();
+        sm.start();
+        cct.wait();
+        REQUIRE(isActive(sm, {&sm, &a, &aa}));
         sm.addEvent(0);
+        cct.wait();
         REQUIRE(isActive(sm, {&sm, &b, &ba}));
-        REQUIRE_THROWS_AS(sm.addEvent(3), ActionException);
+        sm.stop();
+        cct.wait();
+
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
     }
-
-    // The state machine must have been stopped.
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
-
-    // Restart the state machine.
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-    sm.addEvent(0);
-    REQUIRE(isActive(sm, {&sm, &b, &ba}));
-    sm.stop();
-
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
 }
 
-TEST_CASE("throw in onEntry", "[exception]")
+SCENARIO("throw an exception in a state entry function", "[exception]")
 {
-    using TrackingState_t = TrackingState<FunctionState_t>;
-
-    StateMachine_t sm;
-
-    TrackingState_t a("a", &sm);
-    TrackingState_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    a.setEntryFunction([](int) { throw StateException(); });
-
-    REQUIRE_THROWS_AS(sm.start(), StateException);
-    REQUIRE(a.entered == 1);
-    REQUIRE(a.left == 0);
-
-    REQUIRE(aa.entered == 0);
-    REQUIRE(aa.left == 0);
-}
-
-TEST_CASE("throw in onExit", "[exception]")
-{
-    using TrackingState_t = TrackingState<FunctionState_t>;
-
-    StateMachine_t sm;
-
-    TrackingState_t a("a", &sm);
-    TrackingState_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    aa.setExitFunction([](int) { throw StateException(); });
-
-    sm.start();
-    REQUIRE_THROWS_AS(sm.stop(), StateException);
-    REQUIRE(a.entered == 1);
-    REQUIRE(a.left == 1);
-
-    REQUIRE(aa.entered == 1);
-    REQUIRE(aa.left == 1);
-}
-
-#if 0
-TEST_CASE("async sm: throw in transition guard", "[exception]")
-{
-    using StateMachine_t = StateMachine<AsynchronousEventDispatching,
-                                        EventListType<ThrowingList>,
-                                        ConfigurationChangeCallbacksEnable<true>>;
-    using State_t = StateMachine_t::state_type;
-    using FunctionState_t = FunctionState<StateMachine_t>;
-
-    std::future<void> result;
-
-    std::mutex mutex;
-    bool configurationChanged = false;
-    std::condition_variable cv;
-
-    auto waitForConfigurationChange = [&] {
-        std::unique_lock<std::mutex> lock(mutex);
-        cv.wait(lock, [&] { return configurationChanged; });
-        configurationChanged = false;
-    };
-
-    StateMachine_t sm;
-
-    State_t a("a", &sm);
-    State_t aa("aa", &a);
-    State_t ab("ab", &a);
-    State_t b("b", &sm);
-    State_t ba("ba", &b);
-    State_t bb("bb", &b);
-
-    auto guard = [](int event) {
-        if (event == 3)
-            throw GuardException();
-        return event % 2 == 0;
-    };
-
-    sm += aa + event(0) [guard] == ba;
-    sm += aa + event(3) [guard] == ba;
-    sm += ba + event(3) [guard] == bb;
-
-    sm.setConfigurationChangeCallback([&] {
-        std::unique_lock<std::mutex> lock(mutex);
-        configurationChanged = true;
-        cv.notify_all();
-    });
-
-    result = sm.startAsyncEventLoop();
-
-    REQUIRE(isActive(sm, {}));
-    sm.start();
-    waitForConfigurationChange();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-
-    SECTION("throw")
+    GIVEN ("a synchronous FSM")
     {
-        REQUIRE(result.valid());
-        sm.addEvent(3);
-        REQUIRE_THROWS_AS(result.get(), GuardException);
+        using namespace syncSM;
+
+        StateMachine_t sm;
+
+        using TrackingState_t = TrackingState<FunctionState_t>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        WHEN ("an ancestor throws upon entry")
+        {
+            a.setEntryFunction([](int) { throw StateException(); });
+
+            REQUIRE_THROWS_AS(sm.start(), StateException);
+
+            THEN ("the child is not entered")
+            {
+                REQUIRE(a == std::make_tuple(1, 0, 0, 0));
+                REQUIRE(aa == std::make_tuple(0, 0, 0, 0));
+            }
+        }
+
+        WHEN ("a leaf state throws upon entry")
+        {
+            aa.setEntryFunction([](int) { throw StateException(); });
+
+            REQUIRE_THROWS_AS(sm.start(), StateException);
+
+            THEN ("the parent is entered and left")
+            {
+                REQUIRE(a == std::make_tuple(1, 1, 0, 0));
+                REQUIRE(aa == std::make_tuple(1, 0, 0, 0));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
     }
 
-    SECTION("transit then throw")
+    GIVEN ("an asynchronous FSM")
     {
-        sm.addEvent(0);
-        waitForConfigurationChange();
-        REQUIRE(isActive(sm, {&sm, &b, &ba}));
-        REQUIRE_THROWS_AS(sm.addEvent(3), GuardException);
+        using namespace asyncSM;
+
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        using TrackingState_t = TrackingState<FunctionState_t>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        WHEN ("an ancestor throws upon entry")
+        {
+            a.setEntryFunction([](int) { throw StateException(); });
+
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+            REQUIRE_THROWS_AS(result.get(), StateException);
+
+            THEN ("the child is not entered")
+            {
+                REQUIRE(a == std::make_tuple(1, 0, 0, 0));
+                REQUIRE(aa == std::make_tuple(0, 0, 0, 0));
+            }
+        }
+
+        WHEN ("a leaf state throws upon entry")
+        {
+            aa.setEntryFunction([](int) { throw StateException(); });
+
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+            REQUIRE_THROWS_AS(result.get(), StateException);
+
+            THEN ("the parent is entered and left")
+            {
+                REQUIRE(a == std::make_tuple(1, 1, 0, 0));
+                REQUIRE(aa == std::make_tuple(1, 0, 0, 0));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
+}
+
+SCENARIO("throw an exception in a state exit function", "[exception]")
+{
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+
+        StateMachine_t sm;
+
+        using TrackingState_t = TrackingState<FunctionState_t>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        WHEN ("a leaf state throws upon exit")
+        {
+            aa.setExitFunction([](int) { throw StateException(); });
+
+            sm.start();
+            REQUIRE_THROWS_AS(sm.stop(), StateException);
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE(a == std::make_tuple(1, 1, 1, 1));
+                REQUIRE(aa == std::make_tuple(1, 1, 1, 1));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
     }
 
-    // The state machine must have been stopped.
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
+    GIVEN ("an asynchronous FSM")
+    {
+        using namespace asyncSM;
 
-    // Restart the state machine.
-    sm.start();
-    REQUIRE(isActive(sm, {&sm, &a, &aa}));
-    sm.addEvent(0);
-    REQUIRE(isActive(sm, {&sm, &b, &ba}));
-    sm.stop();
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
 
-    REQUIRE(!sm.running());
-    REQUIRE(isActive(sm, {}));
+        using TrackingState_t = TrackingState<FunctionState_t>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+        State_t ab("ab", &a);
+        State_t b("b", &sm);
+        State_t ba("ba", &b);
+        State_t bb("bb", &b);
+
+        WHEN ("a leaf state throws upon exit")
+        {
+            aa.setExitFunction([](int) { throw StateException(); });
+
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+            sm.stop();
+            cct.wait();
+            REQUIRE_THROWS_AS(result.get(), StateException);
+            REQUIRE(a == std::make_tuple(1, 1, 1, 1));
+            REQUIRE(aa == std::make_tuple(1, 1, 1, 1));
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
 }
-#endif
+
+SCENARIO ("throw an exception when entering the invoke action", "[exception]")
+{
+}
