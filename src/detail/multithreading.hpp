@@ -55,6 +55,13 @@ public:
     }
 
     template <typename T = void>
+    void try_lock()
+    {
+        static_assert(!FSM11STD::is_same<T, T>::value,
+                      "Multithreading support is not enabled");
+    }
+
+    template <typename T = void>
     void unlock()
     {
         static_assert(!FSM11STD::is_same<T, T>::value,
@@ -77,13 +84,18 @@ public:
         m_mutex.lock();
     }
 
+    bool try_lock()
+    {
+        return m_mutex.try_lock();
+    }
+
     void unlock()
     {
         m_mutex.unlock();
     }
 
 protected:
-    mutable FSM11STD::mutex m_mutex; // Non-recursive!!!
+    mutable FSM11STD::mutex m_mutex; // Non-recursive to avoid mistakes in the application!!!
 
     inline
     FSM11STD::unique_lock<FSM11STD::mutex> getLock() const

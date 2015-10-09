@@ -49,6 +49,20 @@ TEST_CASE("an FSM without multithreading support is smaller",
     REQUIRE(sizeof(asm_t) < sizeof(asm_mt_t));
 }
 
+TEST_CASE("a multithreading FSM is a C++11 lockable")
+{
+    using sm_t = StateMachine<MultithreadingEnable<true>>;
+    sm_t sm;
+
+    std::unique_lock<sm_t> lock(sm, std::try_to_lock);
+    REQUIRE(lock.owns_lock());
+    lock.unlock();
+    REQUIRE(!lock.owns_lock());
+    lock.lock();
+    REQUIRE(lock.owns_lock());
+    lock.unlock();
+}
+
 TEST_CASE("mutual exclusion during configuration change", "[multithreading]")
 {
     using StateMachine_t = StateMachine<SynchronousEventDispatching,
