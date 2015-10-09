@@ -435,7 +435,7 @@ SCENARIO("simple configuration changes in synchronous statemachine",
 
 // TODO
 TEST_CASE("simple configuration changes in asynchronous statemachine",
-          "[transition]")
+          "[behavior]")
 {
     std::future<void> result;
 
