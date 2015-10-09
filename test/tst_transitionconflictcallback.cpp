@@ -36,7 +36,7 @@ using namespace fsm11;
 
 using StateMachine_t = StateMachine<>;
 using CallbackStateMachine_t = StateMachine<
-                                   TransitionConflictCallbacksEnable<true>,
+                                   TransitionConflictPolicy<InvokeCallback>,
                                    TransitionSelectionStopsAfterFirstMatch<false>>;
 using CallbackState_t = State<CallbackStateMachine_t>;
 using CallbackTransition_t = Transition<CallbackStateMachine_t>;

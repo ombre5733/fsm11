@@ -565,7 +565,7 @@ template <typename TDerived>
 void EventDispatcherBase<TDerived>::findTransitionConflict(
         transition_type* ignoredTransition)
 {
-    if (!derived().hasTransitionConflictCallback())
+    if (!derived().hasTransitionConflictAction())
         return;
 
     state_type* ignoredDomain = transitionDomain(ignoredTransition);
@@ -590,7 +590,7 @@ void EventDispatcherBase<TDerived>::findTransitionConflict(
             if (   (iter->m_flags & state_type::Active)
                 && (iter->m_flags & state_type::PartOfConflict))
             {
-                derived().invokeTransitionConflictCallback(
+                derived().invokeTransitionConflictAction(
                             transition, ignoredTransition);
                 return;
             }

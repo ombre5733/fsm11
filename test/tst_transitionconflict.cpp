@@ -33,16 +33,12 @@
 
 using namespace fsm11;
 
-
-#include <iostream>
-using namespace std;
-
-SCENARIO("transition conflicts", "[conflicts]")
+SCENARIO("transition conflict callback", "[conflicts]")
 {
     GIVEN ("that the transition selection stops after the first match")
     {
         using StateMachine_t = StateMachine<
-                                   TransitionConflictCallbacksEnable<true>>;
+                                   TransitionConflictPolicy<InvokeCallback>>;
         using State_t = State<StateMachine_t>;
         using Transition_t = Transition<StateMachine_t>;
 
@@ -65,7 +61,7 @@ SCENARIO("transition conflicts", "[conflicts]")
         WHEN ("a matching event is added")
         {
             sm.addEvent(1);
-            THEN ("the transitions do not conflict")
+            THEN ("the callback is not invoked")
             {
                 REQUIRE(isActive(sm, {&sm, &b}));
                 REQUIRE(conflicts == 0);
@@ -76,7 +72,7 @@ SCENARIO("transition conflicts", "[conflicts]")
     GIVEN ("that all transitions of a state are scanned")
     {
         using StateMachine_t = StateMachine<
-                                   TransitionConflictCallbacksEnable<true>,
+                                   TransitionConflictPolicy<InvokeCallback>,
                                    TransitionSelectionStopsAfterFirstMatch<false>>;
         using State_t = State<StateMachine_t>;
         using Transition_t = Transition<StateMachine_t>;
@@ -86,10 +82,43 @@ SCENARIO("transition conflicts", "[conflicts]")
         State_t b("b", &sm);
         State_t c("c", &sm);
 
+        Transition_t* t1 = sm += a + event(1) > b;
+        Transition_t* t2 = sm += a + event(1) > c;
+
         int conflicts = 0;
-        sm.setTransitionConflictCallback([&](Transition_t*, Transition_t*) {
-                                             ++conflicts;
-                                         });
+        sm.setTransitionConflictCallback([&](Transition_t* a, Transition_t* b) {
+            ++conflicts;
+            REQUIRE(a == t1);
+            REQUIRE(b == t2);
+        });
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+
+        WHEN ("a matching event is added")
+        {
+            sm.addEvent(1);
+            THEN ("the conflict is reported via the callback")
+            {
+                REQUIRE(isActive(sm, {&sm, &b}));
+                REQUIRE(conflicts == 1);
+            }
+        }
+    }
+}
+
+SCENARIO("transition conflict exception", "[conflicts]")
+{
+    GIVEN ("that the transition selection stops after the first match")
+    {
+        using StateMachine_t = StateMachine<
+                                   TransitionConflictPolicy<ThrowException>>;
+        using State_t = State<StateMachine_t>;
+
+        StateMachine_t sm;
+        State_t a("a", &sm);
+        State_t b("b", &sm);
+        State_t c("c", &sm);
 
         sm += a + event(1) > b;
         sm += a + event(1) > c;
@@ -100,10 +129,51 @@ SCENARIO("transition conflicts", "[conflicts]")
         WHEN ("a matching event is added")
         {
             sm.addEvent(1);
-            THEN ("the conflict is reported")
+            THEN ("the exception is not thrown")
             {
                 REQUIRE(isActive(sm, {&sm, &b}));
-                REQUIRE(conflicts == 1);
+            }
+        }
+    }
+
+    GIVEN ("that all transitions of a state are scanned")
+    {
+        using StateMachine_t = StateMachine<
+                                   TransitionConflictPolicy<ThrowException>,
+                                   TransitionSelectionStopsAfterFirstMatch<false>>;
+        using State_t = State<StateMachine_t>;
+        using Transition_t = Transition<StateMachine_t>;
+
+        StateMachine_t sm;
+        State_t a("a", &sm);
+        State_t b("b", &sm);
+        State_t c("c", &sm);
+
+        Transition_t* t1 = sm += a + event(1) > b;
+        Transition_t* t2 = sm += a + event(1) > c;
+
+        sm.start();
+        REQUIRE(isActive(sm, {&sm, &a}));
+
+        WHEN ("a matching event is added")
+        {
+            THEN ("the conflict is reported via the exception")
+            {
+                try
+                {
+                    sm.addEvent(1);
+                    REQUIRE(false);
+                }
+                catch (TransitionConflictError<Transition_t>& error)
+                {
+                    REQUIRE(error.first() == t1);
+                    REQUIRE(error.second() == t2);
+                }
+                catch (...)
+                {
+                    REQUIRE(false);
+                }
+                REQUIRE(!sm.running());
             }
         }
     }

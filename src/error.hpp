@@ -42,7 +42,8 @@ namespace fsm11
 enum class FsmErrorCode
 {
     InvalidInitialState = 1,
-    ThreadPoolUnderflow = 2
+    TransitionConflict = 2,
+    ThreadPoolUnderflow = 3
 };
 
 const FSM11STD::error_category& fsm11_category() noexcept;
@@ -73,6 +74,32 @@ public:
         : FSM11STD::system_error(make_error_code(ec))
     {
     }
+};
+
+template <typename TTransition>
+class TransitionConflictError : public FsmError
+{
+public:
+    TransitionConflictError(TTransition* first, TTransition* second)
+        : FsmError(FsmErrorCode::TransitionConflict),
+          m_first(first),
+          m_second(second)
+    {
+    }
+
+    TTransition* first() const
+    {
+        return m_first;
+    }
+
+    TTransition* second() const
+    {
+        return m_second;
+    }
+
+private:
+    TTransition* m_first;
+    TTransition* m_second;
 };
 
 } // namespace fsm11

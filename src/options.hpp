@@ -37,6 +37,14 @@
 
 namespace fsm11
 {
+
+enum TransitionConflictPolicyEnum
+{
+    Ignore,
+    InvokeCallback,
+    ThrowException
+};
+
 namespace fsm11_detail
 {
 
@@ -48,9 +56,10 @@ struct default_options
     using capture_storage = type_list<>;
     using transition_allocator_type = std::allocator<Transition<void>>;
 
-    // Behaviour
+    // Behavior
     static constexpr bool synchronous_dispatch = true;
     static constexpr bool multithreading_enable = false;
+    static constexpr TransitionConflictPolicyEnum transition_conflict_policy = Ignore;
     static constexpr bool transition_selection_stops_after_first_match = true;
     static constexpr bool threadpool_enable = false;
 
@@ -58,7 +67,6 @@ struct default_options
     static constexpr bool event_callbacks_enable = false;
     static constexpr bool configuration_change_callbacks_enable = false;
     static constexpr bool state_callbacks_enable = false;
-    static constexpr bool transition_conflict_callbacks_enable = false;
 
     // Callbacks for exeptions
     static constexpr bool state_exception_callbacks_enable = false;
@@ -157,6 +165,18 @@ struct MultithreadingEnable
     //! \endcond
 };
 
+template <TransitionConflictPolicyEnum TPolicy>
+struct TransitionConflictPolicy
+{
+    //! \cond
+    template <typename TBase>
+    struct pack : TBase
+    {
+        static constexpr TransitionConflictPolicyEnum transition_conflict_policy = TPolicy;
+    };
+    //! \endcond
+};
+
 template <bool TEnable>
 struct TransitionSelectionStopsAfterFirstMatch
 {
@@ -236,18 +256,6 @@ struct StateCallbacksEnable
     struct pack : TBase
     {
         static constexpr bool state_callbacks_enable = TEnable;
-    };
-    //! \endcond
-};
-
-template <bool TEnable>
-struct TransitionConflictCallbacksEnable
-{
-    //! \cond
-    template <typename TBase>
-    struct pack : TBase
-    {
-        static constexpr bool transition_conflict_callbacks_enable = TEnable;
     };
     //! \endcond
 };

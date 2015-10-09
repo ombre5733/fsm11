@@ -30,6 +30,7 @@
 #define FSM11_DETAIL_CALLBACKS_HPP
 
 #include "../statemachine_fwd.hpp"
+#include "../error.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/functional.hpp>
@@ -330,7 +331,7 @@ struct get_state_exception_callbacks
 // ----=====================================================================----
 
 template <typename TDerived>
-class WithoutTransitionConflictCallback
+class WithoutTransitionConflictAction
 {
 public:
     using transition_type = Transition<TDerived>;
@@ -344,12 +345,12 @@ public:
 
 protected:
     inline
-    void invokeTransitionConflictCallback(transition_type*, transition_type*)
+    void invokeTransitionConflictAction(transition_type*, transition_type*)
     {
     }
 
     inline
-    bool hasTransitionConflictCallback() const
+    bool hasTransitionConflictAction() const
     {
         return false;
     }
@@ -369,7 +370,7 @@ public:
 
 protected:
     inline
-    void invokeTransitionConflictCallback(
+    void invokeTransitionConflictAction(
             transition_type* transition, transition_type* ignoredTransition)
     {
         if (m_transitionConflictCallback)
@@ -377,7 +378,7 @@ protected:
     }
 
     inline
-    bool hasTransitionConflictCallback() const
+    bool hasTransitionConflictAction() const
     {
         return m_transitionConflictCallback != nullptr;
     }
@@ -388,13 +389,47 @@ private:
         m_transitionConflictCallback;
 };
 
+template <typename TDerived>
+class WithTransitionConflictException
+{
+public:
+    using transition_type = Transition<TDerived>;
+
+    template <typename TType>
+    void setTransitionConflictCallback(TType&&)
+    {
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "Transition conflict callbacks are disabled");
+    }
+
+protected:
+    inline
+    void invokeTransitionConflictAction(transition_type* first,
+                                          transition_type* second)
+    {
+        throw FSM11_EXCEPTION(
+                    TransitionConflictError<transition_type>(first, second));
+    }
+
+    inline
+    bool hasTransitionConflictAction() const
+    {
+        return true;
+    }
+};
+
 template <typename TOptions>
-struct get_transition_conflict_callbacks
+struct get_transition_conflict_action
 {
     using type = typename FSM11STD::conditional<
-                     TOptions::transition_conflict_callbacks_enable,
-                     WithTransitionConflictCallback<StateMachineImpl<TOptions>>,
-                     WithoutTransitionConflictCallback<StateMachineImpl<TOptions>>>::type;
+                     TOptions::transition_conflict_policy == Ignore,
+                     WithoutTransitionConflictAction<StateMachineImpl<TOptions>>,
+                     typename FSM11STD::conditional<
+                         TOptions::transition_conflict_policy == InvokeCallback,
+                         WithTransitionConflictCallback<StateMachineImpl<TOptions>>,
+                         WithTransitionConflictException<StateMachineImpl<TOptions>>>::type
+                 >::type;
+    using type1 = WithTransitionConflictException<StateMachineImpl<TOptions>>;
 };
 
 } // namespace fsm11_detail
