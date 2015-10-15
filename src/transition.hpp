@@ -721,38 +721,60 @@ public:
     //! \brief Creates a transition.
     //!
     //! Creates a transition from the specification \p rhs.
-    template <typename TState, typename TEvent, typename TGuard,
+    template <typename TAllocator,
+              typename TState, typename TEvent, typename TGuard,
               typename TAction>
-    explicit Transition(fsm11_detail::TypeSourceEventGuardActionTarget<
-                            TState, TEvent, TGuard, TAction>&& rhs)
-        : m_source(rhs.m_source),
-          m_target(rhs.m_target),
-          m_nextInSourceState{nullptr},
-          m_nextInEnabledSet{nullptr},
-          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
-          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
-          m_event{FSM11STD::forward<TEvent>(rhs.m_event)},
-          m_eventless(false),
-          m_isExternal(rhs.m_isExternal)
+    explicit
+    Transition(const TAllocator& allocator,
+               fsm11_detail::TypeSourceEventGuardActionTarget<
+                   TState, TEvent, TGuard, TAction>&& rhs)
+        : m_source(rhs.m_source)
+        , m_target(rhs.m_target)
+        , m_nextInSourceState{nullptr}
+        , m_nextInEnabledSet{nullptr}
+#ifdef FSM11_USE_WEOS
+        , m_guard{FSM11STD::allocator_arg, allocator,
+                  FSM11STD::forward<TGuard>(rhs.m_guard)}
+        , m_action{FSM11STD::allocator_arg, allocator,
+                   FSM11STD::forward<TAction>(rhs.m_action)}
+#else
+        , m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)}
+        , m_action{FSM11STD::forward<TAction>(rhs.m_action)}
+#endif // FSM11_USE_WEOS
+        , m_event{FSM11STD::forward<TEvent>(rhs.m_event)}
+        , m_eventless(false)
+        , m_isExternal(rhs.m_isExternal)
     {
+        (void)allocator;
     }
 
     //! \brief Creates a transition.
     //!
     //! Creates an eventless transition from the specification \p rhs.
-    template <typename TState, typename TGuard, typename TAction>
-    explicit Transition(fsm11_detail::TypeSourceNoEventGuardActionTarget<
-                            TState, TGuard, TAction>&& rhs)
-        : m_source(rhs.m_source),
-          m_target(rhs.m_target),
-          m_nextInSourceState{nullptr},
-          m_nextInEnabledSet{nullptr},
-          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
-          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
-          m_event(),
-          m_eventless(true),
-          m_isExternal(rhs.m_isExternal)
+    template <typename TAllocator,
+              typename TState, typename TGuard, typename TAction>
+    explicit
+    Transition(const TAllocator& allocator,
+               fsm11_detail::TypeSourceNoEventGuardActionTarget<
+                   TState, TGuard, TAction>&& rhs)
+        : m_source(rhs.m_source)
+        , m_target(rhs.m_target)
+        , m_nextInSourceState{nullptr}
+        , m_nextInEnabledSet{nullptr}
+#ifdef FSM11_USE_WEOS
+        , m_guard{FSM11STD::allocator_arg, allocator,
+                  FSM11STD::forward<TGuard>(rhs.m_guard)}
+        , m_action{FSM11STD::allocator_arg, allocator,
+                   FSM11STD::forward<TAction>(rhs.m_action)}
+#else
+        , m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)}
+        , m_action{FSM11STD::forward<TAction>(rhs.m_action)}
+#endif // FSM11_USE_WEOS
+        , m_event()
+        , m_eventless(true)
+        , m_isExternal(rhs.m_isExternal)
     {
+        (void)allocator;
     }
 
     Transition(const Transition&) = delete;
@@ -824,7 +846,10 @@ public:
     }
 
 private:
+    //! The source state from which the transition originates.
     state_type* m_source;
+    //! The target state of the transition or a nullptr if the transition
+    //! has no target.
     state_type* m_target;
 
     //! The next transition in the same source state.
@@ -833,11 +858,16 @@ private:
     //! The next transition in the set of enabled transitions.
     Transition* m_nextInEnabledSet;
 
+    //! The guard which has been placed on this transition.
     guard_type m_guard;
+    //! The action which is executed when the transition is taken.
     action_type m_action;
 
+    //! The event which triggers this transition.
     event_type m_event;
+    //! If set, the transition has no attached event.
     bool m_eventless;
+    //! If set, the transition is an external one.
     bool m_isExternal;
 
 
