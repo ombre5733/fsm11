@@ -679,13 +679,14 @@ private:
 
 TEST_CASE("transition allocator by copy-construction", "[transition]")
 {
-    using StateMachine_t = fsm11::StateMachine<TransitionAllocator<TrackingTransitionAllocator<Transition<void>>>>;
+    using StateMachine_t = fsm11::StateMachine<Allocator<TrackingTransitionAllocator<Transition<void>>>>;
     using State_t = StateMachine_t::state_type;
 
     int numTransitions = 0;
 
     {
-        StateMachine_t sm{TrackingTransitionAllocator<void>(numTransitions)};
+        StateMachine_t sm{std::allocator_arg,
+                          TrackingTransitionAllocator<void>(numTransitions)};
 
         TrackingState<State_t> a("a", &sm);
         TrackingState<State_t> b("b", &sm);

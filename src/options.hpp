@@ -54,7 +54,7 @@ struct default_options
     using event_type = int;
     using event_list_type = std::deque<int>;
     using capture_storage = type_list<>;
-    using transition_allocator_type = std::allocator<Transition<void>>;
+    using allocator_type = std::allocator<char>;
 
     // Behavior
     static constexpr bool synchronous_dispatch = true;
@@ -116,13 +116,13 @@ struct CaptureStorage
 };
 
 template <typename TAllocator>
-struct TransitionAllocator
+struct Allocator
 {
     //! \cond
     template <typename TBase>
     struct pack : TBase
     {
-        using transition_allocator_type = TAllocator;
+        using allocator_type = TAllocator;
     };
     //! \endcond
 };
