@@ -51,10 +51,12 @@ TEST_CASE("an FSM without multithreading support is smaller",
 
 TEST_CASE("a multithreading FSM is a C++11 lockable")
 {
+    using namespace std;
+
     using sm_t = StateMachine<MultithreadingEnable<true>>;
     sm_t sm;
 
-    std::unique_lock<sm_t> lock(sm, std::try_to_lock);
+    unique_lock<sm_t> lock(sm, try_to_lock);
     REQUIRE(lock.owns_lock());
     lock.unlock();
     REQUIRE(!lock.owns_lock());
@@ -65,6 +67,8 @@ TEST_CASE("a multithreading FSM is a C++11 lockable")
 
 TEST_CASE("mutual exclusion during configuration change", "[multithreading]")
 {
+    using namespace std;
+
     using StateMachine_t = StateMachine<SynchronousEventDispatching,
                                         MultithreadingEnable<true>>;
     using State_t = StateMachine_t::state_type;
@@ -76,14 +80,14 @@ TEST_CASE("mutual exclusion during configuration change", "[multithreading]")
     sm += a + event(1) > b;
     sm += b + event(2) > a;
 
-    std::atomic_int counter{0};
-    sm += b + noEvent ([&](int) { std::this_thread::yield(); return ++counter % 10000 != 0; }) > b;
+    atomic_int counter{0};
+    sm += b + noEvent ([&](int) { this_thread::yield(); return ++counter % 10000 != 0; }) > b;
 
-    std::atomic_bool terminate{false};
-    auto observer = std::async(std::launch::async, [&]{
+    atomic_bool terminate{false};
+    auto observer = async(launch::async, [&]{
         while (!terminate)
         {
-            std::lock_guard<StateMachine_t> lock(sm);
+            lock_guard<StateMachine_t> lock(sm);
             if (counter % 10000)
                 return false;
         }
