@@ -316,19 +316,16 @@ SCENARIO("simple configuration changes in synchronous statemachine",
 
         sm.start();
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
-        REQUIRE(a.entered == 1);
-        REQUIRE(a.left == 0);
-        REQUIRE(aa.entered == 1);
-        REQUIRE(aa.left == 0);
-        REQUIRE(ab.entered == 0);
-        REQUIRE(b.entered == 0);
+        REQUIRE(a  == make_tuple(1, 0, X, X));
+        REQUIRE(aa == make_tuple(1, 0, X, X));
+        REQUIRE(ab == make_tuple(0, 0, 0, 0));
+        REQUIRE(b  == make_tuple(0, 0, 0, 0));
 
         SECTION("from atomic to atomic")
         {
             sm.addEvent(2);
             REQUIRE(isActive(sm, {&sm, &b, &ba}));
-            REQUIRE(a.entered == 1);
-            REQUIRE(a.left == 1);
+            REQUIRE(a == make_tuple(1, 1, X, X));
             REQUIRE(aa.entered == 1);
             REQUIRE(aa.left == 1);
             REQUIRE(ab.entered == 0);
@@ -691,6 +688,138 @@ SCENARIO("no invoke in case of an eventless transition", "[behavior]")
         REQUIRE(a == make_tuple(Y, Y, Z, Z));
         REQUIRE(b == make_tuple(Y, Y, Z, Z));
         REQUIRE(c == make_tuple(Y, Y, Z, Z));
+    }
+}
+
+template <typename TBase>
+class DeferingState : public TBase
+{
+public:
+    DeferingState(const char* name, TBase* parent)
+        : TBase(name, parent),
+          m_result(0)
+    {
+    }
+
+    virtual void onEntry(int event) override
+    {
+        m_result = 0;
+        m_max = event;
+    }
+
+    virtual void enterInvoke() override
+    {
+        using namespace std;
+        using namespace chrono;
+
+        m_task = async(launch::deferred, [this] {
+            int sum = 0;
+            for (int i = 1; i <= m_max; ++i)
+            {
+                sum += i;
+                this_thread::sleep_for(milliseconds(10));
+            }
+            return sum;
+        });
+    }
+
+    virtual void exitInvoke() override
+    {
+        REQUIRE(m_result == 0);
+        m_result = m_task.get();
+    }
+
+    int result() const
+    {
+        return m_result;
+    }
+
+private:
+    int m_max;
+    std::atomic_int m_result;
+    std::future<int> m_task;
+};
+
+SCENARIO("custom invoke behavior", "[behavior]")
+{
+    using namespace std;
+
+    GIVEN ("a synchronous FSM with a state with a custom invoke action")
+    {
+        using namespace syncSM;
+
+        StateMachine_t sm;
+        TrackingState<State_t> a("a", &sm);
+        TrackingState<DeferingState<State_t>> b("b", &sm);
+
+        sm += a + event(20) > b;
+        sm += b + event(1) > a;
+
+        sm.start();
+
+        WHEN ("the state is entered")
+        {
+            sm.addEvent(20);
+            THEN ("the custom invoke action is started")
+            {
+                REQUIRE(a == make_tuple(1, 1, 1, 1));
+                REQUIRE(b == make_tuple(1, 0, 1, 0));
+                REQUIRE(b.result() == 0);
+            }
+
+            WHEN ("the state is left")
+            {
+                sm.addEvent(1);
+                THEN ("the custom invoke action is stopped")
+                {
+                    REQUIRE(a == make_tuple(2, 1, 2, 1));
+                    REQUIRE(b == make_tuple(1, 1, 1, 1));
+                    REQUIRE(b.result() == 210);
+                }
+            }
+        }
+    }
+
+    GIVEN ("an asynchronous FSM with a state with a custom invoke action")
+    {
+        using namespace asyncSM;
+
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+        TrackingState<State_t> a("a", &sm);
+        TrackingState<DeferingState<State_t>> b("b", &sm);
+
+        sm += a + event(20) > b;
+        sm += b + event(1) > a;
+
+        auto result = sm.startAsyncEventLoop();
+        sm.start();
+        cct.wait();
+
+        WHEN ("the state is entered")
+        {
+            sm.addEvent(20);
+            cct.wait();
+            THEN ("the custom invoke action is started")
+            {
+                REQUIRE(a == make_tuple(1, 1, 1, 1));
+                REQUIRE(b == make_tuple(1, 0, 1, 0));
+                REQUIRE(b.result() == 0);
+            }
+            WHEN ("the state is left")
+            {
+                sm.addEvent(1);
+                cct.wait();
+                THEN ("the custom invoke action is stopped")
+                {
+                    REQUIRE(a == make_tuple(2, 1, 2, 1));
+                    REQUIRE(b == make_tuple(1, 1, 1, 1));
+                    REQUIRE(b.result() == 210);
+                }
+            }
+        }
+
+        sm.stop();
     }
 }
 

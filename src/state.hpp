@@ -179,7 +179,7 @@ public:
     //!
     //! This method is called by the state machine, whenever this state
     //! is entered. The event which triggered the configuration change
-    //! is passed in \p event.
+    //! is passed in \p event. The default implementation does nothing.
     virtual void onEntry(event_type /*event*/)
     {
         // The default implementation does nothing.
@@ -187,19 +187,27 @@ public:
 
     //! \brief The on-exit method.
     //!
-    //! This method is called by the state machine, when the staet is left.
+    //! This method is called by the state machine, when the state is left.
     //! The event which triggered the configuration change is passed in
-    //! \p event.
+    //! \p event. The default implementation does nothing.
     virtual void onExit(event_type /*event*/)
     {
         // The default implementation does nothing.
     }
 
+    //! \brief Enter the invoke action.
+    //!
+    //! This method is called by the state machine when the invoke action
+    //! has to be started. The default implementation does nothing.
     virtual void enterInvoke()
     {
         // The default implementation does nothing.
     }
 
+    //! \brief Leave the invoke action.
+    //!
+    //! This method is called by the state machine when the invoke action
+    //! has to be left. The default implementation does nothing.
     virtual void exitInvoke()
     {
         // The default implementation does nothing.
