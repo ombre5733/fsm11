@@ -405,8 +405,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
         {
             derived().invokeStateExitCallback(&*iter);
 
-            iter->m_flags &= ~(state_type::Active | state_type::StartInvoke
-                               | state_type::InExitSet);
+            iter->m_flags &= ~state_type::StartInvoke;
 
             if (iter->m_flags & state_type::Invoked)
             {
@@ -420,6 +419,8 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
                     derived().invokeStateExceptionCallbackOrThrow();
                 }
             }
+
+            iter->m_flags &= ~(state_type::Active | state_type::InExitSet);
 
             try
             {

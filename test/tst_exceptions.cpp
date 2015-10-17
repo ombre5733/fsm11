@@ -47,12 +47,41 @@ struct GuardException
 {
 };
 
+struct InvokeException
+{
+};
+
 struct ListException
 {
 };
 
 struct StateException
 {
+};
+
+template <typename TState>
+class ThrowingInvokeState : public TState
+{
+public:
+    ThrowingInvokeState(const char* name, TState* parent)
+        : TState(name, parent)
+    {
+    }
+
+    virtual void enterInvoke() override
+    {
+        if (throwInEnterInvoke)
+            throw InvokeException();
+    }
+
+    virtual void exitInvoke() override
+    {
+        if (throwInExitInvoke)
+            throw InvokeException();
+    }
+
+    bool throwInEnterInvoke{false};
+    bool throwInExitInvoke{false};
 };
 
 class ThrowingList
@@ -99,6 +128,7 @@ using StateMachine_t = StateMachine<AsynchronousEventDispatching,
 using State_t = StateMachine_t::state_type;
 using FunctionState_t = FunctionState<StateMachine_t>;
 } // namespace asyncSM
+
 
 SCENARIO("throw an exception from the event list", "[exception]")
 {
@@ -649,4 +679,186 @@ SCENARIO("throw an exception in a state exit function", "[exception]")
 
 SCENARIO ("throw an exception when entering the invoke action", "[exception]")
 {
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+
+        StateMachine_t sm;
+
+        using TrackingState_t = TrackingState<ThrowingInvokeState<State_t>>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+
+        WHEN ("an ancestor throws upon entering the invoke action")
+        {
+            a.throwInEnterInvoke = true;
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(sm.start(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, 1, 0));
+                REQUIRE(aa == std::make_tuple(1, 1, Y, Y));
+            }
+        }
+
+        WHEN ("a leaf state throws upon entering the invoke action")
+        {
+            aa.throwInEnterInvoke = true;
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(sm.start(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, Y, Y));
+                REQUIRE(aa == std::make_tuple(1, 1, 1, 0));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
+
+    GIVEN ("an asynchronous FSM")
+    {
+        using namespace asyncSM;
+
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        using TrackingState_t = TrackingState<ThrowingInvokeState<State_t>>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+
+        WHEN ("an ancestor throws upon entering the invoke action")
+        {
+            a.throwInEnterInvoke = true;
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(result.get(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, 1, 0));
+                REQUIRE(aa == std::make_tuple(1, 1, Y, Y));
+            }
+        }
+
+        WHEN ("a leaf state throws upon entering the invoke action")
+        {
+            aa.throwInEnterInvoke = true;
+
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(result.get(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, Y, Y));
+                REQUIRE(aa == std::make_tuple(1, 1, 1, 0));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
+}
+
+SCENARIO ("throw an exception when leaving the invoke action", "[exception]")
+{
+    GIVEN ("a synchronous FSM")
+    {
+        using namespace syncSM;
+
+        StateMachine_t sm;
+
+        using TrackingState_t = TrackingState<ThrowingInvokeState<State_t>>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+
+        WHEN ("an ancestor throws upon leaving the invoke action")
+        {
+            a.throwInExitInvoke = true;
+            sm.start();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(sm.stop(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, 1, 1));
+                REQUIRE(aa == std::make_tuple(1, 1, Y, Y));
+            }
+        }
+
+        WHEN ("a leaf state throws upon leaving the invoke action")
+        {
+            aa.throwInExitInvoke = true;
+            sm.start();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(sm.stop(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, Y, Y));
+                REQUIRE(aa == std::make_tuple(1, 1, 1, 1));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
+
+    GIVEN ("an asynchronous FSM")
+    {
+        using namespace asyncSM;
+
+        std::future<void> result;
+        StateMachine_t sm;
+        ConfigurationChangeTracker<StateMachine_t> cct(sm);
+
+        using TrackingState_t = TrackingState<ThrowingInvokeState<State_t>>;
+        TrackingState_t a("a", &sm);
+        TrackingState_t aa("aa", &a);
+
+        WHEN ("an ancestor throws upon leaving the invoke action")
+        {
+            a.throwInExitInvoke = true;
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+            sm.stop();
+            cct.wait();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(result.get(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, 1, 1));
+                REQUIRE(aa == std::make_tuple(1, 1, Y, Y));
+            }
+        }
+
+        WHEN ("a leaf state throws upon leaving the invoke action")
+        {
+            aa.throwInExitInvoke = true;
+
+            result = sm.startAsyncEventLoop();
+            sm.start();
+            cct.wait();
+            sm.stop();
+            cct.wait();
+
+            THEN ("the leaf and the parent are exited")
+            {
+                REQUIRE_THROWS_AS(result.get(), InvokeException);
+                REQUIRE(a == std::make_tuple(1, 1, Y, Y));
+                REQUIRE(aa == std::make_tuple(1, 1, 1, 1));
+            }
+        }
+
+        // The state machine must have been stopped.
+        REQUIRE(!sm.running());
+        REQUIRE(isActive(sm, {}));
+    }
 }
