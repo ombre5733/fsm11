@@ -47,8 +47,10 @@ public:
     {
         switch (static_cast<FsmErrorCode>(err_val))
         {
-        case FsmErrorCode::InvalidInitialState:
-            return "Invalid initial state";
+        case FsmErrorCode::InvalidStateRelationship:
+            return "Invalid state relationship";
+        case FsmErrorCode::TransitionConflict:
+            return "Transition conflict";
         case FsmErrorCode::ThreadPoolUnderflow:
             return "Thread pool underflow";
         default:

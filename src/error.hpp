@@ -41,7 +41,7 @@ namespace fsm11
 {
 enum class FsmErrorCode
 {
-    InvalidInitialState = 1,
+    InvalidStateRelationship = 1,
     TransitionConflict = 2,
     ThreadPoolUnderflow = 3
 };

@@ -241,7 +241,8 @@ public:
     //! \brief Sets the initial state.
     //!
     //! Sets the initial state to \p descendant. If \p descendant is no
-    //! proper descendant of this state, an exception is thrown.                TODO: which exception?
+    //! proper descendant of this state, an FsmError is thrown whose
+    //! error code is FsmErrorCode::InvalidStateRelationship.
     //!
     //! The initial state will be entered, if this state or any of its
     //! ancestors is the target of a transition and no other transition
@@ -1243,7 +1244,7 @@ template <typename TStateMachine>
 void State<TStateMachine>::setInitialState(State* descendant)
 {
     if (!isProperAncestor(this, descendant))
-        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::InvalidInitialState));
+        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::InvalidStateRelationship));
 
     m_initialState = descendant;
 }
