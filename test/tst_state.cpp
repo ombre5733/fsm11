@@ -128,20 +128,54 @@ TEST_CASE("change the child mode", "[state]")
     REQUIRE(!s.isParallel());
 }
 
-TEST_CASE("set an initial state", "[state]")
+TEST_CASE("set an initial state", "[state][exception]")
 {
-    StateMachine_t sm;
-    State_t s1("s1", &sm);
-    State_t s2("s2");
-    State_t s3("s3", &s2);
+    GIVEN ("a set of states")
+    {
+        State_t s1("s1");
+        State_t s2("s2", &s1);
+        State_t s3("s3", &s2);
+        State_t s4("s4");
+        REQUIRE(s1.initialState() == nullptr);
 
-    REQUIRE(s2.initialState() == 0);
-    s2.setInitialState(&s3);
-    REQUIRE(s2.initialState() == &s3);
+        WHEN ("the initial state is set to a child")
+        {
+            s1.setInitialState(&s2);
+            THEN ("the initial state is changed")
+            {
+                REQUIRE(s1.initialState() == &s2);
+            }
+        }
 
-    REQUIRE(sm.initialState() == 0);
-    sm.setInitialState(&s1);
-    REQUIRE(sm.initialState() == &s1);
+        WHEN ("the initial state is set to a grand-child")
+        {
+            s1.setInitialState(&s3);
+            THEN ("the initial state is changed")
+            {
+                REQUIRE(s1.initialState() == &s3);
+            }
+        }
+
+        WHEN ("the initial state is set to an unrelated state")
+        {
+            THEN ("an exception is thrown")
+            {
+                try
+                {
+                    s1.setInitialState(&s4);
+                    REQUIRE(false);
+                }
+                catch (FsmError& error)
+                {
+                    REQUIRE(error.code() == FsmErrorCode::InvalidStateRelationship);
+                }
+                catch (...)
+                {
+                    REQUIRE(false);
+                }
+            }
+        }
+    }
 }
 
 TEST_CASE("find a child", "[state]")

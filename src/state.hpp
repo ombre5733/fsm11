@@ -244,9 +244,8 @@ public:
     //! proper descendant of this state, an FsmError is thrown whose
     //! error code is FsmErrorCode::InvalidStateRelationship.
     //!
-    //! The initial state will be entered, if this state or any of its
-    //! ancestors is the target of a transition and no other transition
-    //! targets a descendant.
+    //! The initial state will be entered, if this state is activated after
+    //! a transition and no other transition targets a descendant of this state.
     void setInitialState(State* descendant);
 
     //! \brief Changes the parent.
