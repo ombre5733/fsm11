@@ -138,12 +138,30 @@ TEST_CASE("set an initial state", "[state][exception]")
         State_t s4("s4");
         REQUIRE(s1.initialState() == nullptr);
 
+        WHEN ("the initial state is set to a nullptr")
+        {
+            s1.setInitialState(nullptr);
+            THEN ("it does not change")
+            {
+                REQUIRE(s1.initialState() == nullptr);
+            }
+        }
+
         WHEN ("the initial state is set to a child")
         {
             s1.setInitialState(&s2);
             THEN ("the initial state is changed")
             {
                 REQUIRE(s1.initialState() == &s2);
+            }
+
+            WHEN ("the initial state is set to a nullptr")
+            {
+                s1.setInitialState(nullptr);
+                THEN ("the initial state is changed")
+                {
+                    REQUIRE(s1.initialState() == nullptr);
+                }
             }
         }
 
@@ -153,6 +171,15 @@ TEST_CASE("set an initial state", "[state][exception]")
             THEN ("the initial state is changed")
             {
                 REQUIRE(s1.initialState() == &s3);
+            }
+
+            WHEN ("the initial state is set to a nullptr")
+            {
+                s1.setInitialState(nullptr);
+                THEN ("the initial state is changed")
+                {
+                    REQUIRE(s1.initialState() == nullptr);
+                }
             }
         }
 
@@ -173,6 +200,8 @@ TEST_CASE("set an initial state", "[state][exception]")
                 {
                     REQUIRE(false);
                 }
+
+                REQUIRE(s1.initialState() == nullptr);
             }
         }
     }

@@ -1242,6 +1242,12 @@ bool State<TStateMachine>::isActive() const noexcept
 template <typename TStateMachine>
 void State<TStateMachine>::setInitialState(State* descendant)
 {
+    if (!descendant)
+    {
+        m_initialState = nullptr;
+        return;
+    }
+
     if (!isProperAncestor(this, descendant))
         throw FSM11_EXCEPTION(FsmError(FsmErrorCode::InvalidStateRelationship));
 
