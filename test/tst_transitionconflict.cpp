@@ -164,7 +164,7 @@ SCENARIO("transition conflict exception", "[conflicts]")
                     sm.addEvent(1);
                     REQUIRE(false);
                 }
-                catch (TransitionConflictError<Transition_t>& error)
+                catch (StateMachine_t::transition_conflict_error_type& error)
                 {
                     REQUIRE(error.first() == t1);
                     REQUIRE(error.second() == t2);

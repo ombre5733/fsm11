@@ -394,6 +394,8 @@ class WithTransitionConflictException
 {
 public:
     using transition_type = Transition<TDerived>;
+    using transition_conflict_error_type
+        = TransitionConflictError<transition_type>;
 
     template <typename TType>
     void setTransitionConflictCallback(TType&&)
@@ -407,8 +409,7 @@ protected:
     void invokeTransitionConflictAction(transition_type* first,
                                           transition_type* second)
     {
-        throw FSM11_EXCEPTION(
-                    TransitionConflictError<transition_type>(first, second));
+        throw FSM11_EXCEPTION(transition_conflict_error_type(first, second));
     }
 
     inline
