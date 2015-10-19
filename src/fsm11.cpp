@@ -28,6 +28,12 @@
 
 #include "error.hpp"
 
+#ifdef FSM11_USE_WEOS
+#include <weos/utility.hpp>
+#else
+#include <utility>
+#endif // FSM11_USE_WEOS
+
 using namespace FSM11STD;
 
 namespace fsm11
