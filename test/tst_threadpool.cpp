@@ -215,9 +215,9 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
                     sm.start();
                     REQUIRE(false);
                 }
-                catch (FsmError& error)
+                catch (Error& error)
                 {
-                    REQUIRE(error.code() == FsmErrorCode::ThreadPoolUnderflow);
+                    REQUIRE(error.code() == ErrorCode::ThreadPoolUnderflow);
                 }
                 catch (...)
                 {
@@ -271,9 +271,9 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
                     result.get();
                     REQUIRE(false);
                 }
-                catch (FsmError& error)
+                catch (Error& error)
                 {
-                    REQUIRE(error.code() == FsmErrorCode::ThreadPoolUnderflow);
+                    REQUIRE(error.code() == ErrorCode::ThreadPoolUnderflow);
                 }
                 catch (...)
                 {

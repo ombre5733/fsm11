@@ -34,11 +34,11 @@
 
 using namespace fsm11;
 
-TEST_CASE("FsmErrorCode is an error code enum", "[error]")
+TEST_CASE("ErrorCode is an error code enum", "[error]")
 {
-    REQUIRE(std::is_error_code_enum<FsmErrorCode>::value);
-    std::error_code ec = make_error_code(FsmErrorCode::InvalidStateRelationship);
+    REQUIRE(std::is_error_code_enum<ErrorCode>::value);
+    std::error_code ec = make_error_code(ErrorCode::InvalidStateRelationship);
     REQUIRE(!!ec);
     REQUIRE(&ec.category() == &fsm11_category());
-    REQUIRE(ec == FsmErrorCode::InvalidStateRelationship);
+    REQUIRE(ec == ErrorCode::InvalidStateRelationship);
 }

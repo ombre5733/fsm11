@@ -192,9 +192,9 @@ TEST_CASE("set an initial state", "[state][exception]")
                     s1.setInitialState(&s4);
                     REQUIRE(false);
                 }
-                catch (FsmError& error)
+                catch (Error& error)
                 {
-                    REQUIRE(error.code() == FsmErrorCode::InvalidStateRelationship);
+                    REQUIRE(error.code() == ErrorCode::InvalidStateRelationship);
                 }
                 catch (...)
                 {

@@ -39,7 +39,7 @@
 
 namespace fsm11
 {
-enum class FsmErrorCode
+enum class ErrorCode
 {
     InvalidStateRelationship = 1,
     TransitionConflict = 2,
@@ -49,7 +49,7 @@ enum class FsmErrorCode
 const FSM11STD::error_category& fsm11_category() noexcept;
 
 inline
-FSM11STD::error_code make_error_code(FsmErrorCode error) noexcept
+FSM11STD::error_code make_error_code(ErrorCode error) noexcept
 {
     return FSM11STD::error_code(static_cast<int>(error), fsm11_category());
 }
@@ -60,28 +60,28 @@ namespace FSM11STD
 {
 
 template <>
-struct is_error_code_enum<fsm11::FsmErrorCode> : public true_type {};
+struct is_error_code_enum<fsm11::ErrorCode> : public true_type {};
 
 } // namespace FSM11STD
 
 namespace fsm11
 {
 
-class FsmError : public FSM11STD::system_error
+class Error : public FSM11STD::system_error
 {
 public:
-    FsmError(FsmErrorCode ec)
+    Error(ErrorCode ec)
         : FSM11STD::system_error(make_error_code(ec))
     {
     }
 };
 
 template <typename TTransition>
-class TransitionConflictError : public FsmError
+class TransitionConflictError : public Error
 {
 public:
     TransitionConflictError(TTransition* first, TTransition* second)
-        : FsmError(FsmErrorCode::TransitionConflict),
+        : Error(ErrorCode::TransitionConflict),
           m_first(first),
           m_second(second)
     {

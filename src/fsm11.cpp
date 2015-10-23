@@ -51,13 +51,13 @@ public:
         -> decltype(declval<error_category>().message(0))
         override
     {
-        switch (static_cast<FsmErrorCode>(err_val))
+        switch (static_cast<ErrorCode>(err_val))
         {
-        case FsmErrorCode::InvalidStateRelationship:
+        case ErrorCode::InvalidStateRelationship:
             return "Invalid state relationship";
-        case FsmErrorCode::TransitionConflict:
+        case ErrorCode::TransitionConflict:
             return "Transition conflict";
-        case FsmErrorCode::ThreadPoolUnderflow:
+        case ErrorCode::ThreadPoolUnderflow:
             return "Thread pool underflow";
         default:
             return "Unkown error";

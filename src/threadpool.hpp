@@ -305,7 +305,7 @@ ThreadPool<TSize>::enqueue(fsm11_detail::ThreadedStateBase& state)
 
     lock_guard<mutex> lock(m_workerMutex);
     if (m_idleWorkers == 0)
-        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::ThreadPoolUnderflow));
+        throw FSM11_EXCEPTION(Error(ErrorCode::ThreadPoolUnderflow));
     --m_idleWorkers;
 
     m_tasks.emplace_back(state);

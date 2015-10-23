@@ -1249,7 +1249,7 @@ void State<TStateMachine>::setInitialState(State* descendant)
     }
 
     if (!isProperAncestor(this, descendant))
-        throw FSM11_EXCEPTION(FsmError(FsmErrorCode::InvalidStateRelationship));
+        throw FSM11_EXCEPTION(Error(ErrorCode::InvalidStateRelationship));
 
     m_initialState = descendant;
 }
