@@ -823,12 +823,12 @@ SCENARIO("custom invoke behavior", "[behavior]")
     }
 }
 
-SCENARIO("history state", "[behavior]")
+SCENARIO("shallow history state", "[behavior]")
 {
-    GIVEN ("an FSM with a history state")
+    GIVEN ("an FSM with a shallow history state")
     {
         using namespace syncSM;
-        using HistoryState_t = HistoryState<StateMachine_t>;
+        using HistoryState_t = ShallowHistoryState<StateMachine_t>;
 
         StateMachine_t sm;
         TrackingState<HistoryState_t> s1("s1", &sm);
@@ -877,6 +877,93 @@ SCENARIO("history state", "[behavior]")
                     THEN ("the latest active state is activated again")
                     {
                         REQUIRE(isActive(sm, {&sm, &s1, &s13, &s131}));
+                    }
+                }
+            }
+        }
+
+        WHEN ("the history state is entered after restarting the FSM")
+        {
+            sm.start();
+            REQUIRE(isActive(sm, {&sm, &s1, &s11, &s111}));
+
+            sm.addEvent(1);
+            REQUIRE(isActive(sm, {&sm, &s1, &s12, &s121}));
+
+            sm.addEvent(2);
+            REQUIRE(isActive(sm, {&sm, &s2}));
+
+            sm.stop();
+
+            sm.start();
+            THEN ("the history state is reset again")
+            {
+                REQUIRE(isActive(sm, {&sm, &s1, &s11, &s111}));
+            }
+        }
+
+
+        // TODO:
+        // - initial state in history state only followed after startup
+        // - if transition targets a more specific state, history has no effect
+    }
+}
+
+// TODO: Make this work
+SCENARIO("deep history state - WIP", "[behavior]")
+{
+    GIVEN ("an FSM with a shallow history state")
+    {
+        using namespace syncSM;
+        using HistoryState_t = DeepHistoryState<StateMachine_t>;
+
+        StateMachine_t sm;
+        TrackingState<HistoryState_t> s1("s1", &sm);
+        TrackingState<State_t> s11("s11", &s1);
+        TrackingState<State_t> s111("s111", &s11);
+        TrackingState<State_t> s112("s112", &s11);
+        TrackingState<State_t> s12("s12", &s1);
+        TrackingState<State_t> s121("s121", &s12);
+        TrackingState<State_t> s122("s122", &s12);
+        TrackingState<State_t> s13("s13", &s1);
+        TrackingState<State_t> s131("s131", &s13);
+        TrackingState<State_t> s132("s132", &s13);
+        TrackingState<State_t> s2("s2", &sm);
+
+        sm += s11 + event(1) > s12;
+        sm += s12 + event(2) > s2;
+        sm += s12 + event(3) > s132;
+        sm += s132 + event(2) > s2;
+        sm += s2 + event(4) > s1;
+
+        WHEN ("the history state is re-entered")
+        {
+            sm.start();
+            REQUIRE(isActive(sm, {&sm, &s1, &s11, &s111}));
+
+            sm.addEvent(1);
+            REQUIRE(isActive(sm, {&sm, &s1, &s12, &s121}));
+
+            sm.addEvent(2);
+            REQUIRE(isActive(sm, {&sm, &s2}));
+
+            sm.addEvent(4);
+            THEN ("the latest active state is activated")
+            {
+                REQUIRE(isActive(sm, {&sm, &s1, &s12, &s121}));
+
+                WHEN ("the history state is re-entered again")
+                {
+                    sm.addEvent(3);
+                    REQUIRE(isActive(sm, {&sm, &s1, &s13, &s132}));
+
+                    sm.addEvent(2);
+                    REQUIRE(isActive(sm, {&sm, &s2}));
+
+                    sm.addEvent(4);
+                    THEN ("the latest active state is activated again")
+                    {
+                        REQUIRE(isActive(sm, {&sm, &s1, &s13, &s132}));
                     }
                 }
             }

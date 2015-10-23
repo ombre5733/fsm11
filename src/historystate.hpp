@@ -36,16 +36,36 @@ namespace fsm11
 {
 
 template <typename TStateMachine>
-class HistoryState : public State<TStateMachine>
+class ShallowHistoryState : public State<TStateMachine>
 {
     using base_type = State<TStateMachine>;
 
 public:
-    explicit HistoryState(const char* name,
-                          base_type* parent = nullptr) noexcept
+    explicit ShallowHistoryState(const char* name,
+                                 base_type* parent = nullptr) noexcept
         : base_type(name, parent)
     {
         base_type::m_flags |= base_type::ShallowHistory;
+    }
+
+private:
+    base_type* m_latestActiveChild{nullptr};
+
+    template <typename TDerived>
+    friend class fsm11_detail::EventDispatcherBase;
+};
+
+template <typename TStateMachine>
+class DeepHistoryState : public State<TStateMachine>
+{
+    using base_type = State<TStateMachine>;
+
+public:
+    explicit DeepHistoryState(const char* name,
+                              base_type* parent = nullptr) noexcept
+        : base_type(name, parent)
+    {
+        base_type::m_flags |= base_type::DeepHistory;
     }
 
 private:

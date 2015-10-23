@@ -164,7 +164,7 @@ void EventDispatcherBase<TDerived>::resetHistoryStates() noexcept
         if (iter->m_flags
             & (state_type::ShallowHistory | state_type::DeepHistory))
         {
-            using history_state_type = HistoryState<TDerived>;
+            using history_state_type = ShallowHistoryState<TDerived>;
             history_state_type* historyState
                     = static_cast<history_state_type*>(&*iter);
             historyState->m_latestActiveChild = nullptr;
@@ -313,7 +313,7 @@ void EventDispatcherBase<TDerived>::markDescendantsForEntry()
                 if (state->m_flags
                     & (state_type::ShallowHistory | state_type::DeepHistory))
                 {
-                    using history_state_type = HistoryState<TDerived>;
+                    using history_state_type = ShallowHistoryState<TDerived>;
                     history_state_type* historyState
                             = static_cast<history_state_type*>(&*state);
 
@@ -388,7 +388,7 @@ void EventDispatcherBase<TDerived>::leaveStatesInExitSet(event_type event)
             if (parent->m_flags
                 & (state_type::ShallowHistory | state_type::DeepHistory))
             {
-                using history_state_type = HistoryState<TDerived>;
+                using history_state_type = ShallowHistoryState<TDerived>;
                 history_state_type* historyState
                         = static_cast<history_state_type*>(parent);
                 historyState->m_latestActiveChild = state;

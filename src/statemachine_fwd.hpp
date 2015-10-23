@@ -68,7 +68,10 @@ namespace fsm11
 {
 
 template <typename TStateMachine>
-class HistoryState;
+class ShallowHistoryState;
+
+template <typename TStateMachine>
+class DeepHistoryState;
 
 template <typename TStateMachine>
 class State;

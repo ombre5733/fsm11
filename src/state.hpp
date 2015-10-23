@@ -1180,7 +1180,10 @@ private:
     friend class fsm11_detail::EventDispatcherBase;
 
     template <typename T>
-    friend class HistoryState;
+    friend class ShallowHistoryState;
+
+    template <typename T>
+    friend class DeepHistoryState;
 };
 
 template <typename TStateMachine>
