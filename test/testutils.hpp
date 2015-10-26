@@ -133,8 +133,9 @@ public:
     bool operator==(const std::tuple<TArgs...>& t) const
     {
         PatternMap map;
-        return all<0, sizeof...(TArgs)>(
-                   map, t, std::integral_constant<bool, sizeof...(TArgs)>());
+        constexpr size_t nargs = sizeof...(TArgs);
+        constexpr bool   hasArgs = nargs > 0;
+        return all<0, nargs>(map, t, std::integral_constant<bool, hasArgs>());
     }
 
     virtual void onEntry(event_type event) override
