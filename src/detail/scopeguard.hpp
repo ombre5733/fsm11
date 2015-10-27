@@ -63,6 +63,9 @@ int uncaught_exceptions() noexcept
 }
 } // namespace std
 
+#elif _MSC_VER >= 1900
+    // Visual Studio 2015 does already implement uncaught_exceptions() - no need for a workaround
+
 #else
 
 #error "Unknown compiler."

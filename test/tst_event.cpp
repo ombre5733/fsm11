@@ -221,14 +221,18 @@ SCENARIO("strings are suitable as events", "[events]")
         State_t b("b", &sm);
         State_t c("c", &sm);
 
-        sm += a + event("go to B") > b;
-        sm += a + event("go to C") > c;
+        const char* gotoA = "go to A";
+        const char* gotoB = "go to B";
+        const char* gotoC = "go to C";
+
+        sm += a + event(gotoB) > b;
+        sm += a + event(gotoC) > c;
 
         sm.start();
 
         WHEN ("the event 'go to B' is added")
         {
-            sm.addEvent("go to B");
+            sm.addEvent(gotoB);
             THEN ("the FSM transitions to state B")
             {
                 REQUIRE(isActive(sm, {&sm, &b}));
@@ -236,7 +240,7 @@ SCENARIO("strings are suitable as events", "[events]")
 
             WHEN ("the event 'go to A' is added")
             {
-                sm.addEvent("go to A");
+                sm.addEvent(gotoA);
                 THEN ("nothing happens")
                 {
                     REQUIRE(isActive(sm, {&sm, &b}));
@@ -246,7 +250,7 @@ SCENARIO("strings are suitable as events", "[events]")
 
         WHEN ("the event 'go to B' with a distinct address is added")
         {
-            sm.addEvent(std::string("go to B").c_str());
+            sm.addEvent(std::string(gotoB).c_str());
             THEN ("nothing happens")
             {
                 REQUIRE(isActive(sm, {&sm, &a}));
@@ -255,7 +259,7 @@ SCENARIO("strings are suitable as events", "[events]")
 
         WHEN ("the event 'go to C' is added")
         {
-            sm.addEvent("go to C");
+            sm.addEvent(gotoC);
             THEN ("the FSM transitions to state C")
             {
                 REQUIRE(isActive(sm, {&sm, &c}));
@@ -263,7 +267,7 @@ SCENARIO("strings are suitable as events", "[events]")
 
             WHEN ("the event 'go to A' is added")
             {
-                sm.addEvent("go to A");
+                sm.addEvent(gotoA);
                 THEN ("nothing happens")
                 {
                     REQUIRE(isActive(sm, {&sm, &c}));
