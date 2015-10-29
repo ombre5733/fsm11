@@ -38,13 +38,13 @@ TEST_CASE("construct function state", "[functionstate]")
 {
     State_t s0("s0");
     REQUIRE(!s0.isActive());
-    REQUIRE(s0.parent() == 0);
+    REQUIRE(s0.parent() == nullptr);
     REQUIRE(!s0.entryFunction());
     REQUIRE(!s0.exitFunction());
 
     State_t s1("s1", nullptr, nullptr);
     REQUIRE(!s1.isActive());
-    REQUIRE(s1.parent() == 0);
+    REQUIRE(s1.parent() == nullptr);
     REQUIRE(!s1.entryFunction());
     REQUIRE(!s1.exitFunction());
 
