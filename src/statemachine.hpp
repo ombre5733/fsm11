@@ -41,11 +41,9 @@
 #include "detail/threadpool.hpp"
 
 #ifdef FSM11_USE_WEOS
-#include <weos/memory.hpp>
 #include <weos/mutex.hpp>
 #include <weos/type_traits.hpp>
 #else
-#include <memory>
 #include <mutex>
 #include <type_traits>
 #endif // FSM11_USE_WEOS
@@ -382,13 +380,14 @@ public:
     using transition_type = Transition<type>;
     using event_type = typename TOptions::event_type;
     using event_list_type = typename TOptions::event_list_type;
-    using allocator_type = typename FSM11STD::allocator_traits<
-                               typename TOptions::allocator_type
-                           >::template rebind_alloc<transition_type>;
+    using transition_allocator_type = typename TOptions::transition_allocator_type;
 
 private:
     using dispatcher_type = typename get_dispatcher<TOptions>::type;
     using storage_type = typename get_storage<TOptions>::type;
+    using rebound_transition_allocator_t
+        = typename transition_allocator_type::
+          template rebind<transition_type>::other;
     using internal_thread_pool_type
         = typename get_threadpool<TOptions>::type::internal_thread_pool_type;
 
@@ -405,19 +404,16 @@ public:
     template <typename T = void,
               typename = typename FSM11STD::enable_if<
                              TOptions::threadpool_enable, T>::type>
-    explicit
-    StateMachineImpl(internal_thread_pool_type&& pool)
+    explicit StateMachineImpl(internal_thread_pool_type&& pool)
         : state_type("(StateMachine)"),
           m_threadPool(FSM11STD::move(pool))
     {
         state_type::m_stateMachine = this;
     }
 
-    template <typename TAllocator>
-    explicit
-    StateMachineImpl(FSM11STD::allocator_arg_t, const TAllocator& alloc)
+    explicit StateMachineImpl(const transition_allocator_type& alloc)
         : state_type("(StateMachine)"),
-          m_allocator(alloc)
+          m_transitionAllocator(alloc)
     {
         state_type::m_stateMachine = this;
     }
@@ -428,7 +424,7 @@ public:
         this->halt();
 
         for (auto& state : *this)
-            state.deleteTransitions(m_allocator);
+            state.deleteTransitions(m_transitionAllocator);
     }
 
     StateMachineImpl(const StateMachineImpl&) = delete;
@@ -476,8 +472,7 @@ public:
     //! \brief Adds a transition.
     template <typename TState, typename TGuard, typename TAction>
     inline
-    transition_type* operator+=(
-            TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
+    transition_type* operator+=(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
         return add(FSM11STD::move(t));
     }
@@ -486,9 +481,9 @@ private:
     //! A list of events which have to be handled by the event loop.
     event_list_type m_eventList;
     //! The allocator for transitions.
-    allocator_type m_allocator; // TODO: Make use of EBCO.
-    //! The thread pool.
-    internal_thread_pool_type m_threadPool; // TODO: Make use of EBCO.
+    rebound_transition_allocator_t m_transitionAllocator;
+
+    internal_thread_pool_type m_threadPool; // TODO: merge if empty
 
 
     internal_thread_pool_type& threadPool()
@@ -506,29 +501,6 @@ private:
     friend class WithThreadPool;
 };
 
-namespace fsm11_detail
-{
-
-template <typename TAllocator>
-class Deallocator
-{
-    TAllocator& m_allocator;
-public:
-    using pointer = typename FSM11STD::allocator_traits<TAllocator>::pointer;
-
-    Deallocator(TAllocator& allocator) noexcept
-        : m_allocator(allocator)
-    {
-    }
-
-    void operator()(pointer ptr) noexcept
-    {
-        FSM11STD::allocator_traits<TAllocator>::deallocate(m_allocator, ptr, 1);
-    }
-};
-
-} // namespace fsm11_detail
-
 template <typename TOptions>
 template <typename TState, typename TEvent, typename TGuard,
           typename TAction>
@@ -536,15 +508,11 @@ auto StateMachineImpl<TOptions>::add(
         TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     -> transition_type*
 {
-    using namespace FSM11STD;
-
-    using traits = allocator_traits<allocator_type>;
-    using deallocator_t = fsm11_detail::Deallocator<allocator_type>;
-    unique_ptr<transition_type, deallocator_t> transition(
-                traits::allocate(m_allocator, 1), deallocator_t(m_allocator));
-    traits::construct(m_allocator, transition.get(), m_allocator, move(t));
-    transition->source()->pushBackTransition(transition.get());
-    return transition.release();
+    // TODO: Use a unique_ptr here
+    void* mem = m_transitionAllocator.allocate(1);
+    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
+    transition->source()->pushBackTransition(transition);
+    return transition;
 }
 
 template <typename TOptions>
@@ -553,15 +521,11 @@ auto StateMachineImpl<TOptions>::add(
         TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     -> transition_type*
 {
-    using namespace FSM11STD;
-
-    using traits = allocator_traits<allocator_type>;
-    using deallocator_t = fsm11_detail::Deallocator<allocator_type>;
-    unique_ptr<transition_type, deallocator_t> transition(
-                traits::allocate(m_allocator, 1), deallocator_t(m_allocator));
-    traits::construct(m_allocator, transition.get(), m_allocator, move(t));
-    transition->source()->pushBackTransition(transition.get());
-    return transition.release();
+    // TODO: Use a unique_ptr here
+    void* mem = m_transitionAllocator.allocate(1);
+    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
+    transition->source()->pushBackTransition(transition);
+    return transition;
 }
 
 
