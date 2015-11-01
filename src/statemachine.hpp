@@ -538,13 +538,13 @@ auto StateMachineImpl<TOptions>::add(
 {
     using namespace FSM11STD;
 
+    using traits = allocator_traits<allocator_type>;
     using deallocator_t = fsm11_detail::Deallocator<allocator_type>;
-    unique_ptr<transition_type, deallocator_t> mem(
-                m_allocator.allocate(1), deallocator_t(m_allocator));
-    auto transition = ::new (mem.get()) transition_type(
-                          m_allocator, move(t));
-    transition->source()->pushBackTransition(transition);
-    return mem.release();
+    unique_ptr<transition_type, deallocator_t> transition(
+                traits::allocate(m_allocator, 1), deallocator_t(m_allocator));
+    traits::construct(m_allocator, transition.get(), m_allocator, move(t));
+    transition->source()->pushBackTransition(transition.get());
+    return transition.release();
 }
 
 template <typename TOptions>
@@ -555,13 +555,13 @@ auto StateMachineImpl<TOptions>::add(
 {
     using namespace FSM11STD;
 
+    using traits = allocator_traits<allocator_type>;
     using deallocator_t = fsm11_detail::Deallocator<allocator_type>;
-    unique_ptr<transition_type, deallocator_t> mem(
-                m_allocator.allocate(1), deallocator_t(m_allocator));
-    auto transition = ::new (mem.get()) transition_type(
-                          m_allocator, move(t));
-    transition->source()->pushBackTransition(transition);
-    return mem.release();
+    unique_ptr<transition_type, deallocator_t> transition(
+                traits::allocate(m_allocator, 1), deallocator_t(m_allocator));
+    traits::construct(m_allocator, transition.get(), m_allocator, move(t));
+    transition->source()->pushBackTransition(transition.get());
+    return transition.release();
 }
 
 
