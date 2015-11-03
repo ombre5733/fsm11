@@ -518,7 +518,7 @@ public:
     //! Returns a const-iterator to the first child.
     const_sibling_iterator child_begin() const noexcept
     {
-        return sibling_iterator(m_children);
+        return const_sibling_iterator(m_children);
     }
 
     //! \brief A const-iterator to the first child.
@@ -526,7 +526,7 @@ public:
     //! Returns a const-iterator to the first child.
     const_sibling_iterator child_cbegin() const noexcept
     {
-        return sibling_iterator(m_children);
+        return const_sibling_iterator(m_children);
     }
 
     //! \brief An iterator past the last child.
@@ -542,7 +542,7 @@ public:
     //! Returns a const-iterator past the last child.
     const_sibling_iterator child_end() const noexcept
     {
-        return sibling_iterator(nullptr);
+        return const_sibling_iterator(nullptr);
     }
 
     //! \brief A const-iterator past the last child.
@@ -550,7 +550,7 @@ public:
     //! Returns a const-iterator past the last child.
     const_sibling_iterator child_cend() const noexcept
     {
-        return sibling_iterator(nullptr);
+        return const_sibling_iterator(nullptr);
     }
 
 
@@ -619,7 +619,9 @@ public:
     //! rooted at this state.
     const_atomic_iterator atomic_cend() const noexcept
     {
-        return const_cast<State*>(this)->atomic_end();
+        State* this_ = const_cast<State*>(this);
+        const_atomic_iterator it = this_->atomic_end();
+        return it;
     }
 
 private:
@@ -693,13 +695,11 @@ public:
         PreOrderIterator() noexcept = default;
         PreOrderIterator(const PreOrderIterator&) noexcept = default;
         PreOrderIterator& operator=(const PreOrderIterator&) noexcept = default;
-
+        
         //! Constructs a const-iterator from a non-const iterator.
-        template <bool B = FSM11STD::is_const<TState>::value,
-                  typename = typename FSM11STD::enable_if<B>::type>
-        PreOrderIterator(
-                const PreOrderIterator<
-                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
+        template <typename TTState, 
+                  typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value>>
+        PreOrderIterator(const PreOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current),
               m_skipChildren(false)
         {
@@ -852,13 +852,11 @@ public:
         PostOrderIterator() noexcept = default;
         PostOrderIterator(const PostOrderIterator&) noexcept = default;
         PostOrderIterator& operator=(const PostOrderIterator&) noexcept = default;
-
+        
         //! Constructs a const-iterator from a non-const iterator.
-        template <bool B = FSM11STD::is_const<TState>::value,
-                  typename = typename FSM11STD::enable_if<B>::type>
-        PostOrderIterator(
-                const PostOrderIterator<
-                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
+        template <typename TTState,
+            typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+        PostOrderIterator(const PostOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
         }
@@ -938,11 +936,9 @@ public:
         SiblingIterator& operator=(const SiblingIterator&) noexcept = default;
 
         //! Constructs a const-iterator from a non-const one.
-        template <bool B = FSM11STD::is_const<TState>::value,
-                  typename = typename FSM11STD::enable_if<B>::type>
-        SiblingIterator(
-                const SiblingIterator<
-                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
+        template <typename TTState,
+        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+        SiblingIterator(const SiblingIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
         }
@@ -986,11 +982,9 @@ public:
         AtomicIterator& operator=(const AtomicIterator&) noexcept = default;
 
         //! Constructs a const-iterator from a non-const iterator.
-        template <bool B = FSM11STD::is_const<TState>::value,
-                  typename = typename FSM11STD::enable_if<B>::type>
-        AtomicIterator(
-                const AtomicIterator<
-                typename FSM11STD::remove_cv<TState>::type>& other) noexcept
+        template <typename TTState,
+        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+        AtomicIterator(const AtomicIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
         }
@@ -1094,12 +1088,14 @@ public:
         TransitionIterator& operator=(const TransitionIterator&) noexcept = default;
 
         //! Constructs a const-iterator from a non-const one.
-        template <bool B = TIsConst,
-                  typename = typename FSM11STD::enable_if<B>::type>
-        TransitionIterator(const TransitionIterator<false>& other) noexcept
+        /*
+        template <typename TTState,
+        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value>>
+        TransitionIterator(const TransitionIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
         }
+        */
 
         using base_type::operator++;
 
