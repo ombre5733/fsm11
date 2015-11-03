@@ -98,7 +98,7 @@ class ThreadPool
 
     struct Handle
     {
-        explicit Handle(ThreadPool* pool, int id);
+        explicit Handle(ThreadPool* pool, std::size_t id);
 
         Handle(const Handle&) = delete;
         Handle& operator=(const Handle&) = delete;
@@ -108,7 +108,7 @@ class ThreadPool
             return m_pool != current;
         }
 
-        ThreadPool* change(ThreadPool* current, int id);
+        ThreadPool* change(ThreadPool* current, std::size_t id);
 
         ThreadPool* m_pool;
         Handle* m_next{nullptr};
@@ -146,7 +146,7 @@ private:
     FSM11STD::condition_variable m_workerCv;
     FSM11STD::condition_variable m_assignmentCv;
     unsigned m_assignedWorkers{0};
-    int m_idleWorkers{TSize};
+    std::size_t m_idleWorkers{TSize};
     Handle* m_handles{nullptr};
 #ifdef FSM11_USE_WEOS
     boost::container::static_vector<Task, TSize> m_tasks;
@@ -158,7 +158,7 @@ private:
     void moveTo(FSM11STD::unique_lock<FSM11STD::mutex>&& lock,
                 ThreadPool* newPool);
 
-    static void work(ThreadPool* pool, int id);
+    static void work(ThreadPool* pool, std::size_t id);
 
 #ifdef FSM11_USE_WEOS
     template <typename TAttributes, std::size_t... TIndices>
@@ -325,7 +325,7 @@ void ThreadPool<TSize>::moveTo(FSM11STD::unique_lock<FSM11STD::mutex>&& lock,
 }
 
 template <std::size_t TSize>
-void ThreadPool<TSize>::work(ThreadPool* pool, int id)
+void ThreadPool<TSize>::work(ThreadPool* pool, std::size_t id)
 {
     using namespace FSM11STD;
 
@@ -362,7 +362,7 @@ void ThreadPool<TSize>::work(ThreadPool* pool, int id)
 }
 
 template <std::size_t TSize>
-ThreadPool<TSize>::Handle::Handle(ThreadPool* pool, int id)
+ThreadPool<TSize>::Handle::Handle(ThreadPool* pool, std::size_t id)
     : m_pool(pool)
 {
     pool->m_workerMutex.lock();
@@ -383,7 +383,7 @@ ThreadPool<TSize>::Handle::Handle(ThreadPool* pool, int id)
 }
 
 template <std::size_t TSize>
-auto ThreadPool<TSize>::Handle::change(ThreadPool* current, int id)
+auto ThreadPool<TSize>::Handle::change(ThreadPool* current, std::size_t id)
     -> ThreadPool*
 {
     current->m_assignedWorkers &= ~(1 << id);
