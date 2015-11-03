@@ -241,8 +241,8 @@ public:
     //! \brief Sets the initial state.
     //!
     //! Sets the initial state to \p descendant. If \p descendant is no
-    //! proper descendant of this state, an FsmError is thrown whose
-    //! error code is FsmErrorCode::InvalidStateRelationship.
+    //! proper descendant of this state, an Error is thrown whose
+    //! error code is ErrorCode::InvalidStateRelationship.
     //!
     //! The initial state will be entered, if this state is activated after
     //! a transition and no other transition targets a descendant of this state.
