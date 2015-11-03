@@ -685,7 +685,7 @@ TEST_CASE("transition allocator by copy-construction", "[transition]")
     int numTransitions = 0;
 
     {
-        StateMachine_t sm{TrackingTransitionAllocator<void>(numTransitions)};
+        StateMachine_t sm{TrackingTransitionAllocator<bool>(numTransitions)};
 
         TrackingState<State_t> a("a", &sm);
         TrackingState<State_t> b("b", &sm);
