@@ -48,7 +48,7 @@ bool contains(const std::map<const State_t*, int>& set, State_t* state)
 } // anonymous namespace
 
 // Copied over from Bothe.
-#if 0
+#ifdef __GNUC__
     #define CREATE_TYPE_CHECKER(t)                                                 \
         template <typename T, typename U = int>                                    \
         struct has_ ## t : std::false_type {};                                     \
@@ -56,20 +56,20 @@ bool contains(const std::map<const State_t*, int>& set, State_t* state)
         struct has_ ## t <T, decltype((void)std::declval<typename T::t>(),0)> : std::true_type {};
 #else
     #define CREATE_TYPE_CHECKER(t)                                                  \
-    template <class T>                                                              \
-    struct has_## t ## _wrapper : public T                                          \
-    {                                                                               \
-        template <class U>                                                          \
-        static auto check(U const & t) -> decltype(T::t(), std::true_type());       \
+        template <class T>                                                              \
+        struct has_## t ## _wrapper : public T                                          \
+        {                                                                               \
+            template <class U>                                                          \
+            static auto check(U const & t) -> decltype(T::t(), std::true_type());       \
                                                                                     \
-        static auto check(...) -> decltype(std::false_type());                      \
-    };                                                                              \
+            static auto check(...) -> decltype(std::false_type());                      \
+        };                                                                              \
                                                                                     \
-    template<class T>                                                               \
-    struct has_ ## t                                                                \
-        : decltype(has_## t ## _wrapper<T>::                                        \
-            check(std::declval<has_## t ## _wrapper<T>>()))                         \
-    { };
+        template<class T>                                                               \
+        struct has_ ## t                                                                \
+            : decltype(has_## t ## _wrapper<T>::                                        \
+                check(std::declval<has_## t ## _wrapper<T>>()))                         \
+        { };
 #endif
 
 CREATE_TYPE_CHECKER(difference_type)
