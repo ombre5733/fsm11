@@ -44,13 +44,13 @@ TEST_CASE("construct a state", "[state]")
 
     REQUIRE(s.childMode() == ChildMode::Exclusive);
     REQUIRE(!std::strcmp(s.name(), "name"));
-    REQUIRE(s.parent() == 0);
+    REQUIRE(s.parent() == nullptr);
     REQUIRE(s.isAtomic());
     REQUIRE(!s.isCompound());
     REQUIRE(!s.isParallel());
-    REQUIRE(s.stateMachine() == 0);
+    REQUIRE(s.stateMachine() == nullptr);
     REQUIRE(!s.isActive());
-    REQUIRE(s.initialState() == 0);
+    REQUIRE(s.initialState() == nullptr);
 
     REQUIRE(s.beginTransitions() == s.endTransitions());
     REQUIRE(s.cbeginTransitions() == s.cendTransitions());
