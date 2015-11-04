@@ -695,10 +695,11 @@ public:
         PreOrderIterator() noexcept = default;
         PreOrderIterator(const PreOrderIterator&) noexcept = default;
         PreOrderIterator& operator=(const PreOrderIterator&) noexcept = default;
-        
+
         //! Constructs a const-iterator from a non-const iterator.
-        template <typename TTState, 
-                  typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value>>
+        template <typename TTState,
+                  typename = typename FSM11STD::enable_if<
+                      !FSM11STD::is_const<TTState>::value>::type>
         PreOrderIterator(const PreOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current),
               m_skipChildren(false)
@@ -852,10 +853,11 @@ public:
         PostOrderIterator() noexcept = default;
         PostOrderIterator(const PostOrderIterator&) noexcept = default;
         PostOrderIterator& operator=(const PostOrderIterator&) noexcept = default;
-        
+
         //! Constructs a const-iterator from a non-const iterator.
         template <typename TTState,
-            typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+                  typename = typename FSM11STD::enable_if<
+                      !FSM11STD::is_const<TTState>::value>::type>
         PostOrderIterator(const PostOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
@@ -937,7 +939,8 @@ public:
 
         //! Constructs a const-iterator from a non-const one.
         template <typename TTState,
-        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+                  typename = typename FSM11STD::enable_if<
+                      !FSM11STD::is_const<TTState>::value>::type>
         SiblingIterator(const SiblingIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
@@ -983,7 +986,8 @@ public:
 
         //! Constructs a const-iterator from a non-const iterator.
         template <typename TTState,
-        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value >>
+                  typename = typename FSM11STD::enable_if<
+                      !FSM11STD::is_const<TTState>::value>::type>
         AtomicIterator(const AtomicIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
