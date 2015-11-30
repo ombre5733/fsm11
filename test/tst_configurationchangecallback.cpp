@@ -138,7 +138,7 @@ SCENARIO("configuration callback is invoked after starting and stopping",
 
         WHEN ("the FSM is started")
         {
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             waitForConfigurationChange();
             THEN ("the configuration callback is invoked")
@@ -230,7 +230,7 @@ SCENARIO("run-to-completion changes the configuration only once",
             cv.notify_all();
         });
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         sm.start();
         waitForConfigurationChange();
 

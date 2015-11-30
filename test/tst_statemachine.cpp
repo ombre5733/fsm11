@@ -101,16 +101,15 @@ TEST_CASE("construct an asynchronous statemachine", "[statemachine]")
 TEST_CASE("the eventloop of an asynchronous statemachine is left upon destruction",
           "[statemachine]")
 {
+    using namespace asyncSM;
+
     std::future<void> result;
+    StateMachine_t sm;
+    REQUIRE(!sm.running());
+    REQUIRE(sm.numConfigurationChanges() == 0);
 
-    {
-        using namespace asyncSM;
-        StateMachine_t sm;
-        REQUIRE(!sm.running());
-        REQUIRE(sm.numConfigurationChanges() == 0);
-
-        result = sm.startAsyncEventLoop();
-    }
+    result = std::async(std::launch::async, [&] { sm.eventLoop(); });
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
 }
 
 TEST_CASE("start an empty synchronous statemachine", "[statemachine]")
@@ -156,7 +155,7 @@ TEST_CASE("start an empty asynchronous statemachine", "[statemachine]")
     REQUIRE(!sm.running());
     for (int cnt = 0; cnt < 2; ++cnt)
     {
-        auto result = sm.startAsyncEventLoop();
+        auto result = std::async(std::launch::async, [&] { sm.eventLoop(); });
 
         sm.start();
         waitForConfigurationChange();
@@ -190,14 +189,16 @@ TEST_CASE("an asynchronous statemachine is stopped upon destruction",
     SECTION("without starting")
     {
         StateMachine_t sm;
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     SECTION("with starting")
     {
         StateMachine_t sm;
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         sm.start();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
 
     SECTION("with starting and waiting for a configuration change")
@@ -209,7 +210,7 @@ TEST_CASE("an asynchronous statemachine is stopped upon destruction",
             cv.notify_all();
         });
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         sm.start();
         waitForConfigurationChange();
     }
@@ -279,7 +280,8 @@ SCENARIO("state machine actions are executed", "[statemachine]")
             cv.notify_all();
         });
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
 
         WHEN ("the state machine is not started")
         {

@@ -191,7 +191,7 @@ SCENARIO("throw an exception from the event list", "[exception]")
 
         sm += aa + event(0) > ba;
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         REQUIRE(isActive(sm, {}));
         sm.start();
         cct.wait();
@@ -321,7 +321,7 @@ SCENARIO("throw an exception in a transition guard", "[exception]")
         sm += aa + event(3) [guard] / action > ba;
         sm += ba + event(3) [guard] / action > bb;
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         REQUIRE(isActive(sm, {}));
         sm.start();
         cct.wait();
@@ -357,7 +357,7 @@ SCENARIO("throw an exception in a transition guard", "[exception]")
         REQUIRE(isActive(sm, {}));
 
         // Restart the state machine.
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         sm.start();
         cct.wait();
 
@@ -457,7 +457,7 @@ SCENARIO("throw an exception in a transition action", "[exception]")
         sm += aa + event(3) / action > ba;
         sm += ba + event(3) / action > bb;
 
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         REQUIRE(isActive(sm, {}));
         sm.start();
         cct.wait();
@@ -491,7 +491,7 @@ SCENARIO("throw an exception in a transition action", "[exception]")
         REQUIRE(isActive(sm, {}));
 
         // Restart the state machine.
-        result = sm.startAsyncEventLoop();
+        result = std::async(std::launch::async, [&] { sm.eventLoop(); });
         sm.start();
         cct.wait();
         REQUIRE(isActive(sm, {&sm, &a, &aa}));
@@ -573,7 +573,7 @@ SCENARIO("throw an exception in a state entry function", "[exception]")
         {
             a.setEntryFunction([](int) { throw StateException(); });
 
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             REQUIRE_THROWS_AS(result.get(), StateException);
@@ -589,7 +589,7 @@ SCENARIO("throw an exception in a state entry function", "[exception]")
         {
             aa.setEntryFunction([](int) { throw StateException(); });
 
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             REQUIRE_THROWS_AS(result.get(), StateException);
@@ -661,7 +661,7 @@ SCENARIO("throw an exception in a state exit function", "[exception]")
         {
             aa.setExitFunction([](int) { throw StateException(); });
 
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             sm.stop();
@@ -733,7 +733,7 @@ SCENARIO ("throw an exception when entering the invoke action", "[exception]")
         WHEN ("an ancestor throws upon entering the invoke action")
         {
             a.throwInEnterInvoke = true;
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
 
@@ -749,7 +749,7 @@ SCENARIO ("throw an exception when entering the invoke action", "[exception]")
         {
             aa.throwInEnterInvoke = true;
 
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
 
@@ -825,7 +825,7 @@ SCENARIO ("throw an exception when leaving the invoke action", "[exception]")
         WHEN ("an ancestor throws upon leaving the invoke action")
         {
             a.throwInExitInvoke = true;
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             sm.stop();
@@ -843,7 +843,7 @@ SCENARIO ("throw an exception when leaving the invoke action", "[exception]")
         {
             aa.throwInExitInvoke = true;
 
-            result = sm.startAsyncEventLoop();
+            result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             sm.stop();

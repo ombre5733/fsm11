@@ -170,7 +170,7 @@ TEST_CASE("invoked actions are executed in a thread pool", "[threadpool]")
 
         WHEN ("the FSM is started")
         {
-            auto result = sm.startAsyncEventLoop();
+            auto result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             sm.start();
             cct.wait();
             sm.addEvent(1);
@@ -260,7 +260,7 @@ TEST_CASE("the thread pool throws an exception on underflow", "[threadpool]")
         WHEN ("the FSM is started")
         {
             sm.start();
-            auto result = sm.startAsyncEventLoop();
+            auto result = std::async(std::launch::async, [&] { sm.eventLoop(); });
             waitForConfigurationChange(std::chrono::milliseconds(10));
             sm.stop();
 

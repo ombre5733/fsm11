@@ -700,13 +700,6 @@ public:
                       "A synchronous statemachine has no event-loop.");
     }
 
-    template <typename T = void>
-    void startAsyncEventLoop()
-    {
-        static_assert(!FSM11STD::is_same<T, T>::value,
-                      "A synchronous statemachine has no event-loop.");
-    }
-
 protected:
     void halt()
     {
@@ -827,25 +820,6 @@ public:
 
         doEventLoop();
     }
-
-#ifdef FSM11_USE_WEOS
-    FSM11STD::future<void> startAsyncEventLoop(const weos::thread::attributes& attrs)
-    {
-        FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
-        // TODO: if (m_eventLoopRunning) throw;
-        m_eventLoopActive = true;
-        return FSM11STD::async(attrs, &AsynchronousEventDispatcher::doEventLoop, this);
-    }
-#else
-    FSM11STD::future<void> startAsyncEventLoop()
-    {
-        FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
-        // TODO: if (m_eventLoopRunning) throw;
-        m_eventLoopActive = true;
-        return FSM11STD::async(std::launch::async,
-                               &AsynchronousEventDispatcher::doEventLoop, this);
-    }
-#endif
 
 protected:
     void halt()

@@ -471,7 +471,7 @@ TEST_CASE("simple configuration changes in asynchronous statemachine",
     sm += a  + event(5) > ab;
     sm += ab + event(6) > a;
 
-    result = sm.startAsyncEventLoop();
+    result = async(launch::async, [&] { sm.eventLoop(); });
 
     sm.start();
     waitForConfigurationChange();
@@ -792,7 +792,7 @@ SCENARIO("custom invoke behavior", "[behavior]")
         sm += a + event(20) > b;
         sm += b + event(1) > a;
 
-        auto result = sm.startAsyncEventLoop();
+        auto result = async(launch::async, [&] { sm.eventLoop(); });
         sm.start();
         cct.wait();
 
