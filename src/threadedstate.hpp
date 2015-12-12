@@ -73,7 +73,7 @@ public:
               typename = typename FSM11STD::enable_if<
                              !has_thread_pool, T>::type>
     explicit ThreadedState(const char* name,
-                           const FSM11STD::thread::attributes& attrs,
+                           const FSM11STD::thread_attributes& attrs,
                            base_type* parent = nullptr)
         : base_type(name, parent)
     {
@@ -122,7 +122,7 @@ private:
 
     using maybe_thread_attributes_t
         = typename FSM11STD::conditional<!has_thread_pool,
-                                         FSM11STD::thread::attributes,
+                                         FSM11STD::thread_attributes,
                                          None>::type;
 
     using data_type = FSM11STD::tuple<FSM11STD::future<void>,

@@ -117,7 +117,7 @@ class ThreadPool
 public:
 #ifdef FSM11_USE_WEOS
     template <typename... TAttributes>
-    explicit ThreadPool(const FSM11STD::thread::attributes& attr,
+    explicit ThreadPool(const FSM11STD::thread_attributes& attr,
                         const TAttributes&... attributes);
 #else
     //! Constructs a thread pool.
@@ -185,7 +185,7 @@ private:
         }
     }
 
-    int constructOne(const FSM11STD::thread::attributes& attr,
+    int constructOne(const FSM11STD::thread_attributes& attr,
                      std::size_t idx, unsigned& workers)
     {
         FSM11STD::thread(attr, &ThreadPool::work, this, idx).detach();
@@ -203,13 +203,13 @@ private:
 #ifdef FSM11_USE_WEOS
 template <std::size_t TSize>
 template <typename... TAttributes>
-ThreadPool<TSize>::ThreadPool(const FSM11STD::thread::attributes& attr,
+ThreadPool<TSize>::ThreadPool(const FSM11STD::thread_attributes& attr,
                               const TAttributes&... attributes)
 {
     using namespace FSM11STD;
 
     static_assert(fsm11_detail::all<
-                      is_same<TAttributes, thread::attributes>::value...
+                      is_same<TAttributes, thread_attributes>::value...
                   >::value,
                   "All arguments have to be thread attributes");
     static_assert(1 + sizeof...(TAttributes) == TSize,

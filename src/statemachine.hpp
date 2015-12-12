@@ -614,15 +614,6 @@ public:
     //! Starts the state machine.
     void start();
 
-    //! Starts the state machine.
-    //!
-    //! Starts the state machine. The attributes \p attrs are passed to the
-    //! thread running the event loop.
-    //!
-    //! \note This overload is only available, if asynchronous event
-    //! dispatching has been enabled.
-    void start(const weos::thread::attributes& attrs);
-
     void stop();
 
     bool running() const;

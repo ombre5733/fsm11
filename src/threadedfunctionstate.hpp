@@ -205,7 +205,7 @@ public:
 
 private:
 #ifdef FSM11_USE_WEOS
-    weos::thread::attributes m_invokeThreadAttributes;
+    weos::thread_attributes m_invokeThreadAttributes;
 #endif // FSM11_USE_WEOS
 
     FSM11STD::thread m_invokeThread;

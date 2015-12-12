@@ -83,7 +83,8 @@ public:
     //! Constructs a state with given \p name which will be a child of the
     //! \p parent state. The \p parent may be a null-pointer. In this case
     //! the state is at the root of its hierarchy.
-    explicit State(const char* name, State* parent = nullptr) noexcept;
+    explicit
+    State(const char* name, State* parent = nullptr) noexcept;
 
     //! \brief Destroys the state.
     virtual ~State() {}
