@@ -1045,17 +1045,17 @@ public:
 
     transition_iterator beginTransitions() noexcept
     {
-        return transition_iterator(m_transitions);
+        return transition_iterator(m_originatingTransitions);
     }
 
     const_transition_iterator beginTransitions() const noexcept
     {
-        return const_transition_iterator(m_transitions);
+        return const_transition_iterator(m_originatingTransitions);
     }
 
     const_transition_iterator cbeginTransitions() const noexcept
     {
-        return const_transition_iterator(m_transitions);
+        return const_transition_iterator(m_originatingTransitions);
     }
 
     transition_iterator endTransitions() noexcept
@@ -1156,8 +1156,8 @@ private:
     //! The initial state will be entered if this state is the target of
     //! a transition.
     State* m_initialState;
-    //! A pointer to the first transition.
-    transition_type* m_transitions;
+    //! A linked list of transitions originating from this state.
+    transition_type* m_originatingTransitions;
     //! The flags.
     //! \todo This should be of type Flags
     int m_flags;
@@ -1195,7 +1195,7 @@ State<TStateMachine>::State(const char* name, State* parent) noexcept
       m_children(nullptr),
       m_nextSibling(nullptr),
       m_initialState(nullptr),
-      m_transitions(nullptr),
+      m_originatingTransitions(nullptr),
       m_flags(0),
       m_visibleActive(false)
 {
@@ -1328,13 +1328,13 @@ template <typename TStateMachine>
 void State<TStateMachine>::pushBackTransition(
         transition_type* transition) noexcept
 {
-    if (!m_transitions)
+    if (!m_originatingTransitions)
     {
-        m_transitions = transition;
+        m_originatingTransitions = transition;
     }
     else
     {
-        transition_type* iter = m_transitions;
+        transition_type* iter = m_originatingTransitions;
         while (iter->m_nextInSourceState)
             iter = iter->m_nextInSourceState;
         iter->m_nextInSourceState = transition;
@@ -1345,12 +1345,12 @@ template <typename TStateMachine>
 template <typename TAlloc>
 void State<TStateMachine>::deleteTransitions(TAlloc& alloc) noexcept
 {
-    while (m_transitions)
+    while (m_originatingTransitions)
     {
-        auto next = m_transitions->m_nextInSourceState;
-        m_transitions->~transition_type();
-        alloc.deallocate(m_transitions, 1);
-        m_transitions = next;
+        auto next = m_originatingTransitions->m_nextInSourceState;
+        m_originatingTransitions->~transition_type();
+        alloc.deallocate(m_originatingTransitions, 1);
+        m_originatingTransitions = next;
     }
 }
 
