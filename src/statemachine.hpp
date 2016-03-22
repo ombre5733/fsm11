@@ -37,6 +37,7 @@
 #include "detail/callbacks.hpp"
 #include "detail/capturestorage.hpp"
 #include "detail/eventdispatcher.hpp"
+#include "detail/meta.hpp"
 #include "detail/multithreading.hpp"
 #include "detail/threadpool.hpp"
 
@@ -352,7 +353,9 @@ private:
 
 
 
-
+// ----=====================================================================----
+//     StateMachineImpl
+// ----=====================================================================----
 
 
 //! \brief A finite state machine.
@@ -480,6 +483,22 @@ public:
         return add(FSM11STD::move(t));
     }
 
+    //! \brief Checks if at least one state is active.
+    //!
+    //! Returns \p true, if any state of the given list (\p state, \p states)
+    //! is active, which means that the state belongs to the current state
+    //! machine configuration.
+    template <typename... TStates>
+    bool anyActive(const state_type& state, const TStates&... states) const noexcept;
+
+    //! \brief Checks if all states are active.
+    //!
+    //! Returns \p true, if all states of the given list (\p state, \p states)
+    //! are active, which means that they all belong to the current state
+    //! machine configuration.
+    template <typename... TStates>
+    bool allActive(const state_type& state, const TStates&... states) const noexcept;
+
 private:
     //! A list of events which have to be handled by the event loop.
     event_list_type m_eventList;
@@ -492,6 +511,32 @@ private:
     internal_thread_pool_type& threadPool()
     {
         return m_threadPool;
+    }
+
+
+
+    template <typename... TStates>
+    bool doAnyActive(const state_type& state, const TStates&... states) const noexcept
+    {
+        return state.m_visibleActive ? true : doAnyActive(states...);
+    }
+
+    template <typename... TStates>
+    bool doAnyActive() const noexcept
+    {
+        return false;
+    }
+
+    template <typename... TStates>
+    bool doAllActive(const state_type& state, const TStates&... states) const noexcept
+    {
+        return !state.m_visibleActive ? false : doAllActive(states...);
+    }
+
+    template <typename... TStates>
+    bool doAllActive() const noexcept
+    {
+        return true;
     }
 
 
@@ -529,6 +574,42 @@ auto StateMachineImpl<TOptions>::add(
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
     return transition;
+}
+
+template <typename TOptions>
+template <typename... TStates>
+bool StateMachineImpl<TOptions>::anyActive(const state_type& state,
+                                           const TStates&... states) const noexcept
+{
+    using namespace FSM11STD;
+
+    static_assert(fsm11_detail::all<
+                      is_base_of<state_type, TStates>::value...
+                  >::value,
+                  "All arguments have to be states");
+
+    this->acquireStateActiveFlags();
+    auto any = doAnyActive(state, states...);
+    this->releaseStateActiveFlags();
+    return any;
+}
+
+template <typename TOptions>
+template <typename... TStates>
+bool StateMachineImpl<TOptions>::allActive(const state_type& state,
+                                           const TStates&... states) const noexcept
+{
+    using namespace FSM11STD;
+
+    static_assert(fsm11_detail::all<
+                      is_base_of<state_type, TStates>::value...
+                  >::value,
+                  "All arguments have to be states");
+
+    this->acquireStateActiveFlags();
+    auto all = doAllActive(state, states...);
+    this->releaseStateActiveFlags();
+    return all;
 }
 
 
@@ -579,7 +660,7 @@ void ConfigurationVisitor<TDerived>::operator() (StateMachine& machine)
 
 
 
-
+// A helper to create the concrete state machine type.
 template <typename... TOptions>
 struct makeStateMachineType
 {

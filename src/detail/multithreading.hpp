@@ -70,9 +70,17 @@ public:
 
 protected:
     inline
-    int getLock() const
+    int getLock() const noexcept
     {
         return 0;
+    }
+
+    void acquireStateActiveFlags() const noexcept
+    {
+    }
+
+    void releaseStateActiveFlags() const noexcept
+    {
     }
 };
 
@@ -97,10 +105,23 @@ public:
 protected:
     mutable FSM11STD::mutex m_mutex; // Non-recursive to avoid mistakes in the application!!!
 
+    //! A mutex to update the state active flags atomically.
+    mutable FSM11STD::mutex m_stateActiveUpdate;
+
     inline
     FSM11STD::unique_lock<FSM11STD::mutex> getLock() const
     {
         return FSM11STD::unique_lock<FSM11STD::mutex>(m_mutex);
+    }
+
+    void acquireStateActiveFlags() const
+    {
+        m_stateActiveUpdate.lock();
+    }
+
+    void releaseStateActiveFlags() const
+    {
+        m_stateActiveUpdate.unlock();
     }
 };
 
