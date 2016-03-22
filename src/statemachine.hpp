@@ -483,6 +483,12 @@ public:
         return add(FSM11STD::move(t));
     }
 
+    //! \brief Checks if the state machine is active.
+    //!
+    //! Returns \p true, if the state machine is active, which means that
+    //! at least one of its child states is active, too.
+    bool isActive() const noexcept;
+
     //! \brief Checks if at least one state is active.
     //!
     //! Returns \p true, if any state of the given list (\p state, \p states)
@@ -574,6 +580,15 @@ auto StateMachineImpl<TOptions>::add(
     transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
     transition->source()->pushBackTransition(transition);
     return transition;
+}
+
+template <typename TOptions>
+bool StateMachineImpl<TOptions>::isActive() const noexcept
+{
+    this->acquireStateActiveFlags();
+    bool active = this->m_visibleActive;
+    this->releaseStateActiveFlags();
+    return active;
 }
 
 template <typename TOptions>

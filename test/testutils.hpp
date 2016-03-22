@@ -47,9 +47,9 @@ bool isActive(const T& sm,
     {
         auto iter = expected.find(&state);
         if (iter != expected.end())
-            REQUIRE(state.isActive());
+            REQUIRE(sm.allActive(state));
         else
-            REQUIRE(!state.isActive());
+            REQUIRE(!sm.anyActive(state));
     }
     return true;
 }

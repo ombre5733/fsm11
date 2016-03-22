@@ -49,7 +49,6 @@ TEST_CASE("construct a state", "[state]")
     REQUIRE(!s.isCompound());
     REQUIRE(!s.isParallel());
     REQUIRE(s.stateMachine() == nullptr);
-    REQUIRE(!s.isActive());
     REQUIRE(s.initialState() == nullptr);
 
     REQUIRE(s.beginTransitions() == s.endTransitions());

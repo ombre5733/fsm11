@@ -132,12 +132,6 @@ public:
         return m_initialState;
     }
 
-    //! \brief Checks if the state is active.
-    //!
-    //! Returns \p true, if the state is active, which means that it belongs
-    //! to the current state machine configuration.
-    bool isActive() const noexcept;
-
     //! \brief Checks for atomicity.
     //!
     //! Returns \p true, if this state is atomic which means that it does not
@@ -1241,13 +1235,6 @@ State<TStateMachine>* State<TStateMachine>::findDescendant(
         state = &*child;
     }
     return const_cast<State*>(state);
-}
-
-template <typename TStateMachine>
-inline
-bool State<TStateMachine>::isActive() const noexcept
-{
-    return m_visibleActive;
 }
 
 template <typename TStateMachine>

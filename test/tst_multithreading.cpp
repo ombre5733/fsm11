@@ -104,3 +104,42 @@ TEST_CASE("mutual exclusion during configuration change", "[multithreading]")
     terminate = true;
     REQUIRE(observer.get());
 }
+
+TEST_CASE("state active flags are updated atomically", "[multithreading]")
+{
+    using namespace std;
+
+    using StateMachine_t = StateMachine<SynchronousEventDispatching,
+                                        MultithreadingEnable<true>>;
+    using State_t = StateMachine_t::state_type;
+
+    StateMachine_t sm;
+    State_t a("a", &sm);
+    State_t b("b", &sm);
+
+    sm += a + event(1) > b;
+    sm += b + event(2) > a;
+
+    sm.start();
+
+    atomic_bool terminate{false};
+    auto observer = async(launch::async, [&]{
+        while (!terminate)
+        {
+            auto any = sm.anyActive(a, b);
+            auto all = sm.allActive(a, b);
+            if (!any || all)
+                return false;
+        }
+        return true;
+    });
+
+    for (int tries = 0; tries < 10000; ++tries)
+    {
+        sm.addEvent(1);
+        sm.addEvent(2);
+    }
+
+    terminate = true;
+    REQUIRE(observer.get());
+}
