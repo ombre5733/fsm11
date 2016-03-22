@@ -30,7 +30,7 @@
 #define FSM11_DETAIL_CAPTURESTORAGE_HPP
 
 #include "../statemachine_fwd.hpp"
-#include "options.hpp"
+#include "meta.hpp"
 
 #ifdef FSM11_USE_WEOS
 #include <weos/utility.hpp>
