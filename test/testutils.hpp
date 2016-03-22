@@ -45,12 +45,13 @@ bool isActive(const T& sm,
 {
     for (const auto& state : sm.pre_order_subtree())
     {
-        REQUIRE(sm.allActive(state) == sm.anyActive(state));
+        REQUIRE(sm.isActive(state) == sm.areAllActive(state));
+        REQUIRE(sm.areAllActive(state) == sm.isAnyActive(state));
         auto iter = expected.find(&state);
         if (iter != expected.end())
-            REQUIRE(sm.allActive(state));
+            REQUIRE(sm.isActive(state));
         else
-            REQUIRE(!sm.anyActive(state));
+            REQUIRE(!sm.isActive(state));
     }
     return true;
 }

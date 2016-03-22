@@ -489,13 +489,18 @@ public:
     //! at least one of its child states is active, too.
     bool isActive() const noexcept;
 
+    //! \brief Checks if a state is active.
+    //!
+    //! Returns \p true, if the \p state is active.
+    bool isActive(const state_type& state) const noexcept;
+
     //! \brief Checks if at least one state is active.
     //!
     //! Returns \p true, if any state of the given list (\p state, \p states)
     //! is active, which means that the state belongs to the current state
     //! machine configuration.
     template <typename... TStates>
-    bool anyActive(const state_type& state, const TStates&... states) const noexcept;
+    bool isAnyActive(const state_type& state, const TStates&... states) const noexcept;
 
     //! \brief Checks if all states are active.
     //!
@@ -503,7 +508,7 @@ public:
     //! are active, which means that they all belong to the current state
     //! machine configuration.
     template <typename... TStates>
-    bool allActive(const state_type& state, const TStates&... states) const noexcept;
+    bool areAllActive(const state_type& state, const TStates&... states) const noexcept;
 
 private:
     //! A list of events which have to be handled by the event loop.
@@ -596,9 +601,18 @@ bool StateMachineImpl<TOptions>::isActive() const noexcept
 }
 
 template <typename TOptions>
+bool StateMachineImpl<TOptions>::isActive(const state_type& state) const noexcept
+{
+    this->acquireStateActiveFlags();
+    bool active = state.m_flags & state_type::VisibleActive;
+    this->releaseStateActiveFlags();
+    return active;
+}
+
+template <typename TOptions>
 template <typename... TStates>
-bool StateMachineImpl<TOptions>::anyActive(const state_type& state,
-                                           const TStates&... states) const noexcept
+bool StateMachineImpl<TOptions>::isAnyActive(const state_type& state,
+                                             const TStates&... states) const noexcept
 {
     using namespace FSM11STD;
 
@@ -615,8 +629,8 @@ bool StateMachineImpl<TOptions>::anyActive(const state_type& state,
 
 template <typename TOptions>
 template <typename... TStates>
-bool StateMachineImpl<TOptions>::allActive(const state_type& state,
-                                           const TStates&... states) const noexcept
+bool StateMachineImpl<TOptions>::areAllActive(const state_type& state,
+                                              const TStates&... states) const noexcept
 {
     using namespace FSM11STD;
 

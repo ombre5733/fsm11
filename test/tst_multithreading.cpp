@@ -126,8 +126,8 @@ TEST_CASE("state active flags are updated atomically", "[multithreading]")
     auto observer = async(launch::async, [&]{
         while (!terminate)
         {
-            auto any = sm.anyActive(a, b);
-            auto all = sm.allActive(a, b);
+            auto any = sm.isAnyActive(a, b);
+            auto all = sm.areAllActive(a, b);
             if (!any || all)
                 return false;
         }
