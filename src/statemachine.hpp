@@ -524,7 +524,9 @@ private:
     template <typename... TStates>
     bool doAnyActive(const state_type& state, const TStates&... states) const noexcept
     {
-        return state.m_visibleActive ? true : doAnyActive(states...);
+        return (state.m_flags & state_type::VisibleActive)
+                ? true
+                : doAnyActive(states...);
     }
 
     template <typename... TStates>
@@ -536,7 +538,9 @@ private:
     template <typename... TStates>
     bool doAllActive(const state_type& state, const TStates&... states) const noexcept
     {
-        return !state.m_visibleActive ? false : doAllActive(states...);
+        return !(state.m_flags & state_type::VisibleActive)
+                ? false
+                : doAllActive(states...);
     }
 
     template <typename... TStates>
@@ -586,7 +590,7 @@ template <typename TOptions>
 bool StateMachineImpl<TOptions>::isActive() const noexcept
 {
     this->acquireStateActiveFlags();
-    bool active = this->m_visibleActive;
+    bool active = this->m_flags & state_type::VisibleActive;
     this->releaseStateActiveFlags();
     return active;
 }

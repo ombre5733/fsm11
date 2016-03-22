@@ -541,7 +541,12 @@ void EventDispatcherBase<TDerived>::runToCompletion(bool changedConfiguration)
     // state active flag.
     derived().acquireStateActiveFlags();
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        iter->m_visibleActive = (iter->m_flags & state_type::Active) != 0;
+    {
+        if (iter->m_flags & state_type::Active)
+            iter->m_flags |= state_type::VisibleActive;
+        else
+            iter->m_flags &= ~state_type::VisibleActive;
+    }
     derived().releaseStateActiveFlags();
 
     // Call the invoke() methods of all currently active states.
@@ -624,7 +629,7 @@ void EventDispatcherBase<TDerived>::leaveConfiguration()
 
     derived().acquireStateActiveFlags();
     for (auto iter = derived().begin(); iter != derived().end(); ++iter)
-        iter->m_visibleActive = false;
+        iter->m_flags &= ~state_type::VisibleActive;
     derived().releaseStateActiveFlags();
 
     ++m_numConfigurationChanges;

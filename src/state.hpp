@@ -1141,6 +1141,7 @@ private:
         DeepHistory             = 0x004,
         StartInvoke             = 0x010,
         Active                  = 0x020,
+        VisibleActive           = 0x040,
         Invoked                 = 0x080,
     };
 
@@ -1162,8 +1163,6 @@ private:
     //! The flags.
     //! \todo This should be of type Flags
     int m_flags;
-
-    FSM11STD::atomic_bool m_visibleActive;
 
     //! Adds a \p child.
     void addChild(State* child) noexcept;
@@ -1197,8 +1196,7 @@ State<TStateMachine>::State(const char* name, State* parent) noexcept
       m_nextSibling(nullptr),
       m_initialState(nullptr),
       m_originatingTransitions(nullptr),
-      m_flags(0),
-      m_visibleActive(false)
+      m_flags(0)
 {
     if (parent)
         parent->addChild(this);
