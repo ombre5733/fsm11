@@ -1,7 +1,7 @@
 ################################################################################
-# fsm11 - A C++11-compliant framework for finite state machines
+# fsm11 - A C++ library for finite state machines
 #
-# Copyright (c) 2015, Manuel Freiberger
+# Copyright (c) 2015-2016, Manuel Freiberger
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
