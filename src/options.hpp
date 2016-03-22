@@ -30,7 +30,7 @@
 #define FSM11_OPTIONS_HPP
 
 #include "statemachine_fwd.hpp"
-#include "detail/options.hpp"
+#include "detail/meta.hpp"
 
 #include <deque>
 #include <memory>

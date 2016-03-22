@@ -31,6 +31,7 @@
 
 #include "statemachine_fwd.hpp"
 #include "error.hpp"
+#include "detail/meta.hpp"
 #include "detail/threadedstatebase.hpp"
 
 #ifdef FSM11_USE_WEOS
@@ -53,23 +54,6 @@
 
 namespace fsm11
 {
-namespace fsm11_detail
-{
-
-template <bool... TValues>
-struct all : FSM11STD::true_type
-{
-};
-
-template <bool THead, bool... TTail>
-struct all<THead, TTail...> : FSM11STD::conditional<THead,
-                                                    all<TTail...>,
-                                                    FSM11STD::false_type>::type
-{
-};
-
-} // namespace fsm11_detail
-
 
 template <std::size_t TSize>
 class ThreadPool

@@ -26,13 +26,36 @@
   POSSIBILITY OF SUCH DAMAGE.
 *******************************************************************************/
 
-#ifndef FSM11_DETAIL_OPTIONS_HPP
-#define FSM11_DETAIL_OPTIONS_HPP
+#ifndef FSM11_DETAIL_META_HPP
+#define FSM11_DETAIL_META_HPP
+
+#include "../statemachine_fwd.hpp"
+
+#ifdef FSM11_USE_WEOS
+#include <weos/type_traits.hpp>
+#else
+#include <type_traits>
+#endif // FSM11_USE_WEOS
+
 
 namespace fsm11
 {
 namespace fsm11_detail
 {
+
+template <bool... TValues>
+struct all : FSM11STD::true_type
+{
+};
+
+template <bool THead, bool... TTail>
+struct all<THead, TTail...> : FSM11STD::conditional<!THead,
+                                                    FSM11STD::false_type,
+                                                    all<TTail...>>::type
+{
+};
+
+
 
 template <typename... TOptions>
 struct type_list
@@ -97,4 +120,4 @@ public:
 } // namespace fsm11_detail
 } // namespace fsm11
 
-#endif // FSM11_DETAIL_OPTIONS_HPP
+#endif // FSM11_DETAIL_META_HPP

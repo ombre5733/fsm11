@@ -77,8 +77,8 @@ HEADERS += \
     ../src/detail/callbacks.hpp \
     ../src/detail/capturestorage.hpp \
     ../src/detail/eventdispatcher.hpp \
+    ../src/detail/meta.hpp \
     ../src/detail/multithreading.hpp \
-    ../src/detail/options.hpp \
     ../src/detail/scopeguard.hpp \
     ../src/detail/threadedstatebase.hpp \
     ../src/detail/threadpool.hpp
