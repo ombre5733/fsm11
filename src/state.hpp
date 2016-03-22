@@ -1140,7 +1140,7 @@ private:
         DeepHistory             = 0x004,
         StartInvoke             = 0x010,
         Active                  = 0x020,
-        Invoked                 = 0x040,
+        Invoked                 = 0x080,
     };
 
     //! The state's name.
