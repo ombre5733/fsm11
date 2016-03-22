@@ -723,8 +723,9 @@ public:
     //! Creates a transition from the specification \p rhs.
     template <typename TState, typename TEvent, typename TGuard,
               typename TAction>
-    explicit Transition(fsm11_detail::TypeSourceEventGuardActionTarget<
-                            TState, TEvent, TGuard, TAction>&& rhs)
+    explicit
+    Transition(fsm11_detail::TypeSourceEventGuardActionTarget<
+               TState, TEvent, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
           m_nextInSourceState{nullptr},
@@ -741,8 +742,9 @@ public:
     //!
     //! Creates an eventless transition from the specification \p rhs.
     template <typename TState, typename TGuard, typename TAction>
-    explicit Transition(fsm11_detail::TypeSourceNoEventGuardActionTarget<
-                            TState, TGuard, TAction>&& rhs)
+    explicit
+    Transition(fsm11_detail::TypeSourceNoEventGuardActionTarget<
+               TState, TGuard, TAction>&& rhs)
         : m_source(rhs.m_source),
           m_target(rhs.m_target),
           m_nextInSourceState{nullptr},

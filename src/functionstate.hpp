@@ -59,7 +59,8 @@ public:
     using function_type = FSM11STD::function<void(event_type)>;
     using type = FunctionState<TStateMachine>;
 
-    explicit FunctionState(const char* name, base_type* parent = nullptr)
+    explicit
+    FunctionState(const char* name, base_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -136,13 +137,15 @@ public:
         m_exitFunction = FSM11STD::forward<T>(fn);
     }
 
-    virtual void onEntry(event_type event) override
+    virtual
+    void onEntry(event_type event) override
     {
         if (m_entryFunction)
             m_entryFunction(event);
     }
 
-    virtual void onExit(event_type event) override
+    virtual
+    void onExit(event_type event) override
     {
         if (m_exitFunction)
             m_exitFunction(event);

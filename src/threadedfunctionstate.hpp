@@ -62,7 +62,8 @@ public:
     using invoke_function_type = FSM11STD::function<void(ExitRequest& exitRequest)>;
     using type = ThreadedFunctionState<TStateMachine>;
 
-    explicit ThreadedFunctionState(const char* name, state_type* parent = nullptr)
+    explicit
+    ThreadedFunctionState(const char* name, state_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -176,7 +177,8 @@ public:
         m_invokeFunction = FSM11STD::forward<T>(fn);
     }
 
-    virtual void enterInvoke() override
+    virtual
+    void enterInvoke() override
     {
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = false;
@@ -190,7 +192,8 @@ public:
                              &ThreadedFunctionState::invokeWrapper, this);
     }
 
-    virtual FSM11STD::exception_ptr exitInvoke() override
+    virtual
+    FSM11STD::exception_ptr exitInvoke() override
     {
         FSM11_ASSERT(m_invokeThread.joinable());
 

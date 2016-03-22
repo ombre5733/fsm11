@@ -42,12 +42,14 @@ namespace fsm11
 class fsm11_category_impl : public error_category
 {
 public:
-    virtual const char* name() const noexcept override
+    virtual
+    const char* name() const noexcept override
     {
         return "fsm11";
     }
 
-    virtual auto message(int err_val) const
+    virtual
+    auto message(int err_val) const
         -> decltype(declval<error_category>().message(0))
         override
     {

@@ -63,7 +63,8 @@ public:
     template <typename T = void,
               typename = typename FSM11STD::enable_if<
                              has_thread_pool, T>::type>
-    explicit ThreadedState(const char* name, base_type* parent = nullptr)
+    explicit
+    ThreadedState(const char* name, base_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -72,16 +73,18 @@ public:
     template <typename T = void,
               typename = typename FSM11STD::enable_if<
                              !has_thread_pool, T>::type>
-    explicit ThreadedState(const char* name,
-                           const FSM11STD::thread_attributes& attrs,
-                           base_type* parent = nullptr)
+    explicit
+    ThreadedState(const char* name,
+                  const FSM11STD::thread_attributes& attrs,
+                  base_type* parent = nullptr)
         : base_type(name, parent)
     {
         FSM11STD::get<1>(m_data) = attrs;
     }
 #else
     //! \brief Creates a state with a threaded invoke action.
-    explicit ThreadedState(const char* name, base_type* parent = nullptr)
+    explicit
+    ThreadedState(const char* name, base_type* parent = nullptr)
         : base_type(name, parent)
     {
     }
@@ -91,10 +94,12 @@ public:
     //!
     //! This method is called in a new thread. Derived classes have to
     //! provide an implementation.
-    virtual void invoke(ExitRequest& exitRequest) = 0;
+    virtual
+    void invoke(ExitRequest& exitRequest) = 0;
 
     //! Enters the invoked thread.
-    virtual void enterInvoke() override final
+    virtual
+    void enterInvoke() override final
     {
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = false;
@@ -106,7 +111,8 @@ public:
     //! Leaves the invoked thread.
     //!
     //! Joins with the thread in which the invoked action is running.
-    virtual void exitInvoke() override final
+    virtual
+    void exitInvoke() override final
     {
         m_exitRequest.m_mutex.lock();
         m_exitRequest.m_requested = true;

@@ -404,14 +404,16 @@ public:
     template <typename T = void,
               typename = typename FSM11STD::enable_if<
                              TOptions::threadpool_enable, T>::type>
-    explicit StateMachineImpl(internal_thread_pool_type&& pool)
+    explicit
+    StateMachineImpl(internal_thread_pool_type&& pool)
         : state_type("(StateMachine)"),
           m_threadPool(FSM11STD::move(pool))
     {
         state_type::m_stateMachine = this;
     }
 
-    explicit StateMachineImpl(const transition_allocator_type& alloc)
+    explicit
+    StateMachineImpl(const transition_allocator_type& alloc)
         : state_type("(StateMachine)"),
           m_transitionAllocator(alloc)
     {
@@ -419,7 +421,8 @@ public:
     }
 
     //! \brief Destroys the state machine.
-    virtual ~StateMachineImpl()
+    virtual
+    ~StateMachineImpl()
     {
         this->halt();
 

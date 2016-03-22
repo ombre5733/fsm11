@@ -87,7 +87,8 @@ public:
     State(const char* name, State* parent = nullptr) noexcept;
 
     //! \brief Destroys the state.
-    virtual ~State() {}
+    virtual
+    ~State() {}
 
     State(const State&) = delete;
     State& operator=(const State&) = delete;
@@ -181,7 +182,8 @@ public:
     //! This method is called by the state machine, whenever this state
     //! is entered. The event which triggered the configuration change
     //! is passed in \p event. The default implementation does nothing.
-    virtual void onEntry(event_type /*event*/)
+    virtual
+    void onEntry(event_type /*event*/)
     {
         // The default implementation does nothing.
     }
@@ -191,7 +193,8 @@ public:
     //! This method is called by the state machine, when the state is left.
     //! The event which triggered the configuration change is passed in
     //! \p event. The default implementation does nothing.
-    virtual void onExit(event_type /*event*/)
+    virtual
+    void onExit(event_type /*event*/)
     {
         // The default implementation does nothing.
     }
@@ -200,7 +203,8 @@ public:
     //!
     //! This method is called by the state machine when the invoke action
     //! has to be started. The default implementation does nothing.
-    virtual void enterInvoke()
+    virtual
+    void enterInvoke()
     {
         // The default implementation does nothing.
     }
@@ -209,7 +213,8 @@ public:
     //!
     //! This method is called by the state machine when the invoke action
     //! has to be left. The default implementation does nothing.
-    virtual void exitInvoke()
+    virtual
+    void exitInvoke()
     {
         // The default implementation does nothing.
     }
@@ -821,7 +826,8 @@ public:
     public:
         using iterator = PreOrderIterator<TState>;
 
-        explicit PreOrderSubtree(typename iterator::pointer state) noexcept
+        explicit
+        PreOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
         {
         }
@@ -907,7 +913,8 @@ public:
     public:
         using iterator = PostOrderIterator<TState>;
 
-        explicit PostOrderSubtree(typename iterator::pointer state) noexcept
+        explicit
+        PostOrderSubtree(typename iterator::pointer state) noexcept
             : m_state(state)
         {
         }

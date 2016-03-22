@@ -75,7 +75,8 @@ public:
     //! Checks if an exit has been requested.
     //!
     //! Returns \p true if an exit has been requested.
-    explicit operator bool() const
+    explicit
+    operator bool() const
     {
         FSM11STD::lock_guard<FSM11STD::mutex> lock(m_mutex);
         return m_requested;

@@ -40,9 +40,11 @@ namespace fsm11_detail
 class ThreadedStateBase
 {
 public:
-    virtual ~ThreadedStateBase() {}
+    virtual
+    ~ThreadedStateBase() {}
 
-    virtual void invoke(ExitRequest& exitRequest) = 0;
+    virtual
+    void invoke(ExitRequest& exitRequest) = 0;
 
 protected:
     ExitRequest m_exitRequest;

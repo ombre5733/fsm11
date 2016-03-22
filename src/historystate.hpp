@@ -41,8 +41,8 @@ class ShallowHistoryState : public State<TStateMachine>
     using base_type = State<TStateMachine>;
 
 public:
-    explicit ShallowHistoryState(const char* name,
-                                 base_type* parent = nullptr) noexcept
+    explicit
+    ShallowHistoryState(const char* name, base_type* parent = nullptr) noexcept
         : base_type(name, parent)
     {
         base_type::m_flags |= base_type::ShallowHistory;
@@ -61,8 +61,8 @@ class DeepHistoryState : public State<TStateMachine>
     using base_type = State<TStateMachine>;
 
 public:
-    explicit DeepHistoryState(const char* name,
-                              base_type* parent = nullptr) noexcept
+    explicit
+    DeepHistoryState(const char* name, base_type* parent = nullptr) noexcept
         : base_type(name, parent)
     {
         base_type::m_flags |= base_type::DeepHistory;

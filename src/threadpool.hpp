@@ -98,7 +98,8 @@ class ThreadPool
 
     struct Handle
     {
-        explicit Handle(ThreadPool* pool, std::size_t id);
+        explicit
+        Handle(ThreadPool* pool, std::size_t id);
 
         Handle(const Handle&) = delete;
         Handle& operator=(const Handle&) = delete;
@@ -117,8 +118,9 @@ class ThreadPool
 public:
 #ifdef FSM11_USE_WEOS
     template <typename... TAttributes>
-    explicit ThreadPool(const FSM11STD::thread_attributes& attr,
-                        const TAttributes&... attributes);
+    explicit
+    ThreadPool(const FSM11STD::thread_attributes& attr,
+               const TAttributes&... attributes);
 #else
     //! Constructs a thread pool.
     ThreadPool();
