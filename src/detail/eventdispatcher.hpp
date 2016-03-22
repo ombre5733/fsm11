@@ -681,7 +681,7 @@ public:
                 this->leaveConfiguration();
             };
 
-            derived().invokeCaptureStorageCallback();
+            derived().invokePreTransitionSelectionCallback();
             this->resetHistoryStates();
             this->enterInitialStates();
             this->runToCompletion(true);
@@ -697,7 +697,7 @@ public:
         {
             m_running = false;
             FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
-            derived().invokeCaptureStorageCallback();
+            derived().invokePreTransitionSelectionCallback();
             this->leaveConfiguration();
         }
     }
@@ -748,7 +748,7 @@ private:
             derived().m_eventList.pop_front();
 
             derived().invokeEventDispatchCallback(event);
-            derived().invokeCaptureStorageCallback();
+            derived().invokePreTransitionSelectionCallback();
 
             this->clearTransientStateFlags();
             this->selectTransitions(false, event);
@@ -895,7 +895,7 @@ private:
                     this->leaveConfiguration();
                 };
 
-                derived().invokeCaptureStorageCallback();
+                derived().invokePreTransitionSelectionCallback();
                 this->resetHistoryStates();
                 this->enterInitialStates();
                 this->runToCompletion(true);
@@ -919,7 +919,7 @@ private:
                     auto lock = derived().getLock();
                     m_running = false;
                     FSM11_SCOPE_FAILURE { this->leaveConfiguration(); };
-                    derived().invokeCaptureStorageCallback();
+                    derived().invokePreTransitionSelectionCallback();
                     this->leaveConfiguration();
                     break;
                 }
@@ -937,7 +937,7 @@ private:
                 };
 
                 derived().invokeEventDispatchCallback(event);
-                derived().invokeCaptureStorageCallback();
+                derived().invokePreTransitionSelectionCallback();
 
                 this->clearTransientStateFlags();
                 this->selectTransitions(false, event);

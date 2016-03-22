@@ -103,9 +103,11 @@ public:
     }
 
 protected:
-    mutable FSM11STD::mutex m_mutex; // Non-recursive to avoid mistakes in the application!!!
+    // A mutex for exclusive access during configuration changes. Note that
+    // it is vital that this mutex is non-recursive!
+    mutable FSM11STD::mutex m_mutex;
 
-    //! A mutex to update the state active flags atomically.
+    // A mutex to update the state active flags atomically.
     mutable FSM11STD::mutex m_stateActiveUpdate;
 
     inline

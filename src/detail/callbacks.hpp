@@ -147,6 +147,13 @@ class WithoutConfigurationChangeCallback
 {
 public:
     template <typename TType>
+    void setPreTransitionSelectionCallback(TType&&)
+    {
+        static_assert(!FSM11STD::is_same<TType, TType>::value,
+                      "Configuration change callbacks are disabled");
+    }
+
+    template <typename TType>
     void setConfigurationChangeCallback(TType&&)
     {
         static_assert(!FSM11STD::is_same<TType, TType>::value,
@@ -154,6 +161,11 @@ public:
     }
 
 protected:
+    inline
+    void invokePreTransitionSelectionCallback()
+    {
+    }
+
     inline
     void invokeConfigurationChangeCallback()
     {
@@ -164,12 +176,25 @@ class WithConfigurationChangeCallback
 {
 public:
     template <typename TType>
+    void setPreTransitionSelectionCallback(TType&& callback)
+    {
+        m_preTransitionSelectionCallback = FSM11STD::forward<TType>(callback);
+    }
+
+    template <typename TType>
     void setConfigurationChangeCallback(TType&& callback)
     {
         m_configurationChangeCallback = FSM11STD::forward<TType>(callback);
     }
 
 protected:
+    inline
+    void invokePreTransitionSelectionCallback()
+    {
+        if (m_preTransitionSelectionCallback)
+            m_preTransitionSelectionCallback();
+    }
+
     inline
     void invokeConfigurationChangeCallback()
     {
@@ -178,6 +203,7 @@ protected:
     }
 
 private:
+    FSM11STD::function<void()> m_preTransitionSelectionCallback;
     FSM11STD::function<void()> m_configurationChangeCallback;
 };
 

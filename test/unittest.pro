@@ -41,7 +41,6 @@ SOURCES += \
     ../src/fsm11.cpp \
     main.cpp \
     tst_behavior.cpp \
-    tst_capturestorage.cpp \
     tst_configurationchangecallback.cpp \
     tst_error.cpp \
     tst_event.cpp \

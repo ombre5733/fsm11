@@ -35,7 +35,6 @@
 #include "transition.hpp"
 
 #include "detail/callbacks.hpp"
-#include "detail/capturestorage.hpp"
 #include "detail/eventdispatcher.hpp"
 #include "detail/meta.hpp"
 #include "detail/multithreading.hpp"
@@ -372,7 +371,6 @@ class StateMachineImpl :
         public get_event_callbacks<TOptions>::type,
         public get_state_callbacks<TOptions>::type,
         public get_state_exception_callbacks<TOptions>::type,
-        public get_storage<TOptions>::type,
         public get_threadpool<TOptions>::type,
         public get_transition_conflict_action<TOptions>::type,
         public State<StateMachineImpl<TOptions>>
@@ -387,7 +385,6 @@ public:
 
 private:
     using dispatcher_type = typename get_dispatcher<TOptions>::type;
-    using storage_type = typename get_storage<TOptions>::type;
     using rebound_transition_allocator_t
         = typename transition_allocator_type::
           template rebind<transition_type>::other;
@@ -395,7 +392,6 @@ private:
         = typename get_threadpool<TOptions>::type::internal_thread_pool_type;
 
     friend dispatcher_type;
-    friend storage_type;
 
 public:
     StateMachineImpl()
@@ -751,23 +747,6 @@ public:
     //!
     //! \sa lock()
     void unlock();
-
-
-    //! Loads an element from the storage.
-    //!
-    //! \p T is the type of the \p TIndex-th element in the storage.
-    //!
-    //! \note This function is only available, if a storage has been specified.
-    template <std::size_t TIndex>
-    const T& load() const;
-
-    //! Sets an element in the storage.
-    //!
-    //! Sets the \p TIndex-th element in the storage to the given \p value.
-    //!
-    //! \note This function is only available, if a storage has been specified.
-    template <std::size_t TIndex, typename TType>
-    void store(TType&& value);
 };
 
 #endif // DOXYGEN
