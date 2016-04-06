@@ -401,12 +401,12 @@ public:
     }
 
     template <typename T = void,
-              typename = typename FSM11STD::enable_if<
+              typename = typename std::enable_if<
                              TOptions::threadpool_enable, T>::type>
     explicit
     StateMachineImpl(internal_thread_pool_type&& pool)
         : state_type("(StateMachine)"),
-          m_threadPool(FSM11STD::move(pool))
+          m_threadPool(std::move(pool))
     {
         state_type::m_stateMachine = this;
     }
@@ -468,7 +468,7 @@ public:
     transition_type* operator+=(
             TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>&& t)
     {
-        return add(FSM11STD::move(t));
+        return add(std::move(t));
     }
 
     //! \brief Adds a transition.
@@ -476,7 +476,7 @@ public:
     inline
     transition_type* operator+=(TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>&& t)
     {
-        return add(FSM11STD::move(t));
+        return add(std::move(t));
     }
 
     //! \brief Checks if the state machine is active.
@@ -569,7 +569,7 @@ auto StateMachineImpl<TOptions>::add(
 {
     // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
-    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
+    transition_type* transition = new (mem) transition_type(std::move(t));
     transition->source()->pushBackTransition(transition);
     return transition;
 }
@@ -582,7 +582,7 @@ auto StateMachineImpl<TOptions>::add(
 {
     // TODO: Use a unique_ptr here
     void* mem = m_transitionAllocator.allocate(1);
-    transition_type* transition = new (mem) transition_type(FSM11STD::move(t));
+    transition_type* transition = new (mem) transition_type(std::move(t));
     transition->source()->pushBackTransition(transition);
     return transition;
 }
@@ -610,7 +610,7 @@ template <typename... TStates>
 bool StateMachineImpl<TOptions>::isAnyActive(const state_type& state,
                                              const TStates&... states) const noexcept
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     static_assert(fsm11_detail::all<
                       is_base_of<state_type, TStates>::value...
@@ -628,7 +628,7 @@ template <typename... TStates>
 bool StateMachineImpl<TOptions>::areAllActive(const state_type& state,
                                               const TStates&... states) const noexcept
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     static_assert(fsm11_detail::all<
                       is_base_of<state_type, TStates>::value...

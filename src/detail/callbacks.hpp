@@ -60,14 +60,14 @@ public:
     template <typename TType>
     void setEventDispatchCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Event callbacks are disabled");
     }
 
     template <typename TType>
     void setEventDiscardedCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Event callbacks are disabled");
     }
 
@@ -93,13 +93,13 @@ public:
     template <typename TType>
     void setEventDispatchCallback(TType&& callback)
     {
-        m_eventDispatchCallback = FSM11STD::forward<TType>(callback);
+        m_eventDispatchCallback = std::forward<TType>(callback);
     }
 
     template <typename TType>
     void setEventDiscardedCallback(TType&& callback)
     {
-        m_eventDiscardedCallback = FSM11STD::forward<TType>(callback);
+        m_eventDiscardedCallback = std::forward<TType>(callback);
     }
 
 protected:
@@ -118,8 +118,8 @@ protected:
     }
 
 private:
-    FSM11STD::function<void(event_type)> m_eventDispatchCallback;
-    FSM11STD::function<void(event_type)> m_eventDiscardedCallback;
+    std::function<void(event_type)> m_eventDispatchCallback;
+    std::function<void(event_type)> m_eventDiscardedCallback;
 };
 
 template <bool TEnabled, typename TOptions>
@@ -149,14 +149,14 @@ public:
     template <typename TType>
     void setPreTransitionSelectionCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Configuration change callbacks are disabled");
     }
 
     template <typename TType>
     void setConfigurationChangeCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Configuration change callbacks are disabled");
     }
 
@@ -178,13 +178,13 @@ public:
     template <typename TType>
     void setPreTransitionSelectionCallback(TType&& callback)
     {
-        m_preTransitionSelectionCallback = FSM11STD::forward<TType>(callback);
+        m_preTransitionSelectionCallback = std::forward<TType>(callback);
     }
 
     template <typename TType>
     void setConfigurationChangeCallback(TType&& callback)
     {
-        m_configurationChangeCallback = FSM11STD::forward<TType>(callback);
+        m_configurationChangeCallback = std::forward<TType>(callback);
     }
 
 protected:
@@ -203,14 +203,14 @@ protected:
     }
 
 private:
-    FSM11STD::function<void()> m_preTransitionSelectionCallback;
-    FSM11STD::function<void()> m_configurationChangeCallback;
+    std::function<void()> m_preTransitionSelectionCallback;
+    std::function<void()> m_configurationChangeCallback;
 };
 
 template <typename TOptions>
 struct get_configuration_change_callbacks
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::configuration_change_callbacks_enable,
                      WithConfigurationChangeCallback,
                      WithoutConfigurationChangeCallback>::type;
@@ -229,14 +229,14 @@ public:
     template <typename TType>
     void setStateEntryCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "State callbacks are disabled");
     }
 
     template <typename TType>
     void setStateExitCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "State callbacks are disabled");
     }
 
@@ -261,13 +261,13 @@ public:
     template <typename TType>
     void setStateEntryCallback(TType&& callback)
     {
-        m_stateEntryCallback = FSM11STD::forward<TType>(callback);
+        m_stateEntryCallback = std::forward<TType>(callback);
     }
 
     template <typename TType>
     void setStateExitCallback(TType&& callback)
     {
-        m_stateExitCallback = FSM11STD::forward<TType>(callback);
+        m_stateExitCallback = std::forward<TType>(callback);
     }
 
 protected:
@@ -286,14 +286,14 @@ protected:
     }
 
 private:
-    FSM11STD::function<void(state_type*)> m_stateEntryCallback;
-    FSM11STD::function<void(state_type*)> m_stateExitCallback;
+    std::function<void(state_type*)> m_stateEntryCallback;
+    std::function<void(state_type*)> m_stateExitCallback;
 };
 
 template <typename TOptions>
 struct get_state_callbacks
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::state_callbacks_enable,
                      WithStateCallbacks<StateMachineImpl<TOptions>>,
                      WithoutStateCallbacks<StateMachineImpl<TOptions>>>::type;
@@ -309,7 +309,7 @@ public:
     template <typename TType>
     void setStateExceptionCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "State exception callbacks are disabled");
     }
 
@@ -328,7 +328,7 @@ public:
     template <typename TType>
     void setStateExceptionCallback(TType&& callback)
     {
-        m_stateExceptionCallback = FSM11STD::forward<TType>(callback);
+        m_stateExceptionCallback = std::forward<TType>(callback);
     }
 
 protected:
@@ -336,17 +336,17 @@ protected:
     void invokeStateExceptionCallbackOrThrow()
     {
         if (m_stateExceptionCallback)
-            m_stateExceptionCallback(FSM11STD::current_exception());
+            m_stateExceptionCallback(std::current_exception());
     }
 
 private:
-    FSM11STD::function<void(FSM11STD::exception_ptr)> m_stateExceptionCallback;
+    std::function<void(std::exception_ptr)> m_stateExceptionCallback;
 };
 
 template <typename TOptions>
 struct get_state_exception_callbacks
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::state_exception_callbacks_enable,
                      WithStateExceptionCallbacks<StateMachineImpl<TOptions>>,
                      WithoutStateExceptionCallbacks>::type;
@@ -365,7 +365,7 @@ public:
     template <typename TType>
     void setTransitionConflictCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Transition conflict callbacks are disabled");
     }
 
@@ -391,7 +391,7 @@ public:
     template <typename TType>
     void setTransitionConflictCallback(TType&& callback)
     {
-        m_transitionConflictCallback = FSM11STD::forward<TType>(callback);
+        m_transitionConflictCallback = std::forward<TType>(callback);
     }
 
 protected:
@@ -410,7 +410,7 @@ protected:
     }
 
 private:
-    FSM11STD::function<void(transition_type* transition,
+    std::function<void(transition_type* transition,
                             transition_type* ignoredTransition)>
         m_transitionConflictCallback;
 };
@@ -426,7 +426,7 @@ public:
     template <typename TType>
     void setTransitionConflictCallback(TType&&)
     {
-        static_assert(!FSM11STD::is_same<TType, TType>::value,
+        static_assert(!std::is_same<TType, TType>::value,
                       "Transition conflict callbacks are disabled");
     }
 
@@ -448,10 +448,10 @@ protected:
 template <typename TOptions>
 struct get_transition_conflict_action
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::transition_conflict_policy == Ignore,
                      WithoutTransitionConflictAction<StateMachineImpl<TOptions>>,
-                     typename FSM11STD::conditional<
+                     typename std::conditional<
                          TOptions::transition_conflict_policy == InvokeCallback,
                          WithTransitionConflictCallback<StateMachineImpl<TOptions>>,
                          WithTransitionConflictException<StateMachineImpl<TOptions>>>::type

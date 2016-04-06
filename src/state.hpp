@@ -630,8 +630,8 @@ private:
     {
         using difference_type = std::ptrdiff_t;
         using value_type = T;
-        using pointer = typename FSM11STD::add_pointer<T>::type;
-        using reference = typename FSM11STD::add_lvalue_reference<T>::type;
+        using pointer = typename std::add_pointer<T>::type;
+        using reference = typename std::add_lvalue_reference<T>::type;
         using iterator_category = std::forward_iterator_tag;
 
 
@@ -698,8 +698,8 @@ public:
 
         //! Constructs a const-iterator from a non-const iterator.
         template <typename TTState,
-                  typename = typename FSM11STD::enable_if<
-                      !FSM11STD::is_const<TTState>::value>::type>
+                  typename = typename std::enable_if<
+                      !std::is_const<TTState>::value>::type>
         PreOrderIterator(const PreOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current),
               m_skipChildren(false)
@@ -810,7 +810,7 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend PreOrderIterator<typename FSM11STD::add_const<TState>::type>;
+        friend PreOrderIterator<typename std::add_const<TState>::type>;
     };
 
     //! \brief A view for pre-order iteration.
@@ -857,8 +857,8 @@ public:
 
         //! Constructs a const-iterator from a non-const iterator.
         template <typename TTState,
-                  typename = typename FSM11STD::enable_if<
-                      !FSM11STD::is_const<TTState>::value>::type>
+                  typename = typename std::enable_if<
+                      !std::is_const<TTState>::value>::type>
         PostOrderIterator(const PostOrderIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
@@ -897,7 +897,7 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend PostOrderIterator<typename FSM11STD::add_const<TState>::type>;
+        friend PostOrderIterator<typename std::add_const<TState>::type>;
     };
 
     //! \brief A view for post-order iteration.
@@ -941,8 +941,8 @@ public:
 
         //! Constructs a const-iterator from a non-const one.
         template <typename TTState,
-                  typename = typename FSM11STD::enable_if<
-                      !FSM11STD::is_const<TTState>::value>::type>
+                  typename = typename std::enable_if<
+                      !std::is_const<TTState>::value>::type>
         SiblingIterator(const SiblingIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
@@ -970,7 +970,7 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend SiblingIterator<typename FSM11STD::add_const<TState>::type>;
+        friend SiblingIterator<typename std::add_const<TState>::type>;
     };
 
     //! \brief An iterator over atomic states.
@@ -988,8 +988,8 @@ public:
 
         //! Constructs a const-iterator from a non-const iterator.
         template <typename TTState,
-                  typename = typename FSM11STD::enable_if<
-                      !FSM11STD::is_const<TTState>::value>::type>
+                  typename = typename std::enable_if<
+                      !std::is_const<TTState>::value>::type>
         AtomicIterator(const AtomicIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {
@@ -1028,7 +1028,7 @@ public:
 
         friend class State;
         // Befriend the non-const version with the const version.
-        friend AtomicIterator<typename FSM11STD::add_const<TState>::type>;
+        friend AtomicIterator<typename std::add_const<TState>::type>;
     };
 
     // -------------------------------------------------------------------------
@@ -1078,12 +1078,12 @@ public:
     //! \brief An iterator over a state's transitions.
     template <bool TIsConst>
     class TransitionIterator : public IteratorBase<
-                                        typename FSM11STD::conditional<TIsConst,
+                                        typename std::conditional<TIsConst,
                                         const transition_type,
                                         transition_type>::type,
                                         TransitionIterator<TIsConst>>
     {
-        using base_type = IteratorBase<typename FSM11STD::conditional<TIsConst,
+        using base_type = IteratorBase<typename std::conditional<TIsConst,
                                        const transition_type,
                                        transition_type>::type,
                                        TransitionIterator<TIsConst>>;
@@ -1096,7 +1096,7 @@ public:
         //! Constructs a const-iterator from a non-const one.
         /*
         template <typename TTState,
-        typename = FSM11STD::enable_if_t<!FSM11STD::is_const<TTState>::value>>
+        typename = std::enable_if_t<!std::is_const<TTState>::value>>
         TransitionIterator(const TransitionIterator<TTState>& other) noexcept
             : m_current(other.m_current)
         {

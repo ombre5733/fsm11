@@ -34,7 +34,7 @@
 #include <utility>
 #endif // FSM11_USE_WEOS
 
-using namespace FSM11STD;
+using namespace std;
 
 namespace fsm11
 {

@@ -46,32 +46,32 @@ enum class ErrorCode
     ThreadPoolUnderflow = 3
 };
 
-const FSM11STD::error_category& fsm11_category() noexcept;
+const std::error_category& fsm11_category() noexcept;
 
 inline
-FSM11STD::error_code make_error_code(ErrorCode error) noexcept
+std::error_code make_error_code(ErrorCode error) noexcept
 {
-    return FSM11STD::error_code(static_cast<int>(error), fsm11_category());
+    return std::error_code(static_cast<int>(error), fsm11_category());
 }
 
 } // namespace fsm11
 
-namespace FSM11STD
+namespace std
 {
 
 template <>
 struct is_error_code_enum<fsm11::ErrorCode> : public true_type {};
 
-} // namespace FSM11STD
+} // namespace std
 
 namespace fsm11
 {
 
-class Error : public FSM11STD::system_error
+class Error : public std::system_error
 {
 public:
     Error(ErrorCode ec)
-        : FSM11STD::system_error(make_error_code(ec))
+        : std::system_error(make_error_code(ec))
     {
     }
 };

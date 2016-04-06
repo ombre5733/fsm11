@@ -54,10 +54,8 @@
 // ----=====================================================================----
 
 #ifdef FSM11_USE_WEOS
-    #define FSM11STD   weos
     #define FSM11_EXCEPTION(x)   WEOS_EXCEPTION(x)
 #else
-    #define FSM11STD   std
     #define FSM11_EXCEPTION(x)   x
 #endif // FSM11_USE_WEOS
 

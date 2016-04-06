@@ -50,21 +50,21 @@ public:
     template <typename T = void>
     void lock()
     {
-        static_assert(!FSM11STD::is_same<T, T>::value,
+        static_assert(!std::is_same<T, T>::value,
                       "Multithreading support is not enabled");
     }
 
     template <typename T = void>
     void try_lock()
     {
-        static_assert(!FSM11STD::is_same<T, T>::value,
+        static_assert(!std::is_same<T, T>::value,
                       "Multithreading support is not enabled");
     }
 
     template <typename T = void>
     void unlock()
     {
-        static_assert(!FSM11STD::is_same<T, T>::value,
+        static_assert(!std::is_same<T, T>::value,
                       "Multithreading support is not enabled");
     }
 
@@ -105,15 +105,15 @@ public:
 protected:
     // A mutex for exclusive access during configuration changes. Note that
     // it is vital that this mutex is non-recursive!
-    mutable FSM11STD::mutex m_mutex;
+    mutable std::mutex m_mutex;
 
     // A mutex to update the state active flags atomically.
-    mutable FSM11STD::mutex m_stateActiveUpdate;
+    mutable std::mutex m_stateActiveUpdate;
 
     inline
-    FSM11STD::unique_lock<FSM11STD::mutex> getLock() const
+    std::unique_lock<std::mutex> getLock() const
     {
-        return FSM11STD::unique_lock<FSM11STD::mutex>(m_mutex);
+        return std::unique_lock<std::mutex>(m_mutex);
     }
 
     void acquireStateActiveFlags() const
@@ -130,7 +130,7 @@ protected:
 template <typename TOptions>
 struct get_multithreading
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::multithreading_enable,
                      WithMultithreading,
                      WithoutMultithreading>::type;

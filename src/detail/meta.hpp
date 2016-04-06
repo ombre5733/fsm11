@@ -44,14 +44,14 @@ namespace fsm11_detail
 {
 
 template <bool... TValues>
-struct all : FSM11STD::true_type
+struct all : std::true_type
 {
 };
 
 template <bool THead, bool... TTail>
-struct all<THead, TTail...> : FSM11STD::conditional<!THead,
-                                                    FSM11STD::false_type,
-                                                    all<TTail...>>::type
+struct all<THead, TTail...> : std::conditional<!THead,
+                                               std::false_type,
+                                               all<TTail...>>::type
 {
 };
 

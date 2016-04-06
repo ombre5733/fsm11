@@ -56,7 +56,7 @@ class FunctionState : public State<TStateMachine>
 
 public:
     using event_type = typename options::event_type;
-    using function_type = FSM11STD::function<void(event_type)>;
+    using function_type = std::function<void(event_type)>;
     using type = FunctionState<TStateMachine>;
 
     explicit
@@ -70,8 +70,8 @@ public:
                   TEntry&& entryFn, TExit&& exitFn,
                   base_type* parent = nullptr)
         : base_type(name, parent),
-          m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
-          m_exitFunction(FSM11STD::forward<TExit>(exitFn))
+          m_entryFunction(std::forward<TEntry>(entryFn)),
+          m_exitFunction(std::forward<TExit>(exitFn))
     {
     }
 
@@ -80,7 +80,7 @@ public:
                   entryFunction_t, TEntry&& fn,
                   base_type* parent = nullptr)
         : base_type(name, parent),
-          m_entryFunction(FSM11STD::forward<TEntry>(fn))
+          m_entryFunction(std::forward<TEntry>(fn))
     {
     }
 
@@ -89,7 +89,7 @@ public:
                   exitFunction_t, TExit&& fn,
                   base_type* parent = nullptr)
         : base_type(name, parent),
-          m_exitFunction(FSM11STD::forward<TExit>(fn))
+          m_exitFunction(std::forward<TExit>(fn))
     {
     }
 
@@ -99,8 +99,8 @@ public:
                   exitFunction_t, TExit&& exitFn,
                   base_type* parent = nullptr)
         : base_type(name, parent),
-          m_entryFunction(FSM11STD::forward<TEntry>(entryFn)),
-          m_exitFunction(FSM11STD::forward<TExit>(exitFn))
+          m_entryFunction(std::forward<TEntry>(entryFn)),
+          m_exitFunction(std::forward<TExit>(exitFn))
     {
     }
 
@@ -119,7 +119,7 @@ public:
     template <typename T>
     void setEntryFunction(T&& fn)
     {
-        m_entryFunction = FSM11STD::forward<T>(fn);
+        m_entryFunction = std::forward<T>(fn);
     }
 
     //! Returns the exit function.
@@ -134,7 +134,7 @@ public:
     template <typename T>
     void setExitFunction(T&& fn)
     {
-        m_exitFunction = FSM11STD::forward<T>(fn);
+        m_exitFunction = std::forward<T>(fn);
     }
 
     virtual

@@ -59,9 +59,9 @@ namespace fsm11_detail
 template <typename TState, typename TEvent, typename TGuard, typename TAction>
 class TypeSourceEventGuardActionTarget
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
@@ -70,9 +70,9 @@ public:
                                      bool isExternal = true) noexcept
         : m_source(source),
           m_target(target),
-          m_event(FSM11STD::forward<TEvent>(event)),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action)),
+          m_event(std::forward<TEvent>(event)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action)),
           m_isExternal(isExternal)
     {
     }
@@ -81,9 +81,9 @@ public:
     TypeSourceEventGuardActionTarget(TypeSourceEventGuardActionTarget&& other) noexcept
         : m_source(other.m_source),
           m_target(other.m_target),
-          m_event(FSM11STD::forward<TEvent>(other.m_event)),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action)),
+          m_event(std::forward<TEvent>(other.m_event)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action)),
           m_isExternal(other.m_isExternal)
     {
     }
@@ -106,18 +106,18 @@ private:
 template <typename TState, typename TEvent, typename TGuard, typename TAction>
 class TypeSourceEventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
     TypeSourceEventGuardAction(TState* source, TEvent event, TGuard guard,
                                TAction action, bool isExternal) noexcept
         : m_source(source),
-          m_event(FSM11STD::forward<TEvent>(event)),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action)),
+          m_event(std::forward<TEvent>(event)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action)),
           m_isExternal(isExternal)
     {
     }
@@ -125,9 +125,9 @@ public:
     constexpr
     TypeSourceEventGuardAction(TypeSourceEventGuardAction&& other) noexcept
         : m_source(other.m_source),
-          m_event(FSM11STD::forward<TEvent>(other.m_event)),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action)),
+          m_event(std::forward<TEvent>(other.m_event)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action)),
           m_isExternal(other.m_isExternal)
     {
     }
@@ -141,9 +141,9 @@ public:
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
                     m_source, &target,
-                    FSM11STD::forward<TEvent>(m_event),
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action),
+                    std::forward<TEvent>(m_event),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action),
                     m_isExternal);
     }
 
@@ -153,9 +153,9 @@ public:
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
                     m_source, nullptr,
-                    FSM11STD::forward<TEvent>(m_event),
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action),
+                    std::forward<TEvent>(m_event),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action),
                     m_isExternal);
     }
 
@@ -170,27 +170,27 @@ private:
 template <typename TState, typename TEvent, typename TGuard, typename TAction>
 class SourceEventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
     SourceEventGuardAction(TState* source, TEvent event, TGuard guard,
                            TAction action) noexcept
         : m_source(source),
-          m_event(FSM11STD::forward<TEvent>(event)),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action))
+          m_event(std::forward<TEvent>(event)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
     {
     }
 
     constexpr
     SourceEventGuardAction(SourceEventGuardAction&& other) noexcept
         : m_source(other.m_source),
-          m_event(FSM11STD::forward<TEvent>(other.m_event)),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action))
+          m_event(std::forward<TEvent>(other.m_event)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action))
     {
     }
 
@@ -203,9 +203,9 @@ public:
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
                     m_source, &target,
-                    FSM11STD::forward<TEvent>(m_event),
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action));
+                    std::forward<TEvent>(m_event),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
     }
 
     constexpr
@@ -214,9 +214,9 @@ public:
     {
         return TypeSourceEventGuardActionTarget<TState, TEvent, TGuard, TAction>(
                     m_source, nullptr,
-                    FSM11STD::forward<TEvent>(m_event),
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action));
+                    std::forward<TEvent>(m_event),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
     }
 
     TState* m_source;
@@ -228,23 +228,23 @@ public:
 template <typename TEvent, typename TGuard, typename TAction>
 struct EventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
     constexpr
     EventGuardAction(TEvent event, TGuard guard, TAction action) noexcept
-        : m_event(FSM11STD::forward<TEvent>(event)),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action))
+        : m_event(std::forward<TEvent>(event)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
     {
     }
 
     constexpr
     EventGuardAction(EventGuardAction&& other) noexcept
-        : m_event(FSM11STD::forward<TEvent>(other.m_event)),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action))
+        : m_event(std::forward<TEvent>(other.m_event)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action))
     {
     }
 
@@ -259,20 +259,20 @@ struct EventGuardAction
 template <typename TEvent, typename TGuard>
 struct EventGuard
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
 
     constexpr
     EventGuard(TEvent event, TGuard guard) noexcept
-        : m_event(FSM11STD::forward<TEvent>(event)),
-          m_guard(FSM11STD::forward<TGuard>(guard))
+        : m_event(std::forward<TEvent>(event)),
+          m_guard(std::forward<TGuard>(guard))
     {
     }
 
     constexpr
     EventGuard(EventGuard&& other) noexcept
-        : m_event(FSM11STD::forward<TEvent>(other.m_event)),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard))
+        : m_event(std::forward<TEvent>(other.m_event)),
+          m_guard(std::forward<TGuard>(other.m_guard))
     {
     }
 
@@ -284,9 +284,9 @@ struct EventGuard
     EventGuardAction<TEvent, TGuard, TAction&&> operator/(TAction&& action) const noexcept
     {
         return EventGuardAction<TEvent, TGuard, TAction&&>(
-                   FSM11STD::forward<TEvent>(m_event),
-                   FSM11STD::forward<TGuard>(m_guard),
-                   FSM11STD::forward<TAction>(action));
+                   std::forward<TEvent>(m_event),
+                   std::forward<TGuard>(m_guard),
+                   std::forward<TAction>(action));
     }
 
     TEvent m_event;
@@ -296,17 +296,17 @@ struct EventGuard
 template <typename TEvent>
 struct Event
 {
-    static_assert(FSM11STD::is_reference<TEvent>::value, "TEvent must be a reference");
+    static_assert(std::is_reference<TEvent>::value, "TEvent must be a reference");
 
     constexpr
     Event(TEvent event) noexcept
-        : m_event(FSM11STD::forward<TEvent>(event))
+        : m_event(std::forward<TEvent>(event))
     {
     }
 
     constexpr
     Event(Event&& other) noexcept
-        : m_event(FSM11STD::forward<TEvent>(other.m_event))
+        : m_event(std::forward<TEvent>(other.m_event))
     {
     }
 
@@ -317,27 +317,27 @@ struct Event
     constexpr
     EventGuard<TEvent, TGuard&&> operator[](TGuard&& guard) const noexcept
     {
-        return EventGuard<TEvent, TGuard&&>(FSM11STD::forward<TEvent>(m_event),
-                                            FSM11STD::forward<TGuard>(guard));
+        return EventGuard<TEvent, TGuard&&>(std::forward<TEvent>(m_event),
+                                            std::forward<TGuard>(guard));
     }
 
     template <typename TGuard>
     constexpr
     EventGuard<TEvent, TGuard&&> operator()(TGuard&& guard) const noexcept
     {
-        return EventGuard<TEvent, TGuard&&>(FSM11STD::forward<TEvent>(m_event),
-                                            FSM11STD::forward<TGuard>(guard));
+        return EventGuard<TEvent, TGuard&&>(std::forward<TEvent>(m_event),
+                                            std::forward<TGuard>(guard));
     }
 
     template <typename TAction>
     constexpr
-    EventGuardAction<TEvent, FSM11STD::nullptr_t&&, TAction&&> operator/(
+    EventGuardAction<TEvent, std::nullptr_t&&, TAction&&> operator/(
             TAction&& action) const noexcept
     {
-        return EventGuardAction<TEvent, FSM11STD::nullptr_t&&, TAction&&>(
-                   FSM11STD::forward<TEvent>(m_event),
+        return EventGuardAction<TEvent, std::nullptr_t&&, TAction&&>(
+                   std::forward<TEvent>(m_event),
                    nullptr,
-                   FSM11STD::forward<TAction>(action));
+                   std::forward<TAction>(action));
     }
 
     TEvent m_event;
@@ -346,22 +346,22 @@ struct Event
 template <typename TSm, typename TEvent>
 constexpr
 auto operator+(State<TSm>& source, Event<TEvent>&& rhs) noexcept
-    -> SourceEventGuardAction<State<TSm>, TEvent, FSM11STD::nullptr_t&&, FSM11STD::nullptr_t&&>
+    -> SourceEventGuardAction<State<TSm>, TEvent, std::nullptr_t&&, std::nullptr_t&&>
 {
-    return SourceEventGuardAction<State<TSm>, TEvent, FSM11STD::nullptr_t&&, FSM11STD::nullptr_t&&>(
+    return SourceEventGuardAction<State<TSm>, TEvent, std::nullptr_t&&, std::nullptr_t&&>(
                 &source,
-                FSM11STD::forward<TEvent>(rhs.m_event), nullptr, nullptr);
+                std::forward<TEvent>(rhs.m_event), nullptr, nullptr);
 }
 
 template <typename TSm, typename TEvent, typename TGuard>
 constexpr
 auto operator+(State<TSm>& source, EventGuard<TEvent, TGuard>&& rhs) noexcept
-    -> SourceEventGuardAction<State<TSm>, TEvent, TGuard, FSM11STD::nullptr_t&&>
+    -> SourceEventGuardAction<State<TSm>, TEvent, TGuard, std::nullptr_t&&>
 {
-    return SourceEventGuardAction<State<TSm>, TEvent, TGuard, FSM11STD::nullptr_t&&>(
+    return SourceEventGuardAction<State<TSm>, TEvent, TGuard, std::nullptr_t&&>(
                 &source,
-                FSM11STD::forward<TEvent>(rhs.m_event),
-                FSM11STD::forward<TGuard>(rhs.m_guard), nullptr);
+                std::forward<TEvent>(rhs.m_event),
+                std::forward<TGuard>(rhs.m_guard), nullptr);
 }
 
 template <typename TSm, typename TEvent, typename TGuard, typename TAction>
@@ -371,9 +371,9 @@ auto operator+(State<TSm>& source, EventGuardAction<TEvent, TGuard, TAction>&& r
 {
     return SourceEventGuardAction<State<TSm>, TEvent, TGuard, TAction>(
                 &source,
-                FSM11STD::forward<TEvent>(rhs.m_event),
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action));
+                std::forward<TEvent>(rhs.m_event),
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action));
 }
 
 template <typename TSm, typename TEvent, typename TGuard, typename TAction>
@@ -383,9 +383,9 @@ auto operator>(internal_t, SourceEventGuardAction<State<TSm>, TEvent, TGuard, TA
 {
     return TypeSourceEventGuardAction<State<TSm>, TEvent, TGuard, TAction>(
                 rhs.m_source,
-                FSM11STD::forward<TEvent>(rhs.m_event),
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action),
+                std::forward<TEvent>(rhs.m_event),
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action),
                 false);
 }
 
@@ -396,9 +396,9 @@ auto operator>(external_t, SourceEventGuardAction<State<TSm>, TEvent, TGuard, TA
 {
     return TypeSourceEventGuardAction<State<TSm>, TEvent, TGuard, TAction>(
                 rhs.m_source,
-                FSM11STD::forward<TEvent>(rhs.m_event),
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action),
+                std::forward<TEvent>(rhs.m_event),
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action),
                 true);
 }
 
@@ -409,8 +409,8 @@ auto operator>(external_t, SourceEventGuardAction<State<TSm>, TEvent, TGuard, TA
 template <typename TState, typename TGuard, typename TAction>
 class TypeSourceNoEventGuardActionTarget
 {
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
@@ -419,8 +419,8 @@ public:
                                        bool isExternal = true) noexcept
         : m_source(source),
           m_target(target),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action)),
           m_isExternal(isExternal)
     {
     }
@@ -429,8 +429,8 @@ public:
     TypeSourceNoEventGuardActionTarget(TypeSourceNoEventGuardActionTarget&& other) noexcept
         : m_source(other.m_source),
           m_target(other.m_target),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action)),
           m_isExternal(other.m_isExternal)
     {
     }
@@ -453,16 +453,16 @@ private:
 template <typename TState, typename TGuard, typename TAction>
 class TypeSourceNoEventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
     TypeSourceNoEventGuardAction(TState* source, TGuard guard,
                                  TAction action, bool isExternal) noexcept
         : m_source(source),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action)),
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action)),
           m_isExternal(isExternal)
     {
     }
@@ -470,8 +470,8 @@ public:
     constexpr
     TypeSourceNoEventGuardAction(TypeSourceNoEventGuardAction&& other) noexcept
         : m_source(other.m_source),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action)),
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action)),
           m_isExternal(other.m_isExternal)
     {
     }
@@ -485,8 +485,8 @@ public:
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
                     m_source, &target,
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action),
                     m_isExternal);
     }
 
@@ -496,8 +496,8 @@ public:
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
                     m_source, nullptr,
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action),
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action),
                     m_isExternal);
     }
 
@@ -511,23 +511,23 @@ private:
 template <typename TState, typename TGuard, typename TAction>
 class SourceNoEventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
 public:
     constexpr
     SourceNoEventGuardAction(TState* source, TGuard guard, TAction action) noexcept
         : m_source(source),
-          m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action))
+          m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
     {
     }
 
     constexpr
     SourceNoEventGuardAction(SourceNoEventGuardAction&& other) noexcept
         : m_source(other.m_source),
-          m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action))
+          m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action))
     {
     }
 
@@ -540,8 +540,8 @@ public:
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
                     m_source, &target,
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action));
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
     }
 
     constexpr
@@ -550,8 +550,8 @@ public:
     {
         return TypeSourceNoEventGuardActionTarget<TState, TGuard, TAction>(
                     m_source, nullptr,
-                    FSM11STD::forward<TGuard>(m_guard),
-                    FSM11STD::forward<TAction>(m_action));
+                    std::forward<TGuard>(m_guard),
+                    std::forward<TAction>(m_action));
     }
 
     TState* m_source;
@@ -562,20 +562,20 @@ public:
 template <typename TGuard, typename TAction>
 struct NoEventGuardAction
 {
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
-    static_assert(FSM11STD::is_reference<TAction>::value, "TAction must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TAction>::value, "TAction must be a reference");
 
     constexpr
     NoEventGuardAction(TGuard guard, TAction action) noexcept
-        : m_guard(FSM11STD::forward<TGuard>(guard)),
-          m_action(FSM11STD::forward<TAction>(action))
+        : m_guard(std::forward<TGuard>(guard)),
+          m_action(std::forward<TAction>(action))
     {
     }
 
     constexpr
     NoEventGuardAction(NoEventGuardAction&& other) noexcept
-        : m_guard(FSM11STD::forward<TGuard>(other.m_guard)),
-          m_action(FSM11STD::forward<TAction>(other.m_action))
+        : m_guard(std::forward<TGuard>(other.m_guard)),
+          m_action(std::forward<TAction>(other.m_action))
     {
     }
 
@@ -589,17 +589,17 @@ struct NoEventGuardAction
 template <typename TGuard>
 struct NoEventGuard
 {
-    static_assert(FSM11STD::is_reference<TGuard>::value, "TGuard must be a reference");
+    static_assert(std::is_reference<TGuard>::value, "TGuard must be a reference");
 
     constexpr
     NoEventGuard(TGuard guard) noexcept
-        : m_guard(FSM11STD::forward<TGuard>(guard))
+        : m_guard(std::forward<TGuard>(guard))
     {
     }
 
     constexpr
     NoEventGuard(NoEventGuard&& other) noexcept
-        : m_guard(FSM11STD::forward<TGuard>(other.m_guard))
+        : m_guard(std::forward<TGuard>(other.m_guard))
     {
     }
 
@@ -611,8 +611,8 @@ struct NoEventGuard
     NoEventGuardAction<TGuard, TAction&&> operator/(TAction&& action) const noexcept
     {
         return NoEventGuardAction<TGuard, TAction&&>(
-                   FSM11STD::forward<TGuard>(m_guard),
-                   FSM11STD::forward<TAction>(action));
+                   std::forward<TGuard>(m_guard),
+                   std::forward<TAction>(action));
     }
 
     TGuard m_guard;
@@ -625,44 +625,44 @@ public:
     constexpr
     NoEventGuard<TGuard&&> operator[](TGuard&& guard) const noexcept
     {
-        return NoEventGuard<TGuard&&>(FSM11STD::forward<TGuard>(guard));
+        return NoEventGuard<TGuard&&>(std::forward<TGuard>(guard));
     }
 
     template <typename TGuard>
     constexpr
     NoEventGuard<TGuard&&> operator()(TGuard&& guard) const noexcept
     {
-        return NoEventGuard<TGuard&&>(FSM11STD::forward<TGuard>(guard));
+        return NoEventGuard<TGuard&&>(std::forward<TGuard>(guard));
     }
 
     template <typename TAction>
     constexpr
-    NoEventGuardAction<FSM11STD::nullptr_t&&, TAction&&> operator/(
+    NoEventGuardAction<std::nullptr_t&&, TAction&&> operator/(
             TAction&& action) const noexcept
     {
-        return NoEventGuardAction<FSM11STD::nullptr_t&&, TAction&&>(
+        return NoEventGuardAction<std::nullptr_t&&, TAction&&>(
                    nullptr,
-                   FSM11STD::forward<TAction>(action));
+                   std::forward<TAction>(action));
     }
 };
 
 template <typename TSm>
 constexpr
 auto operator+(State<TSm>& source, NoEvent) noexcept
-    -> SourceNoEventGuardAction<State<TSm>, FSM11STD::nullptr_t&&, FSM11STD::nullptr_t&&>
+    -> SourceNoEventGuardAction<State<TSm>, std::nullptr_t&&, std::nullptr_t&&>
 {
-    return SourceNoEventGuardAction<State<TSm>, FSM11STD::nullptr_t&&, FSM11STD::nullptr_t&&>(
+    return SourceNoEventGuardAction<State<TSm>, std::nullptr_t&&, std::nullptr_t&&>(
                 &source, nullptr, nullptr);
 }
 
 template <typename TSm, typename TGuard>
 constexpr
 auto operator+(State<TSm>& source, NoEventGuard<TGuard>&& rhs) noexcept
-    -> SourceNoEventGuardAction<State<TSm>, TGuard, FSM11STD::nullptr_t&&>
+    -> SourceNoEventGuardAction<State<TSm>, TGuard, std::nullptr_t&&>
 {
-    return SourceNoEventGuardAction<State<TSm>, TGuard, FSM11STD::nullptr_t&&>(
+    return SourceNoEventGuardAction<State<TSm>, TGuard, std::nullptr_t&&>(
                 &source,
-                FSM11STD::forward<TGuard>(rhs.m_guard), nullptr);
+                std::forward<TGuard>(rhs.m_guard), nullptr);
 }
 
 template <typename TSm, typename TGuard, typename TAction>
@@ -672,8 +672,8 @@ auto operator+(State<TSm>& source, NoEventGuardAction<TGuard, TAction>&& rhs) no
 {
     return SourceNoEventGuardAction<State<TSm>, TGuard, TAction>(
                 &source,
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action));
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action));
 }
 
 template <typename TSm, typename TGuard, typename TAction>
@@ -683,8 +683,8 @@ auto operator>(internal_t, SourceNoEventGuardAction<State<TSm>, TGuard, TAction>
 {
     return TypeSourceNoEventGuardAction<State<TSm>, TGuard, TAction>(
                 rhs.m_source,
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action),
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action),
                 false);
 }
 
@@ -695,8 +695,8 @@ auto operator>(external_t, SourceNoEventGuardAction<State<TSm>, TGuard, TAction>
 {
     return TypeSourceNoEventGuardAction<State<TSm>, TGuard, TAction>(
                 rhs.m_source,
-                FSM11STD::forward<TGuard>(rhs.m_guard),
-                FSM11STD::forward<TAction>(rhs.m_action),
+                std::forward<TGuard>(rhs.m_guard),
+                std::forward<TAction>(rhs.m_action),
                 true);
 }
 
@@ -715,8 +715,8 @@ class Transition
 public:
     using state_type = State<TStateMachine>;
     using event_type = typename options::event_type;
-    using action_type = FSM11STD::function<void(event_type)>;
-    using guard_type = FSM11STD::function<bool(event_type)>;
+    using action_type = std::function<void(event_type)>;
+    using guard_type = std::function<bool(event_type)>;
 
     //! \brief Creates a transition.
     //!
@@ -730,9 +730,9 @@ public:
           m_target(rhs.m_target),
           m_nextInSourceState{nullptr},
           m_nextInEnabledSet{nullptr},
-          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
-          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
-          m_event{FSM11STD::forward<TEvent>(rhs.m_event)},
+          m_guard{std::forward<TGuard>(rhs.m_guard)},
+          m_action{std::forward<TAction>(rhs.m_action)},
+          m_event{std::forward<TEvent>(rhs.m_event)},
           m_eventless(false),
           m_isExternal(rhs.m_isExternal)
     {
@@ -749,8 +749,8 @@ public:
           m_target(rhs.m_target),
           m_nextInSourceState{nullptr},
           m_nextInEnabledSet{nullptr},
-          m_guard{FSM11STD::forward<TGuard>(rhs.m_guard)},
-          m_action{FSM11STD::forward<TAction>(rhs.m_action)},
+          m_guard{std::forward<TGuard>(rhs.m_guard)},
+          m_action{std::forward<TAction>(rhs.m_action)},
           m_event(),
           m_eventless(true),
           m_isExternal(rhs.m_isExternal)
@@ -855,7 +855,7 @@ template <typename TEvent>
 inline
 fsm11_detail::Event<TEvent&&> event(TEvent&& ev) noexcept
 {
-    return fsm11_detail::Event<TEvent&&>(FSM11STD::forward<TEvent>(ev));
+    return fsm11_detail::Event<TEvent&&>(std::forward<TEvent>(ev));
 }
 
 //! A tag to create eventless transitions.

@@ -58,7 +58,7 @@ public:
     //! Waits for an exit request.
     void wait()
     {
-        FSM11STD::unique_lock<FSM11STD::mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         m_cv.wait(lock, [&] { return m_requested; });
     }
 
@@ -66,9 +66,9 @@ public:
     //!
     //! Waits for an exit request or until the \p timeout is expired.
     template <typename TRep, typename TPeriod>
-    bool waitFor(const FSM11STD::chrono::duration<TRep, TPeriod>& timeout)
+    bool waitFor(const std::chrono::duration<TRep, TPeriod>& timeout)
     {
-        FSM11STD::unique_lock<FSM11STD::mutex> lock(m_mutex);
+        std::unique_lock<std::mutex> lock(m_mutex);
         return m_cv.wait_for(lock, timeout, [&] { return m_requested; });
     }
 
@@ -78,13 +78,13 @@ public:
     explicit
     operator bool() const
     {
-        FSM11STD::lock_guard<FSM11STD::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_mutex);
         return m_requested;
     }
 
 private:
-    mutable FSM11STD::mutex m_mutex;
-    FSM11STD::condition_variable m_cv;
+    mutable std::mutex m_mutex;
+    std::condition_variable m_cv;
     bool m_requested;
 
 

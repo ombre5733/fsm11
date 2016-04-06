@@ -58,8 +58,8 @@ class ThreadedFunctionState : public FunctionState<TStateMachine>
 
 public:
     using event_type = typename options::event_type;
-    using function_type = FSM11STD::function<void(event_type)>;
-    using invoke_function_type = FSM11STD::function<void(ExitRequest& exitRequest)>;
+    using function_type = std::function<void(event_type)>;
+    using invoke_function_type = std::function<void(ExitRequest& exitRequest)>;
     using type = ThreadedFunctionState<TStateMachine>;
 
     explicit
@@ -73,10 +73,10 @@ public:
                           TEntry&& entryFn, TExit&& exitFn, TInvoke&& invokeFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    FSM11STD::forward<TEntry>(entryFn),
-                    FSM11STD::forward<TEntry>(exitFn),
+                    std::forward<TEntry>(entryFn),
+                    std::forward<TEntry>(exitFn),
                     parent),
-          m_invokeFunction(FSM11STD::forward<TExit>(invokeFn))
+          m_invokeFunction(std::forward<TExit>(invokeFn))
     {
     }
 
@@ -85,7 +85,7 @@ public:
                           entryFunction_t, TEntry&& entryFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    FSM11STD::forward<TEntry>(entryFn), nullptr,
+                    std::forward<TEntry>(entryFn), nullptr,
                     parent)
     {
     }
@@ -95,7 +95,7 @@ public:
                           exitFunction_t, TExit&& exitFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    nullptr, FSM11STD::forward<TExit>(exitFn),
+                    nullptr, std::forward<TExit>(exitFn),
                     parent)
     {
     }
@@ -105,7 +105,7 @@ public:
                           invokeFunction_t, TInvoke&& invokeFn,
                           state_type* parent = nullptr)
         : base_type(name, parent),
-          m_invokeFunction(FSM11STD::forward<TInvoke>(invokeFn))
+          m_invokeFunction(std::forward<TInvoke>(invokeFn))
     {
     }
 
@@ -115,8 +115,8 @@ public:
                           exitFunction_t, TExit&& exitFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    FSM11STD::forward<TEntry>(entryFn),
-                    FSM11STD::forward<TEntry>(exitFn),
+                    std::forward<TEntry>(entryFn),
+                    std::forward<TEntry>(exitFn),
                     parent)
     {
     }
@@ -127,9 +127,9 @@ public:
                           invokeFunction_t, TInvoke&& invokeFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    FSM11STD::forward<TEntry>(entryFn), nullptr,
+                    std::forward<TEntry>(entryFn), nullptr,
                     parent),
-          m_invokeFunction(FSM11STD::forward<TInvoke>(invokeFn))
+          m_invokeFunction(std::forward<TInvoke>(invokeFn))
     {
     }
 
@@ -139,9 +139,9 @@ public:
                           invokeFunction_t, TInvoke&& invokeFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    nullptr, FSM11STD::forward<TExit>(exitFn),
+                    nullptr, std::forward<TExit>(exitFn),
                     parent),
-          m_invokeFunction(FSM11STD::forward<TInvoke>(invokeFn))
+          m_invokeFunction(std::forward<TInvoke>(invokeFn))
     {
     }
 
@@ -152,10 +152,10 @@ public:
                           invokeFunction_t, TInvoke&& invokeFn,
                           state_type* parent = nullptr)
         : base_type(name,
-                    FSM11STD::forward<TEntry>(entryFn),
-                    FSM11STD::forward<TEntry>(exitFn),
+                    std::forward<TEntry>(entryFn),
+                    std::forward<TEntry>(exitFn),
                     parent),
-          m_invokeFunction(FSM11STD::forward<TExit>(invokeFn))
+          m_invokeFunction(std::forward<TExit>(invokeFn))
     {
     }
 
@@ -174,7 +174,7 @@ public:
     template <typename T>
     void setInvokeFunction(T&& fn)
     {
-        m_invokeFunction = FSM11STD::forward<T>(fn);
+        m_invokeFunction = std::forward<T>(fn);
     }
 
     virtual
@@ -185,15 +185,18 @@ public:
         m_exitRequest.m_mutex.unlock();
 
         m_exceptionPointer = nullptr;
-        m_invokeThread = FSM11STD::thread(
 #ifdef FSM11_USE_WEOS
+        m_invokeThread = weos::thread(
                              m_invokeThreadAttributes,
-#endif // FSM11_USE_WEOS
                              &ThreadedFunctionState::invokeWrapper, this);
+#else
+        m_invokeThread = std::thread(
+                             &ThreadedFunctionState::invokeWrapper, this);
+#endif // FSM11_USE_WEOS
     }
 
     virtual
-    FSM11STD::exception_ptr exitInvoke() override
+    std::exception_ptr exitInvoke() override
     {
         FSM11_ASSERT(m_invokeThread.joinable());
 
@@ -209,10 +212,12 @@ public:
 private:
 #ifdef FSM11_USE_WEOS
     weos::thread_attributes m_invokeThreadAttributes;
+    weos::thread m_invokeThread;
+#else
+    std::thread m_invokeThread;
 #endif // FSM11_USE_WEOS
 
-    FSM11STD::thread m_invokeThread;
-    FSM11STD::exception_ptr m_exceptionPointer;
+    std::exception_ptr m_exceptionPointer;
     ExitRequest m_exitRequest;
 
     invoke_function_type m_invokeFunction;
@@ -226,7 +231,7 @@ private:
         }
         catch (...)
         {
-            m_exceptionPointer = FSM11STD::current_exception();
+            m_exceptionPointer = std::current_exception();
         }
     }
 };

@@ -68,7 +68,7 @@ class ThreadPool
         }
 
         Task(Task&& other)
-            : promise(FSM11STD::move(other.promise)),
+            : promise(std::move(other.promise)),
               state(other.state)
         {
         }
@@ -76,7 +76,7 @@ class ThreadPool
         Task(const Task&) = delete;
         Task& operator=(const Task&) = delete;
 
-        FSM11STD::promise<void> promise;
+        std::promise<void> promise;
         fsm11_detail::ThreadedStateBase& state;
     };
 
@@ -103,7 +103,7 @@ public:
 #ifdef FSM11_USE_WEOS
     template <typename... TAttributes>
     explicit
-    ThreadPool(const FSM11STD::thread_attributes& attr,
+    ThreadPool(const weos::thread_attributes& attr,
                const TAttributes&... attributes);
 #else
     //! Constructs a thread pool.
@@ -123,25 +123,25 @@ public:
     //! Move-assigns the \p other pool to this one.
     ThreadPool& operator=(ThreadPool&& other);
 
-    FSM11STD::future<void> enqueue(fsm11_detail::ThreadedStateBase& state);
+    std::future<void> enqueue(fsm11_detail::ThreadedStateBase& state);
 
 private:
-    FSM11STD::mutex m_poolMutex;
+    std::mutex m_poolMutex;
 
-    FSM11STD::mutex m_workerMutex; // TODO: rethink the locking policy
-    FSM11STD::condition_variable m_workerCv;
-    FSM11STD::condition_variable m_assignmentCv;
+    std::mutex m_workerMutex; // TODO: rethink the locking policy
+    std::condition_variable m_workerCv;
+    std::condition_variable m_assignmentCv;
     unsigned m_assignedWorkers{0};
     std::size_t m_idleWorkers{TSize};
     Handle* m_handles{nullptr};
 #ifdef FSM11_USE_WEOS
     boost::container::static_vector<Task, TSize> m_tasks;
 #else
-    FSM11STD::vector<Task> m_tasks;
+    std::vector<Task> m_tasks;
 #endif
 
 
-    void moveTo(FSM11STD::unique_lock<FSM11STD::mutex>&& lock,
+    void moveTo(std::unique_lock<std::mutex>&& lock,
                 ThreadPool* newPool);
 
     static void work(ThreadPool* pool, std::size_t id);
@@ -149,9 +149,9 @@ private:
 #ifdef FSM11_USE_WEOS
     template <typename TAttributes, std::size_t... TIndices>
     void construct(TAttributes&& attributes,
-                   FSM11STD::integer_sequence<std::size_t, TIndices...>)
+                   std::integer_sequence<std::size_t, TIndices...>)
     {
-        using namespace FSM11STD;
+        using namespace std;
 
         unsigned workers = 0;
         try
@@ -171,10 +171,10 @@ private:
         }
     }
 
-    int constructOne(const FSM11STD::thread_attributes& attr,
+    int constructOne(const weos::thread_attributes& attr,
                      std::size_t idx, unsigned& workers)
     {
-        FSM11STD::thread(attr, &ThreadPool::work, this, idx).detach();
+        weos::thread(attr, &ThreadPool::work, this, idx).detach();
         workers |= 1 << idx;
         return 0;
     }
@@ -189,13 +189,13 @@ private:
 #ifdef FSM11_USE_WEOS
 template <std::size_t TSize>
 template <typename... TAttributes>
-ThreadPool<TSize>::ThreadPool(const FSM11STD::thread_attributes& attr,
+ThreadPool<TSize>::ThreadPool(const weos::thread_attributes& attr,
                               const TAttributes&... attributes)
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     static_assert(fsm11_detail::all<
-                      is_same<TAttributes, thread_attributes>::value...
+                      is_same<TAttributes, weos::thread_attributes>::value...
                   >::value,
                   "All arguments have to be thread attributes");
     static_assert(1 + sizeof...(TAttributes) == TSize,
@@ -208,7 +208,7 @@ ThreadPool<TSize>::ThreadPool(const FSM11STD::thread_attributes& attr,
 template <std::size_t TSize>
 ThreadPool<TSize>::ThreadPool()
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     unsigned workers = 0;
     try
@@ -235,7 +235,7 @@ ThreadPool<TSize>::ThreadPool()
 template <std::size_t TSize>
 ThreadPool<TSize>::ThreadPool(ThreadPool&& other)
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     lock_guard<mutex> otherPoolLock(m_poolMutex);
 
@@ -252,13 +252,13 @@ ThreadPool<TSize>::ThreadPool(ThreadPool&& other)
 template <std::size_t TSize>
 ThreadPool<TSize>::~ThreadPool()
 {
-    moveTo(FSM11STD::unique_lock<FSM11STD::mutex>(m_workerMutex), nullptr);
+    moveTo(std::unique_lock<std::mutex>(m_workerMutex), nullptr);
 }
 
 template <std::size_t TSize>
 auto ThreadPool<TSize>::operator=(ThreadPool&& other) -> ThreadPool&
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     if (this == &other)
         return *this;
@@ -284,10 +284,10 @@ auto ThreadPool<TSize>::operator=(ThreadPool&& other) -> ThreadPool&
 }
 
 template <std::size_t TSize>
-FSM11STD::future<void>
+std::future<void>
 ThreadPool<TSize>::enqueue(fsm11_detail::ThreadedStateBase& state)
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     lock_guard<mutex> lock(m_workerMutex);
     if (m_idleWorkers == 0)
@@ -300,7 +300,7 @@ ThreadPool<TSize>::enqueue(fsm11_detail::ThreadedStateBase& state)
 }
 
 template <std::size_t TSize>
-void ThreadPool<TSize>::moveTo(FSM11STD::unique_lock<FSM11STD::mutex>&& lock,
+void ThreadPool<TSize>::moveTo(std::unique_lock<std::mutex>&& lock,
                                ThreadPool* newPool)
 {
     for (Handle* iter = m_handles; iter != nullptr; iter = iter->m_next)
@@ -313,7 +313,7 @@ void ThreadPool<TSize>::moveTo(FSM11STD::unique_lock<FSM11STD::mutex>&& lock,
 template <std::size_t TSize>
 void ThreadPool<TSize>::work(ThreadPool* pool, std::size_t id)
 {
-    using namespace FSM11STD;
+    using namespace std;
 
     Handle handle(pool, id);
     while (pool)

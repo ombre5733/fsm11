@@ -83,7 +83,7 @@ protected:
     //! The set of enabled transitions.
     transition_type* m_enabledTransitions;
 
-    FSM11STD::atomic_uint m_numConfigurationChanges;
+    std::atomic_uint m_numConfigurationChanges;
 
 
     TDerived& derived()
@@ -661,7 +661,7 @@ public:
     {
         auto lock = derived().getLock();
 
-        derived().m_eventList.push_back(FSM11STD::move(event));
+        derived().m_eventList.push_back(std::move(event));
         doDispatchEvents();
     }
 
@@ -705,7 +705,7 @@ public:
     template <typename T = void>
     void eventLoop()
     {
-        static_assert(!FSM11STD::is_same<T, T>::value,
+        static_assert(!std::is_same<T, T>::value,
                       "A synchronous statemachine has no event-loop.");
     }
 
@@ -755,12 +755,12 @@ private:
             bool changedConfiguration = false;
             if (this->m_enabledTransitions)
             {
-                changedConfiguration = this->microstep(FSM11STD::move(event));
+                changedConfiguration = this->microstep(std::move(event));
                 this->clearEnabledTransitionsSet();
             }
             else
             {
-                derived().invokeEventDiscardedCallback(FSM11STD::move(event));
+                derived().invokeEventDiscardedCallback(std::move(event));
             }
 
             this->runToCompletion(changedConfiguration);
@@ -790,8 +790,8 @@ public:
     void addEvent(event_type event)
     {
         {
-            FSM11STD::lock_guard<FSM11STD::mutex> lock(m_eventLoopMutex);
-            derived().m_eventList.push_back(FSM11STD::move(event));
+            std::lock_guard<std::mutex> lock(m_eventLoopMutex);
+            derived().m_eventList.push_back(std::move(event));
         }
 
         m_continueEventLoop.notify_one();
@@ -822,7 +822,7 @@ public:
     void eventLoop()
     {
         {
-            FSM11STD::lock_guard<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+            std::lock_guard<std::mutex> eventLoopLock(m_eventLoopMutex);
             // TODO: if (m_eventLoopRunning) throw;
             m_eventLoopActive = true;
         }
@@ -834,16 +834,16 @@ protected:
     void halt()
     {
         stop();
-        FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+        std::unique_lock<std::mutex> eventLoopLock(m_eventLoopMutex);
         m_continueEventLoop.wait(eventLoopLock,
                                  [this]{ return !m_eventLoopActive; });
     }
 
 private:
     //! A mutex to prevent concurrent modifications of the request flags.
-    mutable FSM11STD::mutex m_eventLoopMutex;
+    mutable std::mutex m_eventLoopMutex;
     //! This CV signals that a new control event is available.
-    FSM11STD::condition_variable m_continueEventLoop;
+    std::condition_variable m_continueEventLoop;
     //! Set if starting the state machine has been requested.
     bool m_startRequest;
     //! Set if stopping the state machine has been requested.
@@ -877,7 +877,7 @@ private:
         do
         {
             // Wait until a start or stop request has been sent.
-            FSM11STD::unique_lock<FSM11STD::mutex> eventLoopLock(m_eventLoopMutex);
+            std::unique_lock<std::mutex> eventLoopLock(m_eventLoopMutex);
             m_continueEventLoop.wait(eventLoopLock,
                                      [this]{ return m_startRequest || m_stopRequest; });
             m_startRequest = false;
@@ -945,12 +945,12 @@ private:
                 if (this->m_enabledTransitions)
                 {
                     changedConfiguration
-                            = this->microstep(FSM11STD::move(event));
+                            = this->microstep(std::move(event));
                     this->clearEnabledTransitionsSet();
                 }
                 else
                 {
-                    derived().invokeEventDiscardedCallback(FSM11STD::move(event));
+                    derived().invokeEventDiscardedCallback(std::move(event));
                 }
 
                 this->runToCompletion(changedConfiguration);

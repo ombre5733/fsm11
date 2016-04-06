@@ -62,7 +62,7 @@ protected:
 template <typename TOptions>
 struct get_threadpool
 {
-    using type = typename FSM11STD::conditional<
+    using type = typename std::conditional<
                      TOptions::threadpool_enable,
                      WithThreadPool<TOptions>,
                      WithoutThreadPool>::type;

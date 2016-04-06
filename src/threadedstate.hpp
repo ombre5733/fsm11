@@ -61,7 +61,7 @@ public:
 #ifdef FSM11_USE_WEOS
     //! \brief Creates a state with a threaded invoke action.
     template <typename T = void,
-              typename = typename FSM11STD::enable_if<
+              typename = typename std::enable_if<
                              has_thread_pool, T>::type>
     explicit
     ThreadedState(const char* name, base_type* parent = nullptr)
@@ -71,15 +71,15 @@ public:
 
     //! \brief Creates a state with a threaded invoke action.
     template <typename T = void,
-              typename = typename FSM11STD::enable_if<
+              typename = typename std::enable_if<
                              !has_thread_pool, T>::type>
     explicit
     ThreadedState(const char* name,
-                  const FSM11STD::thread_attributes& attrs,
+                  const weos::thread_attributes& attrs,
                   base_type* parent = nullptr)
         : base_type(name, parent)
     {
-        FSM11STD::get<1>(m_data) = attrs;
+        std::get<1>(m_data) = attrs;
     }
 #else
     //! \brief Creates a state with a threaded invoke action.
@@ -105,7 +105,7 @@ public:
         m_exitRequest.m_requested = false;
         m_exitRequest.m_mutex.unlock();
 
-        doEnterInvoke(FSM11STD::integral_constant<bool, has_thread_pool>());
+        doEnterInvoke(std::integral_constant<bool, has_thread_pool>());
     }
 
     //! Leaves the invoked thread.
@@ -119,7 +119,7 @@ public:
         m_exitRequest.m_mutex.unlock();
         m_exitRequest.m_cv.notify_one();
 
-        FSM11STD::get<0>(m_data).get();
+        std::get<0>(m_data).get();
     }
 
 private:
@@ -127,35 +127,38 @@ private:
     struct None {};
 
     using maybe_thread_attributes_t
-        = typename FSM11STD::conditional<!has_thread_pool,
-                                         FSM11STD::thread_attributes,
+        = typename std::conditional<!has_thread_pool,
+                                         weos::thread_attributes,
                                          None>::type;
 
-    using data_type = FSM11STD::tuple<FSM11STD::future<void>,
-                                      maybe_thread_attributes_t>;
+    using data_type = std::tuple<std::future<void>,
+                                 maybe_thread_attributes_t>;
 #else
-    using data_type = FSM11STD::tuple<FSM11STD::future<void>>;
+    using data_type = std::tuple<std::future<void>>;
 #endif // FSM11_USE_WEOS
 
     data_type m_data;
 
 
-    void doEnterInvoke(FSM11STD::false_type)
+    void doEnterInvoke(std::false_type)
     {
-        using namespace FSM11STD;
+        using namespace std;
 
-        get<0>(m_data) = async(launch::async,
 #ifdef FSM11_USE_WEOS
-                               get<1>(m_data),
-#endif // FSM11_USE_WEOS
+        get<0>(m_data) = weos::async(launch::async,
+                                     get<1>(m_data),
+                                     &ThreadedStateBase::invoke,
+                                     this, ref(this->m_exitRequest));
+#else
+        get<0>(m_data) = async(launch::async,
                                &ThreadedStateBase::invoke,
                                this, ref(this->m_exitRequest));
+#endif // FSM11_USE_WEOS
     }
 
-    void doEnterInvoke(FSM11STD::true_type)
+    void doEnterInvoke(std::true_type)
     {
-        FSM11STD::get<0>(m_data)
-                = this->stateMachine()->threadPool().enqueue(*this);
+        std::get<0>(m_data) = this->stateMachine()->threadPool().enqueue(*this);
     }
 };
 
